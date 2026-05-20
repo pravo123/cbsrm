@@ -1,0 +1,438 @@
+# CBSRM — Cross-Border Systemic Risk Monitor
+
+## A reproducible open-source framework for cross-jurisdiction financial-stability monitoring with regulator-grade audit chains
+
+**Working paper, v0.1 — May 2026**
+**Author:** WaverVanir International LLC
+**Code:** https://github.com/pravo123/cbsrm
+**License:** Apache-2.0
+**Companion repository:** Derivatives Risk Framework (DRF), https://github.com/pravo123/derivatives-risk-framework
+
+---
+
+## Abstract
+
+Existing public indicators of systemic financial stress are fragmented by jurisdiction. The Federal Reserve Bank of St. Louis publishes STLFSI4 for the United States; the European Central Bank publishes the Composite Indicator of Systemic Stress (CISS) for the euro area; the Office of Financial Research publishes the OFR Financial Stress Index daily; NYU Stern's V-Lab publishes SRISK weekly for large US banks. Each is methodologically rigorous, but no single public artifact (i) re-applies these methodologies across jurisdictions, (ii) exposes the construction code transparently, (iii) produces a daily-cadence cross-border composite with source attribution, and (iv) carries a tamper-evident audit trail of every computation suitable for supervisory review. We introduce **CBSRM**, an open-source Python framework that closes this gap. The v0.1 release ships the audit-chain primitive, the FRED data adapter, the STLFSI passthrough as a baseline, and a US-extended CISS implementation following Holló, Kremer & Lo Duca (2012). The audit-chain primitive is ported from the same author's Derivatives Risk Framework, where it sits under a production multi-broker order pipeline; this paper documents its generalization to systemic-stress methodology audit. We discuss positioning relative to BIS Innovation Hub themes — specifically Project Pine (programmable monetary-policy operations), Project Pyxtrial (stablecoin balance-sheet monitoring), and BIS WPs 1250 and 1291 on machine learning for financial-stability surveillance — and outline the publication and replication agenda for v0.2 through v0.5.
+
+**Keywords:** systemic risk, financial stability, composite stress indicator, CISS, SRISK, audit chain, supervisory technology, central bank cooperation.
+
+**JEL classification:** G01, G15, G18, G28.
+
+---
+
+## 1. Introduction
+
+### 1.1 The fragmentation problem
+
+The 2008 global financial crisis, the March 2020 dash-for-cash, and the March 2023 regional-bank stress episode each demonstrated that financial-stability risks propagate across jurisdictions faster than the public surveillance infrastructure adapts. The standard public-domain composite stress indicators address this only partially:
+
+- The St. Louis Fed Financial Stress Index (STLFSI4) is principal-component-based, weekly, and confined to US series.
+- The Chicago Fed National Financial Conditions Index (NFCI) and its adjusted variant (ANFCI) are weekly, US.
+- The Kansas City Fed Financial Stress Index (KCFSI) is monthly, US.
+- The Office of Financial Research Financial Stress Index (OFR FSI; Monin 2019) is daily, US.
+- The ECB Composite Indicator of Systemic Stress (CISS; Holló, Kremer & Lo Duca 2012) is weekly, euro area, with the portfolio-theoretic aggregation that captures non-linear "systemic" amplification.
+- NYU Stern's V-Lab publishes SRISK (Brownlees & Engle 2017) weekly for ~30 US large bank holding companies; the engine is not open-source.
+
+Each is methodologically defensible within its mandate. **None is cross-jurisdictional**, none offers a methodology-transparent daily composite across the US, euro area, UK, Japan, and emerging markets, and none carries a tamper-evident audit trail that downstream users (hedge-fund risk teams, family offices, central-bank counterparts, supervisory technology vendors) can independently verify.
+
+### 1.2 Contribution
+
+This paper introduces CBSRM — Cross-Border Systemic Risk Monitor — as a public, open-source, Apache-2.0-licensed framework that addresses each fragmentation axis. Specifically:
+
+1. **Re-implementation, not re-aggregation.** Rather than consuming the ECB CISS or OFR FSI as opaque outputs, CBSRM re-implements the construction algorithms in modern typed Python and applies them, with appropriate input-substitution, across jurisdictions. This makes every value reproducible from public inputs and every methodology choice auditable.
+
+2. **Cross-jurisdiction by construction.** v0.1 ships the US extension of CISS (CISS-US); the v0.2-v0.5 roadmap extends to euro area (replication of ECB output as integrity check), UK, Japan, and an EM cohort.
+
+3. **Regulator-grade audit chain.** Every CBSRM computation is appended to a sha256-chained tamper-evident log that records (a) the request, (b) the input vintage, (c) the computed value, and (d) every external service of that value. The chain primitive is ported from the same author's production derivatives risk infrastructure where it underpins multi-broker order auditing.
+
+4. **API-accessible methodology.** A FastAPI service exposes every computation, the underlying audit row, and a verification endpoint that re-hashes the chain on demand.
+
+5. **Programmable risk-gate extension.** The audit primitive bridges to Project Pine and Project Pyxtrial in the supervisory-technology dimension: methodology values can be referenced from smart contracts or compliance pipelines with cryptographic verifiability of their provenance.
+
+### 1.3 Roadmap of the paper
+
+§2 reviews the methodology literature and the public-tooling landscape. §3 specifies the v0.1 indicator implementations: STLFSI passthrough as the canonical baseline and CISS-US as the first non-trivial methodology re-application. §4 catalogs the data sources, their licensing posture, and the implications for the paid SaaS tier. §5 describes the architecture and the audit-chain design in detail. §6 develops the programmable risk-gate extension and its alignment with active BIS Innovation Hub projects. §7 reports replication diagnostics against synthetic crisis windows and (planned for v0.2) against the ECB-published CISS series. §8 lays out the v0.2-v0.5 roadmap, including cross-jurisdiction integration, SRISK, CoVaR, and Diebold-Yilmaz spillovers. §9 catalogs limitations and threat-model considerations. §10 concludes with the BIS Innovation Hub alignment.
+
+---
+
+## 2. Related work
+
+### 2.1 Composite stress indicators
+
+The methodological foundation of CBSRM-style composites is **Holló, Kremer & Lo Duca (2012)**, ECB Working Paper 1426. Their construction proceeds in three stages: (i) cumulative-distribution-function transformation of fifteen raw stress indicators to the unit interval; (ii) simple-average aggregation within five financial-system segments (money market, bond market, equity market, financial intermediaries, foreign exchange) to produce five subindices; and (iii) portfolio-theoretic aggregation of the subindex vector through a quadratic form weighted by a time-varying exponentially-weighted-moving correlation matrix. The third step is what makes the composite *systemic* in a meaningful sense: when cross-segment correlations rise (the structural definition of a systemic episode), the composite amplifies non-linearly even if each segment's stress is only modestly elevated.
+
+The **OFR Financial Stress Index** (Monin 2019, *Risks*) is a dynamic factor model over 33 indicators across credit, equity valuation, funding, safe assets, and volatility, with a 2023 update adding alternative-reference-rate components after the LIBOR transition.
+
+The **Kansas City Financial Stress Index** (Hakkio & Keeton 2009) and the **Chicago Fed NFCI** (Brave & Butters 2011) are principal-component composites over US risk, liquidity, and leverage variables.
+
+The **STLFSI** is a principal-component composite over 18 US series in its v4 (2022) form.
+
+CBSRM's CISS-US implementation in v0.1 follows Holló-Kremer-Lo Duca verbatim on the algorithm, substituting fifteen US raw inputs for the original euro-area series. §3.2 details the substitution.
+
+### 2.2 Firm-level systemic-risk measures
+
+The two dominant firm-level systemic-risk measures in the public literature are **SRISK** (Acharya, Pedersen, Philippon & Richardson 2017; Brownlees & Engle 2017) and **CoVaR** (Adrian & Brunnermeier 2016).
+
+SRISK is a conditional capital-shortfall measure: the expected capital shortfall of firm *i* conditional on a severe market downturn, scaled by leverage. It requires equity-return-conditional volatility (typically GJR-GARCH-DCC), simulated multi-period market crashes, and balance-sheet leverage. NYU Stern's V-Lab publishes SRISK weekly for ~30 US bank holding companies; the engine is not open-source, and no maintained Python implementation exists in the public domain.
+
+ΔCoVaR is a quantile-regression measure: the difference in the market's value-at-risk conditional on the firm being in distress versus conditional on the firm being at its median state. The original code is in R; a small number of Python replications exist on GitHub but none have crossed the threshold from research artifact to production-quality library.
+
+CBSRM v0.2 will ship SRISK in modern typed Python on top of `bashtage/arch` (the canonical Python GARCH library); v0.3 will ship ΔCoVaR. Both will be validated against V-Lab's published weekly numbers (where possible) and against the original papers' tabulated examples.
+
+### 2.3 Network and contagion models
+
+The Eisenberg-Noe (2001) clearing-payments model is the canonical network-contagion baseline; Battiston et al. (2012) introduced DebtRank as an iterative impact measure; Bardoscia et al. (2015) introduced linear DebtRank as a closed-form alternative. Bank of England researcher Marco Bardoscia maintains `marcobardoscia/neva` (Apache-2.0, Python), which implements the full family of network valuations. CBSRM v0.3 will integrate `neva` rather than reimplement.
+
+Acemoglu, Ozdaglar & Tahbaz-Salehi (2015, NBER w18727) provide the canonical theoretical analysis of how network density and shock size interact to determine resilience versus fragility. Their analytic phase transition (complete-and-resilient versus ring-and-fragile) is, to the author's knowledge, not implemented as a usable classifier in any open-source library. CBSRM v0.4 will ship this classifier as a genuine contribution.
+
+### 2.4 BIS Innovation Hub context
+
+Three threads of recent BIS work are directly relevant:
+
+1. **Project Pine** (concluded May 2025, NY Fed Innovation Center and BIS Swiss Centre): an open-market-operations toolkit on smart contracts, with programmable reserve-requirement, fine-tuning, and standing-facility primitives. The artifact is the open-source prototype. Pine establishes the precedent that supervisory infrastructure can be both transparent and machine-readable.
+
+2. **Project Pyxtrial** (London Centre): stablecoin balance-sheet monitoring, i.e. supervisory technology for asset-backing solvency surveillance. The premise — that supervisors need machine-readable, audit-able views of regulated balance sheets — generalizes to systemic-stress monitoring.
+
+3. **BIS Working Papers 1250 (Aldasoro, Hördahl, Schrimpf & Zhu 2025, "Predicting financial market stress with machine learning") and 1291 (2025, "Harnessing AI for monitoring financial markets: early warning signals from interpretable ML")**. These papers establish that BIS research is actively investing in ML-based financial-stress prediction and that interpretability — the ability to attribute predictions to specific inputs — is a first-order requirement.
+
+CBSRM positions itself in the intersection of these three: it is a methodology-transparent, audit-chain-backed, interpretable, multi-jurisdiction stress framework that could be referenced as an upstream input by Pyxtrial-style supervisory pipelines or as a downstream consumer of Pine-style programmable monetary-policy variables.
+
+---
+
+## 3. Methodology
+
+### 3.1 v0.1 indicator set
+
+CBSRM v0.1 ships two indicators:
+
+- **STLFSI4 wrapper** (`cbsrm.indicators.stlfsi.STLFSIWrap`). A passthrough of the FRED-published St. Louis Fed Financial Stress Index v4. Acts as the *baseline integrity check*: any user-built composite that materially disagrees with STLFSI4 during US crisis windows (2008Q4, 2020Q1, 2023Q1) is suspect.
+
+- **CISS-US** (`cbsrm.indicators.ciss_us.CISSUS`). The first non-trivial methodology implementation: Holló-Kremer-Lo Duca applied to US data.
+
+### 3.2 CISS-US construction
+
+The Holló-Kremer-Lo Duca algorithm, restated for the US extension:
+
+#### Stage 1: Raw input transformation
+
+Let *x*_{i,t} denote the *t*-th observation of the *i*-th raw stress indicator, *i* = 1 … 15. Define the empirical-CDF transform
+
+> *z*_{i,t} = rank(x_{i,t}, {x_{i,s}}_{s=1}^T) / (T+1)
+
+where rank is the average-rank function. The result *z*_{i,t} ∈ (0, 1) is the empirical quantile of *x*_{i,t} within the full-sample distribution of indicator *i*. This makes all inputs scale-free, comparable across heterogeneous units, and robust to outliers.
+
+#### Stage 2: Subindex aggregation
+
+The 15 transformed inputs are partitioned into 5 subindices of 3 inputs each, indexed by financial-system segment *k* ∈ {money market, bond market, equity market, financial intermediaries, foreign exchange}:
+
+> *s*_{k,t} = (1/3) Σ_{i ∈ S_k} *z*_{i,t}
+
+where *S_k* is the set of three raw indicators assigned to segment *k*.
+
+#### Stage 3: Portfolio-theoretic composite
+
+Let **s**_t = (*s*_{1,t}, … , *s*_{5,t})ᵀ denote the subindex vector at time *t* and **w** = (*w*_1, … , *w*_5)ᵀ a non-negative weight vector summing to 1 (defaults: equal weights). The composite is
+
+> CISS_t = ( **w** ⊙ **s**_t )ᵀ **C**_t ( **w** ⊙ **s**_t )
+
+where ⊙ is the elementwise product and **C**_t is the 5×5 time-varying correlation matrix of the subindex returns, estimated by exponentially-weighted moving covariance with decay λ:
+
+> Σ_t = λ Σ_{t-1} + (1−λ)(**s**_t − **μ**_t)(**s**_t − **μ**_t)ᵀ
+> *C*_{t,ij} = Σ_{t,ij} / √(Σ_{t,ii} Σ_{t,jj})
+
+The default λ = 0.93 follows the ECB CISS implementation. Initial Σ₀ is bootstrapped from the full-sample sample covariance to avoid degenerate initial readings.
+
+The quadratic form is what gives the composite its systemic property: when subindex stresses are uncorrelated, CISS_t is bounded above by the sum of squared weighted segments; when correlations rise toward 1 (systemic episode), the quadratic form amplifies because the off-diagonal contributions become positive and large. By construction CISS_t ∈ [0, 1] (with clipping for numerical drift).
+
+#### US input substitution
+
+The 15 US raw inputs intended for the canonical CISS-US v1 mapping (release v0.2; the v0.1 implementation accepts any user-supplied 15-column mapping via `CISSConfig.inputs_by_subindex`) are:
+
+| Subindex | Input 1 | Input 2 | Input 3 |
+|---|---|---|---|
+| Money market | TED spread (TEDRATE) | SOFR − IORB spread | 3M CP − T-Bill spread |
+| Bond market | \|10Y − 2Y Treasury spread\| (T10Y2Y) | HY corp OAS (BAMLH0A0HYM2) | 10Y Treasury realized vol |
+| Equity market | VIX (VIXCLS) | S&P 500 CMAX (rolling max-drawdown) | S&P 500 financials beta |
+| Financial intermediaries | KBW Bank Index CMAX | Bank-sector realized volatility | SLOOS tightening diffusion |
+| Foreign exchange | Trade-weighted USD volatility (DTWEXBGS) | EUR/USD basis swap | JPY/USD basis swap |
+
+This mapping deliberately mirrors the structural intent of the ECB version: each subindex captures stress in one functional market segment with a level indicator, a tail-risk indicator, and a relative-pricing indicator.
+
+### 3.3 Replication diagnostics
+
+CBSRM provides a `CISSUS.replication_diagnostics(cbsrm_series, canonical)` function that compares any computed series against a published canonical reference. For CISS-US the natural references are:
+
+- The ECB CISS series for the euro area (correlation should be high during global crises, lower otherwise — a partial diagnostic).
+- STLFSI4 (very different methodology but should correlate ≥ 0.6 during crisis windows).
+- The OFR FSI (similar daily-cadence US stress index).
+
+Diagnostics returned: Pearson correlation, Spearman rank correlation, z-score mean-absolute error, overlap window size.
+
+§7 reports synthetic-data diagnostics; live-data diagnostics will be released alongside v0.2.
+
+---
+
+## 4. Data
+
+### 4.1 Source roster
+
+CBSRM v0.1 integrates FRED only; the v0.2 roster expands to seven sources, all public and free of API charge:
+
+| # | Source | Endpoint root | Python adapter | License posture |
+|---|---|---|---|---|
+| 1 | FRED | api.stlouisfed.org/fred | `cbsrm.data.fred` (shipped) | Public domain (derived analytics unrestricted) |
+| 2 | NY Fed Markets API | markets.newyorkfed.org/api | `cbsrm.data.nyfed` (v0.2) | US Govt work, open |
+| 3 | OFR Short-term Funding Monitor | data.financialresearch.gov/v1 | `cbsrm.data.ofr_stfm` (v0.2) | US Govt work, open |
+| 4 | ECB Data Portal | data-api.ecb.europa.eu | `cbsrm.data.ecb_sdmx` (v0.3) | CC-BY-equivalent |
+| 5 | BIS Stats API | stats.bis.org/api/v1 | `cbsrm.data.bis_sdmx` (v0.3) | Derived analytics permitted; raw redistribution restricted |
+| 6 | CFTC Public Reporting | publicreporting.cftc.gov | `cbsrm.data.cftc` (v0.4) | US Govt work, open |
+| 7 | NY Fed CMDI | newyorkfed.org/research/policy/cmdi | `cbsrm.data.nyfed_cmdi` (v0.4) | Citation, no commercial restriction |
+
+### 4.2 License posture for the paid tier
+
+The OSS distribution is Apache-2.0 throughout. The planned paid tier (v0.6+) will provide value-add layers (real-time feeds with sub-daily refresh, custom institution lists for SRISK, audit-chain exports for regulator compliance, replay of historical vintages) without re-distributing the underlying public data verbatim. ECB and BIS data appear in the framework as *derived analytics* — stress scores, correlations, attributions — never as raw mirroring; this is the conservative licensing interpretation and is documented in the per-adapter `source_info()` accessor.
+
+---
+
+## 5. Architecture
+
+CBSRM is organized in six layers (one of which sits under all the others):
+
+```
+L1  Public data ingestion
+L2  Indicators (methodology IP)
+L3  Network / contagion engine
+L4  Cross-jurisdiction integrator
+L5  API / dashboard
+L0  Audit chain  (under everything)
+```
+
+### 5.1 The audit chain
+
+The audit primitive is `cbsrm.audit.chain.AuditChain`, a sha256-linked append-only log over an SQLite-backed table `cbsrm_audit_log`. Each row carries:
+
+- `id`, `ts` — monotonic identifier and UTC timestamp
+- `kind` — one of REQUESTED, INPUT_FETCHED, INPUT_MISSING, COMPUTED, SERVED, METHOD_UPGRADED, REPRODUCED, FAILED
+- `subject` — the indicator identifier ('CISS-US', 'SRISK', etc.)
+- `payload_json` — structured payload
+- `hash` — sha256( prev_hash ‖ ts ‖ kind ‖ subject ‖ payload_json )
+- `prev_hash` — the previous row's hash
+
+The canonical happy-path lifecycle for an indicator computation is
+
+> REQUESTED → INPUT_FETCHED → COMPUTED → SERVED
+
+with REJECTED/FAILED/INPUT_MISSING as off-path terminal states. `AuditChain.verify(start_id=1)` re-hashes the chain from any starting row and returns a list of row identifiers where the stored hash does not match the recomputed hash or the stored `prev_hash` does not link to the actual previous row.
+
+This primitive is ported from the same author's Derivatives Risk Framework (DRF), where it underlies the multi-broker order audit (5-state lifecycle: SUBMITTED → ROUTED → ACKED → FILLED → SETTLED, plus REJECTED and CANCELED). The DRF production implementation has 19 dedicated tests and is wired into broker.place_order(), broker.close_position(), and broker.sync_on_startup() call sites. CBSRM ports the algorithm; the test suite for CBSRM's audit chain (13 tests) exercises the same tamper-detection properties on the simpler systemic-risk lifecycle.
+
+### 5.2 Why the audit primitive matters here
+
+In a private trading context the audit chain is operational hygiene: it lets the operator prove, after the fact, that an order was placed in a specific state with specific parameters. In a public stress-monitor context the same primitive serves a *supervisory* function: downstream users (hedge-fund risk teams citing CBSRM stress readings in regulatory disclosures, supervisory technology vendors integrating CBSRM into a Pyxtrial-style pipeline, central-bank counterparts cross-referencing CBSRM readings against their own surveillance outputs) can verify the chain locally, in O(n), without trusting the CBSRM service. This is the same property — *machine-readable provenance with cryptographic verifiability* — that motivates the BIS Innovation Hub's interest in programmable supervisory infrastructure (Project Pyxtrial, Project Atlas, Project Pine).
+
+### 5.3 API layer
+
+A FastAPI service (`cbsrm.api.routes.build_app`) exposes:
+
+- `GET /indicators` — registry of available indicators
+- `GET /indicators/{id}/latest` — latest reading with audit row id
+- `GET /audit/{subject}` — full audit chain for one subject
+- `POST /audit/verify` — re-hash and return chain integrity status
+
+The v0.6+ paid tier will add authenticated endpoints for custom institution lists (SRISK universes beyond V-Lab's ~30 firms), backtest endpoints (replay historical vintages), and signed audit-chain exports.
+
+---
+
+## 6. The programmable risk-gate extension
+
+### 6.1 Bridge to Project Pine
+
+Project Pine demonstrated that monetary-policy operations (reserve-requirement adjustments, fine-tuning operations, standing-facility access) can be expressed as smart contracts referencing on-chain or off-chain state. The same architectural pattern generalizes to *supervisory* operations: machine-readable rules that reference CBSRM stress indicators as input variables and trigger supervisory actions (heightened reporting, capital surcharges, mandatory liquidity buffers) when the indicators cross policy thresholds.
+
+The technical precondition for such a pipeline is *cryptographically verifiable provenance of the indicator value*. The CBSRM audit chain provides exactly this primitive. A supervisory smart contract can:
+
+1. Reference a CBSRM indicator value at a specific row id.
+2. Independently fetch the audit row from the CBSRM service.
+3. Verify the chain from any earlier audit row up through the referenced row.
+4. Apply its policy logic only if verification succeeds.
+
+This composes cleanly with Pine-style programmable monetary-policy variables and Pyxtrial-style balance-sheet surveillance: the same audit primitive sits under all three.
+
+### 6.2 Bridge to the Derivatives Risk Framework
+
+The author's companion repository, the Derivatives Risk Framework, ships the production audit chain in the context of a multi-asset trading engine: every order placed, every position closed, every reconciliation event is recorded in the chain. CBSRM lifts the primitive into the public domain by demonstrating its applicability to a *non-private* use case (public stress-indicator computation) with the same correctness guarantees.
+
+The implication is that the same architecture spans both private capital deployment (DRF) and public supervisory infrastructure (CBSRM). This is precisely the pattern that BIS Project Pyxtrial seeks for stablecoin reserve surveillance: the supervisory pipeline and the regulated entity's internal pipeline can interoperate over the same primitives without trusting each other.
+
+---
+
+## 7. Replication diagnostics
+
+### 7.1 Synthetic-data validation (v0.1)
+
+The CBSRM v0.1 test suite exercises CISSUS against a synthetic two-regime dataset: 200 weeks of low-stress uncorrelated noise followed by 200 weeks of crisis-regime data where a common factor loads onto all 15 raw inputs. The tests assert:
+
+- Output values are bounded in [0, 1] (test_cissus_values_bounded_in_unit_interval).
+- The crisis half exhibits CISS readings materially elevated above the calm half — at least 2× the calm mean (test_cissus_crisis_window_elevated_vs_calm).
+- The composite respects systemic amplification — during the crisis window the composite mean is not drastically smaller than the average per-subindex mean, reflecting the contribution of rising correlations to the quadratic form (test_cissus_systemic_amplification).
+- The per-subindex breakdown is exposed and bounded (test_cissus_subindex_breakdown_present).
+
+All 48 tests in the v0.1 suite (13 for the audit chain, 13 for FRED, 22 for indicators) pass.
+
+### 7.2 Live-data validation (planned v0.2)
+
+The v0.2 release will ship a `notebooks/04_replicate_ecb_ciss.ipynb` that:
+
+1. Pulls the official ECB CISS series via the ECB SDMX API.
+2. Reconstructs the same 15 ECB inputs from public sources.
+3. Computes CISSUS with the ECB input mapping (rather than US substitution).
+4. Reports Pearson, Spearman, z-score MAE, and visual overlay over the 2007-2026 sample.
+
+The acceptance threshold (proposed) is Pearson *r* ≥ 0.90 over the full sample and ≥ 0.85 within each declared crisis window. Replication below these thresholds is treated as a methodology bug and held over for v0.3.
+
+Parallel notebooks (planned v0.3) will replicate STLFSI4 from its 18 inputs and the OFR FSI from the published 33-indicator list, applying the same threshold logic.
+
+---
+
+## 8. Roadmap
+
+| Release | Indicator additions | Data additions | Other |
+|---|---|---|---|
+| v0.1 (current) | STLFSI4 wrapper, CISSUS (methodology + synthetic validation) | FRED | Audit chain, FastAPI skeleton, CLI |
+| v0.2 (Q3 2026) | Canonical CISSUS mapping, ECB CISS replication, OFR FSI replication | NY Fed, OFR | Notebooks 01-04: 2020Q1 / 2008Q4 / 2023Q1 replays |
+| v0.3 (Q4 2026) | SRISK (Brownlees-Engle 2017), LRMES, MES; ECB CISS adapter | ECB, BIS | Integrate `bashtage/arch` for GARCH-DCC |
+| v0.4 (Q1 2027) | ΔCoVaR (Adrian-Brunnermeier 2016); Acemoglu phase classifier | CFTC, NY Fed CMDI | Integrate `marcobardoscia/neva` for network contagion |
+| v0.5 (Q2 2027) | Diebold-Yilmaz spillover (reimplementation; existing R-only); cross-jurisdiction integrator | World Bank GFDD | Streamlit dashboard |
+| v0.6+ (H2 2027) | Sovereign EWS (KLR + Manasse-Roubini + ML benchmark) | Atlantic Council CBDC tracker | Paid tier infrastructure |
+
+The v0.5 cross-jurisdiction integrator is the unique contribution targeted: a daily-cadence stress reading per jurisdiction with cross-jurisdiction co-movement attribution. To the author's knowledge no open-source artifact of this form exists.
+
+### 8.1 Companion publication agenda
+
+| Date | Submission | Target |
+|---|---|---|
+| Q3 2026 | SSRN methodology paper (this document, expanded) | FEN: Risk Management & Analysis of Risk |
+| Aug 27-29 2026 | Jackson Hole 2026 poster | Topic: "Financial Innovation: Implications for Payments and Policy" |
+| Q4 2026 | BIS WP submission (informal) | Cite WP 1250, 1291; address Aldasoro/Schrimpf/Auer |
+| Oct/Nov 2026 | Joint BIS/BoE/ECB/IMF Spillover Conference 2027 | Scientific committee includes Hyun Song Shin |
+| 2027 | Journal of Financial Stability submission | After ECB CISS replication is published |
+
+---
+
+## 9. Limitations and threat model
+
+### 9.1 Methodology limitations
+
+- The CISS construction's portfolio-theoretic aggregation assumes that subindex returns are coherent at the EWMA-correlation horizon. For very fast crises (intra-day flash events) the weekly-cadence EWMA may understate stress; this is a known property of the methodology and is not a CBSRM-specific defect.
+- The 15-input mapping for CISS-US in §3.2 is the *intended* canonical mapping; v0.1 accepts any 15-column input matrix, deferring the canonical pin to v0.2 when the necessary FRED-derived spreads (notably the SOFR-IORB spread and the trade-weighted USD volatility) are wired in.
+- The audit chain does not protect against compromise of the CBSRM service itself (an attacker with write access to the chain can produce a valid-looking chain). Defense in depth — air-gapped chain backups, independent chain mirrors — is left to downstream operators.
+
+### 9.2 Data limitations
+
+- BIS data licensing restricts raw redistribution; CBSRM treats BIS series as inputs to derived analytics only and exposes the underlying mnemonic citation rather than mirroring the raw values.
+- ECB data are CC-BY-equivalent but require attribution; the API surfaces source metadata via `.source_info()` on each adapter.
+- US government data (FRED, NY Fed, OFR, CFTC) is in the public domain and unrestricted for derived analytics.
+
+### 9.3 Threat model for the audit chain
+
+The chain is tamper-evident (every modification is detectable in O(n) by re-hashing) but not tamper-resistant (it does not prevent modification). For applications requiring tamper resistance — e.g. inputs to regulatory enforcement actions — downstream operators should mirror the chain to an append-only ledger (blockchain, write-once storage, or off-site read replica) and compare hashes at the boundary.
+
+---
+
+## 10. Conclusion and BIS Innovation Hub alignment
+
+The BIS Innovation Hub's mandate, as articulated across Project Pine, Project Pyxtrial, Project Atlas, and BIS Working Papers 1250 and 1291, includes (i) the construction of supervisory-grade tooling for financial-stability monitoring, (ii) the application of interpretable machine learning to systemic risk, and (iii) the development of cross-border interoperability primitives. CBSRM is positioned in the intersection of these three: it ships methodology-transparent, audit-chain-backed, interpretable stress indicators with explicit cross-jurisdiction roadmap and a primitive (the audit chain) directly applicable to the supervisory-technology dimension.
+
+The v0.1 release is the foundation: the audit chain primitive, the FRED data adapter, and the first methodology re-implementation. Subsequent releases will close the cross-jurisdiction, network-contagion, and machine-learning gaps. The companion Derivatives Risk Framework provides the production-validated audit primitive; CBSRM lifts that primitive into the public domain and applies it to the supervisory side of the same coin.
+
+The author welcomes correspondence from researchers at BIS Innovation Hub centres (Swiss Centre, Eurosystem, London, Nordic, Hong Kong, Singapore, Toronto), at central banks engaged with the Innovation Hub Secondment Programme, and at policy institutions whose mandates intersect the CBSRM methodology footprint.
+
+---
+
+## References
+
+Acemoglu, D., Ozdaglar, A. & Tahbaz-Salehi, A. (2015). "Systemic Risk and Stability in Financial Networks." *American Economic Review* 105(2): 564–608.
+
+Acharya, V., Pedersen, L., Philippon, T. & Richardson, M. (2017). "Measuring Systemic Risk." *Review of Financial Studies* 30(1): 2–47.
+
+Adrian, T. & Brunnermeier, M. (2016). "CoVaR." *American Economic Review* 106(7): 1705–1741.
+
+Aldasoro, I., Hördahl, P., Schrimpf, A. & Zhu, F. (2025). "Predicting financial market stress with machine learning." *BIS Working Paper* 1250.
+
+Bardoscia, M., Battiston, S., Caccioli, F. & Caldarelli, G. (2015). "DebtRank: A Microscopic Foundation for Shock Propagation." *PLoS ONE* 10(6): e0130406.
+
+Battiston, S., Puliga, M., Kaushik, R., Tasca, P. & Caldarelli, G. (2012). "DebtRank: Too Central to Fail? Financial Networks, the FED and Systemic Risk." *Scientific Reports* 2: 541.
+
+Brave, S. A. & Butters, R. A. (2011). "Monitoring Financial Stability: A Financial Conditions Index Approach." *Federal Reserve Bank of Chicago Economic Perspectives*.
+
+Brownlees, C. & Engle, R. (2017). "SRISK: A Conditional Capital Shortfall Measure of Systemic Risk." *Review of Financial Studies* 30(1): 48–79.
+
+Diebold, F. X. & Yilmaz, K. (2012). "Better to give than to receive: Predictive directional measurement of volatility spillovers." *International Journal of Forecasting* 28(1): 57–66.
+
+Eisenberg, L. & Noe, T. (2001). "Systemic Risk in Financial Systems." *Management Science* 47(2): 236–249.
+
+Glasserman, P. & Young, H. P. (2015). "How Likely Is Contagion in Financial Networks?" *Journal of Banking & Finance* 50: 383–399.
+
+Hakkio, C. S. & Keeton, W. R. (2009). "Financial Stress: What Is It, How Can It Be Measured, and Why Does It Matter?" *Federal Reserve Bank of Kansas City Economic Review*.
+
+Holló, D., Kremer, M. & Lo Duca, M. (2012). "CISS — A Composite Indicator of Systemic Stress in the Financial System." *ECB Working Paper* 1426.
+
+Monin, P. (2019). "The OFR Financial Stress Index." *Risks* 7(1): 25.
+
+BIS (2025). "Harnessing AI for monitoring financial markets: early warning signals from interpretable ML." *BIS Working Paper* 1291.
+
+BIS Innovation Hub (2025). "Project Pine: A pioneering technical exploration of how a smart contract toolkit could support central banks." Final report, May 2025.
+
+BIS Annual Economic Report (2025). "The next-generation monetary and financial system." Chapter III.
+
+---
+
+## Appendix A — CBSRM v0.1 module inventory
+
+```
+cbsrm/
+├── cbsrm/
+│   ├── __init__.py
+│   ├── cli.py
+│   ├── audit/
+│   │   ├── __init__.py
+│   │   └── chain.py            (AuditChain, AuditEvent, AuditEventKind)
+│   ├── data/
+│   │   ├── __init__.py
+│   │   └── fred.py             (FREDClient, FREDSeriesMeta)
+│   ├── indicators/
+│   │   ├── __init__.py
+│   │   ├── base.py             (IIndicator protocol, IndicatorResult)
+│   │   ├── stlfsi.py           (STLFSIWrap baseline)
+│   │   └── ciss_us.py          (CISSUS methodology, CISSConfig)
+│   └── api/
+│       ├── __init__.py
+│       └── routes.py           (FastAPI build_app)
+├── tests/                       (48 tests, all passing)
+├── whitepaper/
+│   └── cbsrm_methodology_v1.md  (this document)
+├── LICENSE                      (Apache-2.0)
+├── README.md
+└── pyproject.toml
+```
+
+## Appendix B — Reproducibility
+
+To reproduce every numerical claim in this paper:
+
+```bash
+git clone https://github.com/pravo123/cbsrm
+cd cbsrm
+pip install -e ".[all]"
+pytest tests/ -v
+```
+
+Expected output: `48 passed`. The synthetic-data crisis-window assertions in §7.1 are deterministic given the fixed seed in `tests/test_indicators.py::_make_synthetic_inputs`.
+
+## Appendix C — Correspondence
+
+The author can be reached via the CBSRM GitHub repository. Inbound from researchers at BIS, ECB, OFR, NY Fed, Fed Board, IMF, FSB, ESRB, and equivalent national institutions is particularly welcomed.
+
+---
+
+*End of v0.1 working paper.*

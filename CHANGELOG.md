@@ -6,12 +6,47 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned for v0.7
+### Planned for v0.8
 - 2008Q4 / 2020Q1 / 2023Q1 crisis-replay notebooks
 - True NFP / CPI surprise (consensus-forecast adapter)
 - Network-contagion via `marcobardoscia/neva` (DebtRank)
 - `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
 - LBS (locational banking statistics) + BIS EER (effective exchange rates)
+- Acemoglu phase classifier
+
+---
+
+## [0.7.0] — 2026-05-21
+
+### Added — v0.7 milestone: Sahm Rule + Diebold-Yilmaz spillover
+
+**`cbsrm.macro.sahm_rule.SahmRuleIndicator`** (Sahm 2019, FEDS Notes)
+- Real-time recession indicator from FRED `UNRATE`. Triggers when the 3-month average of the unemployment rate rises ≥ 0.50 pp above its trailing 12-month minimum. Perfect record for US recessions since 1970.
+- Classifications: `RECESSION_TRIGGERED` / `EARLY_WARNING` (≥ 0.30 pp) / `NORMAL`.
+- Full i18n (en/ja/es/fr/de) per the v0.3 multi-language convention.
+- CLI: `cbsrm sahm-rule [--start ...]`.
+
+**`cbsrm.indicators.dy_spillover.DYSpilloverIndicator`** (Diebold-Yilmaz 2012, IJF)
+- Total spillover index in [0, 100%] over any return panel. Pesaran-Shin (1998) generalized variance decomposition (invariant to variable ordering).
+- Pure numpy: OLS VAR + closed-form GFEVD. No statsmodels dependency.
+- Validation invariants: rows of normalized FEVD sum to 1; spillover bounded in [0, 100]; invariant to constant rescaling of any column; coupled panels yield higher spillover than independent ones.
+- Also exports `spillover_series()` for rolling-window time-series of the index.
+- CLI: `cbsrm dy-spillover [--tickers XLF,XLK,XLE,XLU]` (Stooq daily-close default).
+
+**CLI / info / docs**
+- `cbsrm sahm-rule`, `cbsrm dy-spillover` subcommands.
+- `cbsrm info` updated with both modules and the new `connectedness_indicators` group.
+
+**Whitepaper §14 — Recession nowcasting + connectedness**
+- Sahm methodology, the 2024 borderline trigger, the EARLY_WARNING extension.
+- Diebold-Yilmaz methodology, Pesaran-Shin generalized variance decomposition, spillover-vs-stress complementarity.
+
+**Tests**
+- 363 passing (was 335; +28 across `test_sahm_rule.py` and `test_dy_spillover.py`).
+
+### Hosted demo + Show HN
+- `dashboard/STREAMLIT_DEPLOY.md` — step-by-step Streamlit Community Cloud deploy (free, no card).
+- `SHOW_HN_POST.md` — submission-ready Hacker News post + 2 alternate titles + a comment-anchor draft.
 
 ---
 

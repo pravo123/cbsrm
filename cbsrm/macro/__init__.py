@@ -42,6 +42,7 @@ from cbsrm.macro.macro_composite import (
 )
 from cbsrm.macro.nfp_momentum import NFPMomentumIndicator
 from cbsrm.macro.oil_macro import OilMacroIndicator
+from cbsrm.macro.sahm_rule import SahmRuleIndicator
 from cbsrm.macro.yield_curve import (
     YieldCurveIndicator,
     estrella_mishkin_recession_prob,
@@ -57,6 +58,7 @@ __all__ = [
     "CPISurpriseIndicator",
     "OilMacroIndicator",
     "CreditSpreadRegimeIndicator",
+    "SahmRuleIndicator",
     "MacroCompositeIndicator",
     "MACRO_REGIMES",
     "classify_regime",

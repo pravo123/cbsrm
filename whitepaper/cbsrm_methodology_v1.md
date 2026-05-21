@@ -897,6 +897,79 @@ Avdjiev-du-Koepke-Shin (2018) global-dollar literature relies on.
 
 ---
 
+## 14 — Recession nowcasting + connectedness (v0.7)
+
+§§9-13 covered the macro engine, the risk-pricing triad, and cross-border
+data. §14 adds two methodologies that don't fit cleanly into any of those
+buckets but are too central to financial-stability literature to omit:
+real-time recession nowcasting (Sahm Rule) and cross-asset spillover
+(Diebold-Yilmaz).
+
+### 14.1 — Sahm Rule
+
+Sahm (2019, FEDS Notes; updated as the FRED ``SAHMREALTIME`` series) is
+the most-watched real-time US recession indicator in 2024-26. The rule
+is mechanical: when the 3-month moving average of the unemployment rate
+(``UNRATE``) rises 0.50 pp above its trailing 12-month minimum, the US is
+in (or is entering) recession.
+
+Empirical track record: zero false negatives since 1970; one borderline
+trigger in 2024 that ultimately resolved without an NBER-dated recession.
+
+CBSRM computes the Sahm value from ``UNRATE`` directly (rather than
+passing through the St. Louis Fed's pre-computed series) for two reasons:
+
+* **Transparency.** Every monthly observation in the output series can be
+  traced through the audit chain to the underlying ``UNRATE`` print.
+* **Methodology consistency.** Implements the same ``IIndicator`` protocol
+  as every other CBSRM module, so it flows through the existing audit /
+  diagnostics / FastAPI infrastructure without bespoke wiring.
+
+We add an `EARLY_WARNING` classification at 0.30 pp (literature-soft
+threshold) alongside the strict `RECESSION_TRIGGERED` at 0.50 pp.
+
+### 14.2 — Diebold-Yilmaz spillover
+
+Diebold-Yilmaz (2009, 2012, IJF) measure cross-asset / cross-market
+*connectedness* via the H-step-ahead forecast-error variance decomposition
+of a VAR(p) fit to a panel of returns. The total spillover index is in
+[0, 100%]; values above ~75% indicate that the panel is moving as one,
+which is characteristic of contagion regimes (2008Q4, 2020Q1).
+
+CBSRM uses the Pesaran-Shin (1998) **generalized** variance decomposition
+(GFEVD) rather than the orthogonalized Cholesky version. GFEVD is invariant
+to variable ordering and yields rows that no longer naturally sum to 1, so
+each row is normalized to a probability distribution before aggregation
+to a total spillover index. The total spillover is then
+
+```
+    S^g(H) = (1 / N) × (sum of off-diagonal normalized contributions) × 100
+```
+
+The implementation is pure numpy: OLS VAR fit, closed-form MA recursion
+for ψ_h, vectorised GFEVD. No statsmodels / arch dependency at compute
+time. The standard 200-day rolling window + lag order p=4 + horizon H=10
+matches the original paper's parameters.
+
+### 14.3 — Sahm vs spillover vs the triad
+
+The three measure orthogonal facets of "are conditions deteriorating?":
+
+| Measure | Speed | What it captures |
+|---------|-------|------------------|
+| Sahm Rule | Lags 1-3 months | Real-economy state (labour market) |
+| DY spillover | Real-time | Cross-asset coupling / contagion regime |
+| SRISK / ΔCoVaR / MES (v0.4-5) | Real-time | Firm-level capital adequacy under stress |
+| CISS / OFR-FSI / STLFSI4 (v0.1-2) | Real-time | Market-wide contemporaneous stress |
+| Macro composite (v0.3) | Slow | Multi-month regime classification |
+| BIS adapters (v0.6) | Quarterly / semi-annual | Cross-border banking + OTC exposure |
+
+A supervisory dashboard reporting all six layers gives both the
+contemporaneous stress reading and the medium-term outlook, with the
+cross-jurisdiction transmission channels visible separately.
+
+---
+
 ## Appendix A — CBSRM v0.1 module inventory
 
 ```

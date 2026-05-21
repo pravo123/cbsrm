@@ -49,8 +49,11 @@ def cmd_info(_args: argparse.Namespace) -> int:
         "macro_indicators": [
             "YIELD-CURVE-US", "NFP-MOMENTUM-US", "FFR-CHANGE-US",
             "DXY-REGIME-US", "JPY-REGIME", "CPI-SURPRISE-US",
-            "OIL-MACRO", "CREDIT-SPREAD-REGIME-US", "MACRO-COMPOSITE-US",
+            "OIL-MACRO", "CREDIT-SPREAD-REGIME-US",
+            "SAHM-RULE-US",
+            "MACRO-COMPOSITE-US",
         ],
+        "connectedness_indicators": ["DY-SPILLOVER"],
         "risk_modules": [
             "SRISK", "LRMES (Monte Carlo)", "Delta-CoVaR", "MES (empirical + Monte Carlo)",
         ],
@@ -515,6 +518,60 @@ def cmd_mes(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_sahm_rule(args: argparse.Namespace) -> int:
+    from cbsrm.macro import SahmRuleIndicator
+    df = _fred_macro_fetch(["UNRATE"], args.api_key, args.start, args.end, frequency="m")
+    if df.empty or "UNRATE" not in df.columns:
+        print("[sahm-rule] no UNRATE data from FRED", file=sys.stderr)
+        return 1
+    _emit_macro_result(SahmRuleIndicator().compute(df), args.verbose)
+    return 0
+
+
+def cmd_dy_spillover(args: argparse.Namespace) -> int:
+    """Compute Diebold-Yilmaz total spillover from a panel.
+
+    Default: 4-sector US equity ETFs (XLF / XLK / XLE / XLU) via Stooq
+    (no API key needed). Operator can pass --input JSON with their own
+    return panel.
+    """
+    from cbsrm.indicators import DYSpilloverIndicator
+    import json as _json
+    import urllib.request as _ur
+    import pandas as pd
+    import numpy as np
+    if args.input:
+        raw = _json.loads(Path(args.input).read_text(encoding="utf-8"))
+        df = pd.DataFrame(raw)
+    else:
+        tickers = (args.tickers or "XLF,XLK,XLE,XLU").split(",")
+        # Try Stooq daily close as the default free source
+        cols = {}
+        for t in tickers:
+            t = t.strip()
+            url = f"https://stooq.com/q/d/l/?s={t.lower()}.us&i=d"
+            try:
+                with _ur.urlopen(url, timeout=30) as r:
+                    data = pd.read_csv(r)
+                if "Close" in data.columns and "Date" in data.columns:
+                    cols[t] = pd.Series(
+                        data["Close"].values,
+                        index=pd.to_datetime(data["Date"]),
+                    )
+            except Exception as e:
+                print(f"[dy-spillover] failed to fetch {t}: {e}", file=sys.stderr)
+        if not cols:
+            print("[dy-spillover] no data fetched; pass --input JSON instead",
+                  file=sys.stderr)
+            return 1
+        df = pd.DataFrame(cols).dropna(how="any")
+        # Convert prices to log returns
+        df = np.log(df).diff().dropna()
+    res = DYSpilloverIndicator().compute(df)
+    _emit_macro_result(res, args.verbose)
+    return 0
+
+
 def cmd_bis_otc(args: argparse.Namespace) -> int:
     from cbsrm.data import BISStatsClient
     from cbsrm.indicators import BISOTCDerivativesIndicator
@@ -744,6 +801,22 @@ def main(argv: list[str] | None = None) -> int:
     p_credit.add_argument("--api-key")
     p_credit.add_argument("-v", "--verbose", action="store_true")
     p_credit.set_defaults(func=cmd_credit_spread)
+
+    p_sahm = sub.add_parser("sahm-rule",
+                            help="Sahm Rule real-time recession indicator")
+    p_sahm.add_argument("--start"); p_sahm.add_argument("--end")
+    p_sahm.add_argument("--api-key")
+    p_sahm.add_argument("-v", "--verbose", action="store_true")
+    p_sahm.set_defaults(func=cmd_sahm_rule)
+
+    p_dy = sub.add_parser("dy-spillover",
+                          help="Diebold-Yilmaz total spillover index (Pesaran-Shin GFEVD)")
+    p_dy.add_argument("--tickers",
+                      help="Comma-separated ticker list (default XLF,XLK,XLE,XLU)")
+    p_dy.add_argument("--input",
+                      help="Optional JSON path with pre-computed returns panel")
+    p_dy.add_argument("-v", "--verbose", action="store_true")
+    p_dy.set_defaults(func=cmd_dy_spillover)
 
     p_bis_otc = sub.add_parser("bis-otc",
                                help="BIS OTC derivatives notional outstanding (semi-annual)")

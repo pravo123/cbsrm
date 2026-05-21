@@ -170,6 +170,39 @@ LABELS: dict[str, dict[str, str]] = {
         ),
     },
 
+    # ── Sahm Rule ──────────────────────────────────────────────────
+    "sahm_rule.interpretation": {
+        "en": (
+            "Sahm Rule: 3-month average of US unemployment rate minus its "
+            "trailing 12-month minimum, in percentage points. >= 0.50 pp "
+            "is RECESSION_TRIGGERED (perfect record since 1970); "
+            ">= 0.30 pp is EARLY_WARNING."
+        ),
+        "ja": (
+            "サームルール: 米失業率の3か月移動平均から過去12か月の最小値を"
+            "引いた値（パーセンテージポイント）。0.50pp以上 = 景気後退発動 "
+            "(1970年以降パーフェクトな実績)、0.30pp以上 = 早期警戒。"
+        ),
+        "es": (
+            "Regla Sahm: media trimestral de la tasa de desempleo de EE.UU. "
+            "menos su mínimo de los últimos 12 meses, en puntos porcentuales. "
+            ">= 0.50 pp es RECESIÓN_ACTIVADA (récord perfecto desde 1970); "
+            ">= 0.30 pp es ALERTA_TEMPRANA."
+        ),
+        "fr": (
+            "Règle de Sahm : moyenne trimestrielle du taux de chômage américain "
+            "moins son minimum sur 12 mois glissants, en points de pourcentage. "
+            ">= 0,50 pp = RÉCESSION_DÉCLENCHÉE (palmarès parfait depuis 1970) ; "
+            ">= 0,30 pp = ALERTE_PRÉCOCE."
+        ),
+        "de": (
+            "Sahm-Regel: 3-Monats-Durchschnitt der US-Arbeitslosenquote minus "
+            "ihr nachlaufendes 12-Monats-Minimum, in Prozentpunkten. "
+            ">= 0,50 pp = REZESSION_AUSGELÖST (perfekte Historie seit 1970); "
+            ">= 0,30 pp = FRÜHWARNUNG."
+        ),
+    },
+
     # ── Macro composite ────────────────────────────────────────────
     "macro_composite.interpretation": {
         "en": (

@@ -23,6 +23,8 @@ Planned (per whitepaper §3):
   - EWS                          — KLR + Manasse-Roubini + ML benchmark
 """
 from cbsrm.indicators.base import IIndicator, IndicatorResult
+from cbsrm.indicators.bis_cbs_claims import BISCBSClaimsIndicator
+from cbsrm.indicators.bis_otc_derivatives import BISOTCDerivativesIndicator
 from cbsrm.indicators.ciss_us import CISSConfig, CISSUS, SUBINDEX_NAMES
 from cbsrm.indicators.ciss_us_canonical import (
     CANONICAL_INPUTS_BY_SUBINDEX, CISSUSCanonical,
@@ -36,4 +38,5 @@ __all__ = [
     "STLFSIWrap", "OFRFSIWrap", "ECBCISSWrap", "VARIANT_LABELS",
     "CISSUS", "CISSConfig", "SUBINDEX_NAMES",
     "CISSUSCanonical", "CANONICAL_INPUTS_BY_SUBINDEX",
+    "BISOTCDerivativesIndicator", "BISCBSClaimsIndicator",
 ]

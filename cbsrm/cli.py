@@ -55,7 +55,7 @@ def cmd_info(_args: argparse.Namespace) -> int:
             "SRISK", "LRMES (Monte Carlo)", "Delta-CoVaR", "MES (empirical + Monte Carlo)",
         ],
         "supported_locales": ["en", "ja", "es", "fr", "de"],
-        "data_sources": ["FRED", "OFR", "ECB"],
+        "data_sources": ["FRED", "OFR", "ECB", "BIS"],
         "builders": ["CISSUSBuilder"],
         "diagnostics": ["replicate", "crisis_windows"],
     }, indent=2))
@@ -515,6 +515,58 @@ def cmd_mes(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_bis_otc(args: argparse.Namespace) -> int:
+    from cbsrm.data import BISStatsClient
+    from cbsrm.indicators import BISOTCDerivativesIndicator
+    client = BISStatsClient()
+    print("[bis-otc] fetching OTC derivatives notional from BIS...", file=sys.stderr)
+    try:
+        df = client.get_otc_derivatives_notional(start_period=args.start)
+    except Exception as e:
+        print(f"[bis-otc] fetch failed: {e}", file=sys.stderr)
+        return 1
+    if df.empty:
+        print("[bis-otc] no rows returned (BIS may have rotated the key)", file=sys.stderr)
+        return 2
+    result = BISOTCDerivativesIndicator().compute(df)
+    if result.latest is None:
+        return 3
+    ts, value = result.latest
+    print(json.dumps({
+        "indicator_id": result.indicator_id, "version": result.version,
+        "as_of": str(ts), "value": value,
+        "n_obs": int(result.values.size),
+        "interpretation": result.metadata.get("interpretation"),
+    }, indent=2, default=str))
+    return 0
+
+
+def cmd_bis_cbs(args: argparse.Namespace) -> int:
+    from cbsrm.data import BISStatsClient
+    from cbsrm.indicators import BISCBSClaimsIndicator
+    client = BISStatsClient()
+    print("[bis-cbs] fetching consolidated banking statistics from BIS...", file=sys.stderr)
+    try:
+        df = client.get_consolidated_banking_claims(start_period=args.start)
+    except Exception as e:
+        print(f"[bis-cbs] fetch failed: {e}", file=sys.stderr)
+        return 1
+    if df.empty:
+        print("[bis-cbs] no rows returned (BIS may have rotated the key)", file=sys.stderr)
+        return 2
+    result = BISCBSClaimsIndicator().compute(df)
+    if result.latest is None:
+        return 3
+    ts, value = result.latest
+    print(json.dumps({
+        "indicator_id": result.indicator_id, "version": result.version,
+        "as_of": str(ts), "value": value,
+        "n_obs": int(result.values.size),
+        "interpretation": result.metadata.get("interpretation"),
+    }, indent=2, default=str))
+    return 0
+
+
 def cmd_srisk(args: argparse.Namespace) -> int:
     """Compute SRISK for a hand-supplied panel of firms.
 
@@ -692,6 +744,16 @@ def main(argv: list[str] | None = None) -> int:
     p_credit.add_argument("--api-key")
     p_credit.add_argument("-v", "--verbose", action="store_true")
     p_credit.set_defaults(func=cmd_credit_spread)
+
+    p_bis_otc = sub.add_parser("bis-otc",
+                               help="BIS OTC derivatives notional outstanding (semi-annual)")
+    p_bis_otc.add_argument("--start", help="Start period (e.g. 2010)")
+    p_bis_otc.set_defaults(func=cmd_bis_otc)
+
+    p_bis_cbs = sub.add_parser("bis-cbs",
+                               help="BIS consolidated banking statistics — cross-border claims (quarterly)")
+    p_bis_cbs.add_argument("--start", help="Start period (e.g. 2010-Q1)")
+    p_bis_cbs.set_defaults(func=cmd_bis_cbs)
 
     p_srisk = sub.add_parser("srisk",
                              help="Compute SRISK for a JSON panel of firms")

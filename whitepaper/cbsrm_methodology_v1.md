@@ -815,6 +815,88 @@ capitalised).
 
 ---
 
+## 13 — Cross-border data: BIS Stats adapter (v0.6)
+
+§§9-12 added the macro engine and the risk-pricing triad. The remaining
+missing surface — and the most-requested in feedback to v0.5 — was **cross-
+border**. Domestic stress + macro + capital shortfall doesn't tell you how
+shocks propagate across jurisdictions. The BIS Stats adapter closes that
+gap.
+
+### 13.1 — Why BIS
+
+The Bank for International Settlements publishes the only globally-
+harmonised cross-border financial-stability dataset corpus. Three of its
+datasets matter for systemic risk:
+
+* **Consolidated Banking Statistics (CBS)** — cross-border claims on
+  immediate counterparty basis, quarterly, by reporting country. The 2008
+  GFC, 2010-12 EU sovereign-debt crisis, and 2020 dollar-funding stress
+  all manifested as sudden retrenchment in CBS claims.
+* **Locational Banking Statistics (LBS)** — cross-border bank claims by
+  residence, quarterly. Complements CBS by tracking the geographic
+  rather than ownership-of-bank view.
+* **OTC derivatives statistics** — semi-annual notional outstanding by
+  risk class (interest rate / FX / equity / commodity / credit / other).
+  Notional is the canonical headline measure; gross market value runs
+  ~2-3% of notional.
+
+All three are SDMX 2.1 REST endpoints under `stats.bis.org/api/v2`. Free
+under the BIS Open Data Policy (commercial use permitted with attribution).
+
+### 13.2 — Adapter design
+
+`cbsrm.data.bis_sdmx.BISStatsClient` mirrors the v0.2 ECB SDMX client
+(itself modeled after the FRED client). The shared discipline:
+
+* File-cache by dataflow + key + params (one CSV per request, stored under `.cbsrm_cache/bis/`)
+* Retry-on-transient with exponential backoff (default 3 retries, 2s/4s/8s)
+* Project-identifying User-Agent (matches the v0.3.1 OFR pattern; the BIS WAF is similar)
+* CSV mode, no XML SDMX parsing dependency
+* Generic `get_dataset(flow_id, key, version, params)` for arbitrary BIS dataflows
+* Convenience methods for the two most-requested aggregates (OTC, CBS)
+
+The CSV that BIS returns has dataflow-specific dimension columns plus the
+standard `OBS_VALUE` + `TIME_PERIOD` columns. The indicator wrappers
+(`BISOTCDerivativesIndicator`, `BISCBSClaimsIndicator`) are passthroughs
+that resolve the value/time columns case-insensitively and emit
+`IndicatorResult` objects compatible with the existing audit chain and
+the FastAPI service.
+
+### 13.3 — Integration with the risk-pricing triad
+
+The interesting use case combines v0.5 (SRISK / ΔCoVaR / MES) with v0.6
+(BIS CBS). Stylized example:
+
+> "If JPM is in distress (SRISK > 0), which jurisdictions are most
+> exposed via cross-border claims, and by how much?"
+
+The answer requires both sides: SRISK identifies the firm at risk; BIS CBS
+identifies the geographic distribution of its book debt to foreign
+counterparties. CBSRM v0.6 doesn't ship the combined view as a single
+function — that's a v0.7+ project (an indicator that joins SRISK by firm
+to CBS by reporting country). The components are now both present and
+auditable.
+
+### 13.4 — Caveats and operator guidance
+
+BIS occasionally rotates dataflow keys (different from FRED's stable
+series IDs). The convenience methods use the sane-as-of-2026 defaults;
+operators with current BIS expertise should override via
+`get_dataset(flow_id, key)` and contribute corrections via PR.
+
+The CBS dataset reports on a *consolidated* basis (parent bank's
+perspective including foreign subsidiaries) and on an *immediate
+counterparty* basis (where the loan landed, not the ultimate risk).
+This subtle distinction matters for supervisory work — see the BIS
+glossary at `bis.org/statistics/glossary.htm` for the full taxonomy.
+
+A v0.7 release will add CBS-on-ultimate-risk-basis and LBS as separate
+indicators, plus the BIS Effective Exchange Rate (EER) series that the
+Avdjiev-du-Koepke-Shin (2018) global-dollar literature relies on.
+
+---
+
 ## Appendix A — CBSRM v0.1 module inventory
 
 ```

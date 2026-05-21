@@ -6,13 +6,49 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned for v0.6
-- BIS Stats API adapter
+### Planned for v0.7
 - 2008Q4 / 2020Q1 / 2023Q1 crisis-replay notebooks
 - True NFP / CPI surprise (consensus-forecast adapter)
 - Network-contagion via `marcobardoscia/neva` (DebtRank)
-- Streamlit dashboard
 - `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
+- LBS (locational banking statistics) + BIS EER (effective exchange rates)
+
+---
+
+## [0.6.0] — 2026-05-21
+
+### Added — v0.6 milestone: BIS Stats SDMX adapter + Streamlit dashboard
+
+CBSRM gains the cross-border-banking + OTC-derivatives dimension that was the most-requested missing surface from v0.5.
+
+**New module — `cbsrm.data.bis_sdmx`**
+- `BISStatsClient` — SDMX 2.1 REST client against `stats.bis.org/api/v2` (CSV mode, no XML deps). Mirrors the `ECBSDMXClient` shape: file-cache, retry-on-transient, project-identifying User-Agent.
+- Generic `get_dataset(flow_id, key, version, params)` for arbitrary BIS dataflows.
+- Convenience methods: `get_otc_derivatives_notional()`, `get_consolidated_banking_claims()`.
+
+**New indicators — `cbsrm.indicators.bis_*`**
+- `BISOTCDerivativesIndicator` — wraps OTC derivatives notional outstanding (table D5.1). Semi-annual.
+- `BISCBSClaimsIndicator` — wraps consolidated banking statistics (cross-border claims on immediate counterparty basis). Quarterly.
+
+**Streamlit demo dashboard — `dashboard/streamlit_app.py`**
+- Single-page live view: macro composite regime, 4 jurisdictions stress (CISS + STLFSI4), 4 macro readings, SRISK panel for 3 G-SIBs, ΔCoVaR + MES illustration.
+- Read-only, no auth surface. Caches with `st.cache_data(ttl=3600)`.
+- `streamlit run dashboard/streamlit_app.py` to launch.
+
+**CLI**
+- `cbsrm bis-otc [--start YYYY]` — latest OTC derivatives notional
+- `cbsrm bis-cbs [--start YYYY-Qn]` — latest cross-border banking claims
+- `cbsrm info` updated to list BIS as a data source
+
+**Whitepaper**
+- New §13 "Cross-border banking + OTC derivatives data" — methodology, datasets, integration with the v0.5 risk-pricing triad, supervisory interpretation
+
+**Tests**
+- 335 passing (was 316; +19 across `test_bis_sdmx.py`)
+
+### Notes
+- BIS publishes SDMX 2.1; their key formats and dataflow versions occasionally rotate. The convenience methods use sensible defaults; operators with known BIS keys can pass them via `get_dataset(flow_id, key)`.
+- The Streamlit dashboard is read-only and intentionally limited in scope — it exists as a demo / screenshot surface, not a production monitoring system.
 
 ---
 

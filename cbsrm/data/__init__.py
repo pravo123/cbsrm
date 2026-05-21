@@ -17,6 +17,7 @@ Planned (per cbsrm whitepaper §4):
   - bis_sdmx    — BIS Statistics API
   - cftc        — CFTC Public Reporting Environment
 """
+from cbsrm.data.bis_sdmx import BISStatsClient, BISStatsMeta
 from cbsrm.data.ecb_sdmx import (
     ECB_CISS_EURO_AREA, ECB_CISS_FLOWREF, ECB_CISS_UK, ECB_CISS_US,
     ECBSDMXClient, ECBSDMXMeta,
@@ -29,4 +30,5 @@ __all__ = [
     "OFRClient", "OFRFSIMeta",
     "ECBSDMXClient", "ECBSDMXMeta",
     "ECB_CISS_EURO_AREA", "ECB_CISS_US", "ECB_CISS_UK", "ECB_CISS_FLOWREF",
+    "BISStatsClient", "BISStatsMeta",
 ]

@@ -51,7 +51,9 @@ def cmd_info(_args: argparse.Namespace) -> int:
             "DXY-REGIME-US", "JPY-REGIME", "CPI-SURPRISE-US",
             "OIL-MACRO", "CREDIT-SPREAD-REGIME-US", "MACRO-COMPOSITE-US",
         ],
-        "risk_modules": ["SRISK", "LRMES (Monte Carlo)"],
+        "risk_modules": [
+            "SRISK", "LRMES (Monte Carlo)", "Delta-CoVaR", "MES (empirical + Monte Carlo)",
+        ],
         "supported_locales": ["en", "ja", "es", "fr", "de"],
         "data_sources": ["FRED", "OFR", "ECB"],
         "builders": ["CISSUSBuilder"],
@@ -455,6 +457,64 @@ def cmd_credit_spread(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_delta_covar(args: argparse.Namespace) -> int:
+    """Compute ΔCoVaR from a JSON input file.
+
+    Input JSON schema:
+        {
+            "firm": "JPM",
+            "firm_returns": [r1, r2, ...],
+            "system_returns": [r1, r2, ...],
+            "q": 0.05  (optional, default 0.05),
+            "state_vars": [[m1_t1, m2_t1], [m1_t2, m2_t2], ...]  (optional)
+        }
+    """
+    from cbsrm.risk import DeltaCoVaREstimator
+    import json as _json
+    raw = _json.loads(Path(args.input).read_text(encoding="utf-8"))
+    q = float(raw.get("q", 0.05))
+    estimator = DeltaCoVaREstimator(q=q)
+    import numpy as _np
+    state = None
+    if "state_vars" in raw and raw["state_vars"] is not None:
+        state = _np.asarray(raw["state_vars"], dtype=float)
+    res = estimator.estimate(
+        firm=str(raw.get("firm", "firm")),
+        firm_returns=_np.asarray(raw["firm_returns"], dtype=float),
+        system_returns=_np.asarray(raw["system_returns"], dtype=float),
+        state_vars=state,
+        metadata=raw.get("metadata"),
+    )
+    print(_json.dumps(res.__dict__, indent=2, default=str))
+    return 0
+
+
+def cmd_mes(args: argparse.Namespace) -> int:
+    """Compute empirical MES from a JSON input file.
+
+    Input JSON schema:
+        {
+            "firm": "JPM",
+            "firm_returns": [...],
+            "market_returns": [...],
+            "q": 0.05
+        }
+    """
+    from cbsrm.risk import empirical_mes
+    import json as _json
+    raw = _json.loads(Path(args.input).read_text(encoding="utf-8"))
+    import numpy as _np
+    res = empirical_mes(
+        firm_returns=_np.asarray(raw["firm_returns"], dtype=float),
+        market_returns=_np.asarray(raw["market_returns"], dtype=float),
+        q=float(raw.get("q", 0.05)),
+        firm=str(raw.get("firm", "firm")),
+        metadata=raw.get("metadata"),
+    )
+    print(_json.dumps(res.__dict__, indent=2, default=str))
+    return 0
+
+
 def cmd_srisk(args: argparse.Namespace) -> int:
     """Compute SRISK for a hand-supplied panel of firms.
 
@@ -641,6 +701,20 @@ def main(argv: list[str] | None = None) -> int:
     p_srisk.add_argument("--k", type=float, default=0.08,
                          help="Prudential capital ratio (default 0.08)")
     p_srisk.set_defaults(func=cmd_srisk)
+
+    p_dcv = sub.add_parser("delta-covar",
+                           help="Compute Delta-CoVaR for a firm vs system "
+                                "(Adrian-Brunnermeier 2016)")
+    p_dcv.add_argument("--input", required=True,
+                       help="JSON path with firm, firm_returns, system_returns, q")
+    p_dcv.set_defaults(func=cmd_delta_covar)
+
+    p_mes = sub.add_parser("mes",
+                           help="Empirical Marginal Expected Shortfall "
+                                "(Acharya-Pedersen-Philippon-Richardson 2017)")
+    p_mes.add_argument("--input", required=True,
+                       help="JSON path with firm, firm_returns, market_returns, q")
+    p_mes.set_defaults(func=cmd_mes)
 
     p_macro = sub.add_parser("macro-regime",
                              help="4-state macro composite (RISK_ON / TRANSITION / RISK_OFF)")

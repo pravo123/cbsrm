@@ -672,7 +672,146 @@ CBSRM the two most-cited systemic-risk metrics in supervisory literature.
 Network-contagion (DebtRank, Battiston et al. 2012) addresses an
 orthogonal dimension: which firms are *vulnerable* via balance-sheet
 linkages rather than via co-movement. The ``marcobardoscia/neva`` reference
-implementation is the target integration point — planned for v0.5.
+implementation is the target integration point — planned for v0.6.
+
+---
+
+## 11 — ΔCoVaR (v0.5)
+
+Adrian & Brunnermeier (2016) *CoVaR* sits next to SRISK as the second of
+the three most-cited systemic-risk metrics in supervisory literature.
+Where SRISK answers "how much equity capital does firm *i* need in a
+crisis?", CoVaR answers "how much worse does the system get when firm *i*
+is in distress?". The two are mathematically distinct and answer
+complementary policy questions.
+
+### 11.1 — Definition
+
+CoVaR is the q-quantile of the system return conditional on firm *i*
+being at its q-quantile:
+
+```
+    CoVaR_{sys | X_i = VaR_q(X_i)}  =  q-quantile of  X_{sys}  |  X_i = VaR_q(X_i)
+```
+
+The *delta* variant measures the marginal contribution of firm *i*:
+
+```
+    ΔCoVaR_i  =  CoVaR_{sys | X_i = VaR_q(X_i)}  -  CoVaR_{sys | X_i = median_i}
+```
+
+ΔCoVaR < 0 (system worse when firm distressed) measures the firm's
+systemic contribution.
+
+### 11.2 — Estimation
+
+We use linear quantile regression (Koenker & Bassett 1978):
+
+```
+    Q_q(X_{sys,t})  =  α_q  +  β_q · X_{i,t}  +  γ_q' · M_{t-1}
+```
+
+where ``M_{t-1}`` is an optional vector of lagged state variables (yield
+curve slope, vol, credit spread). With state controls, ``ΔCoVaR`` becomes
+the firm-specific component net of common-factor variation.
+
+CBSRM ships ``quantile_regression()`` from scratch — pure numpy gradient
+descent on the pinball loss
+
+```
+    L_q(u)  =  u · (q  -  I(u < 0))
+```
+
+No statsmodels / SciPy fitting dependency. Validated against
+independence and perfect-correlation synthetic pairs (§ 11.3).
+
+### 11.3 — Validation invariants
+
+CBSRM's ΔCoVaR unit tests assert four invariants:
+
+1. **Independence** — firm uncorrelated with system → ``β_q`` ≈ 0 → ``ΔCoVaR`` ≈ 0.
+2. **Perfect correlation** — ``β_q`` ≈ 1.
+3. **Median q** — ``q = 0.5`` ⇒ ``ΔCoVaR`` = 0 by construction.
+4. **Tail q with positive correlation** — ``ΔCoVaR`` strongly negative.
+
+These invariants hold to within sampling noise for N ≥ 1,500 observations
+at q = 0.05.
+
+### 11.4 — Use vs SRISK
+
+SRISK has a single dollar number per firm interpretable as "required
+equity injection." ΔCoVaR has units of % return per firm and answers a
+different question. The two should be reported together in any
+supervisory dashboard. Operators looking for a one-line headline number
+will find SRISK more legible; researchers and risk teams will find
+ΔCoVaR more diagnostic about the *channel* of systemic exposure.
+
+---
+
+## 12 — MES (v0.5)
+
+Marginal Expected Shortfall (Acharya, Pedersen, Philippon, Richardson 2017,
+*Review of Financial Studies*) is the third member of the canonical
+systemic-risk triad.
+
+### 12.1 — Definition
+
+MES is the expected one-day firm return conditional on the market being
+in its left tail:
+
+```
+    MES_i(q)  =  E[ X_i  |  X_market < VaR_q(X_market) ]
+```
+
+A more negative MES means the firm loses more on average during market-
+crisis days — higher systemic contribution. MES is, intuitively, the
+"daily-horizon cousin" of LRMES (§ 10.3) and the building block from
+which SRISK is derived in the original Brownlees-Engle paper.
+
+### 12.2 — Two estimation paths
+
+CBSRM ships both:
+
+1. **Empirical** — average firm return over the historical subset where
+   ``X_market < VaR_q(X_market)``. Robust, fast, model-free. The default
+   for any sample with sufficient market-tail observations.
+
+2. **Model-implied (GJR-GARCH-DCC Monte Carlo)** — simulate paired
+   returns from the parametric model at one-day horizon; condition on
+   the q-tail of simulated market returns. Lets the analyst compute MES
+   under counterfactual scenarios (e.g. doubled correlation, elevated
+   volatility) that haven't occurred in history.
+
+The model-implied variant uses the same simulator that produces LRMES,
+just with ``horizon=1``. This is a small but important point: a single
+estimation engine (``cbsrm.risk.garch_dcc_sim.GARCHDCCSimulator``)
+underlies all model-implied tail measures in CBSRM, so every numerical
+claim is reproducible from one parameter set.
+
+### 12.3 — Validation invariants
+
+1. **Perfect correlation** — ``MES_q = ES_q`` of either series.
+2. **Independence** — ``MES_q ≈ E[X_i]`` (unconditional mean).
+3. **Higher conditional correlation** — model-implied ``MES`` strictly
+   more negative.
+
+### 12.4 — The triad
+
+With v0.5, CBSRM now ships the three dominant systemic-risk measures
+under a single Protocol + audit chain + reproducibility guarantee:
+
+| Measure | Question it answers | Units |
+|---------|--------------------|-------|
+| SRISK   | Equity injection required in crisis | USD |
+| ΔCoVaR  | Marginal system distress from firm distress | % return |
+| MES     | Expected daily firm loss conditional on market tail | % return |
+
+The three are complementary. Supervisory dashboards should report all
+three side-by-side; the absence of correlation among the rankings is
+itself a useful diagnostic (a firm SRISK-large but ΔCoVaR-small is
+under-capitalised but not a systemic contagion node; a firm
+ΔCoVaR-large but SRISK-small is a contagion node but adequately
+capitalised).
 
 ---
 

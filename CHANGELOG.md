@@ -6,13 +6,63 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned for v0.5
+### Planned for v0.6
 - BIS Stats API adapter
 - 2008Q4 / 2020Q1 / 2023Q1 crisis-replay notebooks
 - True NFP / CPI surprise (consensus-forecast adapter)
-- Network-contagion via `marcobardoscia/neva`
-- ΔCoVaR (Adrian-Brunnermeier 2016)
+- Network-contagion via `marcobardoscia/neva` (DebtRank)
 - Streamlit dashboard
+- `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
+
+---
+
+## [0.5.0] — 2026-05-21
+
+### Added — v0.5 milestone: ΔCoVaR + MES — risk-pricing layer expanded
+
+The `cbsrm.risk` subpackage now ships the three most-cited
+systemic-risk metrics in supervisory literature:
+
+- **SRISK** (Brownlees-Engle 2017) — v0.4
+- **ΔCoVaR** (Adrian-Brunnermeier 2016) — v0.5, NEW
+- **MES** (Acharya-Pedersen-Philippon-Richardson 2017) — v0.5, NEW
+
+**New module — `cbsrm.risk.delta_covar`**
+- `DeltaCoVaREstimator` — fits CoVaR via linear quantile regression on
+  paired firm + system returns (optional state-variable controls);
+  computes `ΔCoVaR = β_q × (VaR_q_firm − median_firm)`.
+- `quantile_regression()` — pure-numpy linear quantile regression
+  (Koenker-Bassett 1978) via gradient descent on the pinball loss. No
+  statsmodels / SciPy dependency at fit-time.
+- Validated against known-correlation synthetic pairs (independence →
+  ΔCoVaR ≈ 0; high correlation → ΔCoVaR strongly negative; median q
+  yields ΔCoVaR ≈ 0 by construction).
+
+**New module — `cbsrm.risk.mes`**
+- `empirical_mes()` — historical MES from a paired return sample. The
+  fast, robust default for samples with sufficient market-tail days.
+- `MESMonteCarlo` — model-implied MES via GJR-GARCH-DCC simulation at
+  one-day horizon. Same simulator as LRMES; lets you compute MES under
+  counterfactual scenarios that haven't occurred in the historical sample.
+
+**CLI**
+- `cbsrm delta-covar --input panel.json` — ΔCoVaR for one firm vs system.
+- `cbsrm mes --input panel.json` — empirical MES for one firm vs market.
+- `cbsrm info` updated to list all four risk modules.
+
+**Whitepaper**
+- New §11 — ΔCoVaR methodology + validation properties
+- New §12 — MES (empirical + model-implied), comparison with SRISK / ΔCoVaR
+
+**Tests**
+- 316 passing (was 292; +24 new across `test_delta_covar.py` and `test_mes.py`)
+
+### Notes
+- The three risk modules cover the three dominant academic + supervisory
+  approaches to measuring systemic risk: capital shortfall under stress
+  (SRISK), tail-conditional system distress contribution (ΔCoVaR), and
+  one-day marginal tail exposure (MES). They are complementary, not
+  substitutes.
 
 ---
 

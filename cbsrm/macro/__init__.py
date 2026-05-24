@@ -30,6 +30,7 @@ the audit chain, dossier renderer, replication harness, and CLI driver are
 all written against that one interface. New macro modules slot into the same
 infrastructure without touching the audit / API / diagnostics layers.
 """
+from cbsrm.macro import macro_events
 from cbsrm.macro.cpi_surprise import CPISurpriseIndicator
 from cbsrm.macro.credit_spread_regime import CreditSpreadRegimeIndicator
 from cbsrm.macro.dxy_regime import DXYRegimeIndicator
@@ -62,4 +63,5 @@ __all__ = [
     "MacroCompositeIndicator",
     "MACRO_REGIMES",
     "classify_regime",
+    "macro_events",
 ]

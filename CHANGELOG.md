@@ -6,9 +6,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Planned for v0.8
-- 2008Q4 / 2020Q1 / 2023Q1 crisis-replay notebooks
-- True NFP / CPI surprise (consensus-forecast adapter)
+### Added — v0.8 work in progress
+
+**`cbsrm.macro.macro_events` — discrete macro-event surprise scorer**
+- Pure function `score_event(event, actual, consensus, previous=None, unit=None, history=None)` returns a normalised surprise (`surprise`, `surprise_z`, `abs_z`), a `direction` (`hotter_than_expected` / `cooler_than_expected` / `in_line`), a `severity` bucket (`trivial` / `mild` / `moderate` / `large` / `extreme`), and a coarse `risk_bias` tag (`rates_up_equities_down` etc).
+- Event registry covers 12 prints: CPI, CORE_CPI, PCE, CORE_PCE, NFP, UNRATE, INITIAL_CLAIMS, GDP, RETAIL_SALES, ISM_MANUFACTURING, ISM_SERVICES, FOMC_RATE. Per-event polarity (e.g. UNRATE: higher = cooler) and conservative historical-surprise σ anchors so z-scoring works with zero caller-supplied history.
+- z-score auto-prefers a caller-supplied surprise history (NaN/None filtered, ≥ 2 finite obs required, non-zero variance), otherwise falls back to the registry default scale.
+- Companion helpers: `list_supported_events()`, `get_event_spec(event)`.
+- Intended as *decision intelligence*, not a trading signal — coarse `risk_bias` mapping, in-line band defaults to |z| < 0.25 = `neutral`.
+- 23 tests in `tests/test_macro_events.py`.
+
+### Planned for v0.8 (remaining)
+- 2008Q4 / 2020Q1 / 2023Q1 crisis-replay notebooks (will consume `macro_events`)
 - Network-contagion via `marcobardoscia/neva` (DebtRank)
 - `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
 - LBS (locational banking statistics) + BIS EER (effective exchange rates)

@@ -22,7 +22,7 @@
 | Surface | Status | Reference |
 |---|---|---|
 | **`main`** | ahead of `v0.8.0` by additive v0.9 commits; CI green | `git log v0.8.0..main` |
-| **Tests on `main`** | **754 passed** (was 555 at `v0.8.0`; +199 from v0.9 additive slices) | `pytest tests/` |
+| **Tests on `main`** | **815 passed** (was 555 at `v0.8.0`; +260 from v0.9 additive slices) | `pytest tests/` |
 | **Report registry (v0.9)** | `cbsrm.reporting.get_report_catalog` / `list_report_ids` / `get_report_metadata`; 2 entries (`crisis-dossier`, `macro-composite`) | `cbsrm/reporting/registry.py` |
 | **Catalog CLI (v0.9)** | `cbsrm reports` — JSON dump of the registry catalog | `cbsrm/cli.py` |
 | **Catalog API (v0.9)** | `GET /reports` — JSON catalog endpoint | `cbsrm/api/routes.py` |
@@ -39,6 +39,10 @@
 | **Audit-chain API (v0.9)** | `GET /reports/crisis-dossiers/{window_id}?audit=true` — opt-in; auto-builds manifest, appends to the app's `AuditChain`, returns `{report, dossier, manifest, audit}`. Audit row queryable via existing `GET /audit/{subject}`. | `cbsrm/api/routes.py` |
 | **Audit-chain CLI (v0.9)** | `cbsrm crisis-dossier --audit-db PATH` — opens (or creates) a sqlite DB, stamps the export manifest, prints one stderr line `audit: row_id=… subject=… hash=…`. Stdout report bytes unchanged. | `cbsrm/cli.py` |
 | **Audit-chain Streamlit (v0.9)** | Sidebar "Stamp manifest to audit chain" button in `dashboard/crisis_dossier_viewer.py`. Reads DB path from env var `CBSRM_AUDIT_DB`; sidebar text input overrides per session. Stamps only on explicit button click — never on render or window selection. `build_viewer_artifacts` stays pure. | `dashboard/crisis_dossier_viewer.py` |
+| **Report persistence foundation (v0.9)** | `cbsrm.reporting.persistence` — `REPORT_STORE_VERSION`, `init_report_store`, `store_report_artifact`, `get_report_artifact`, `list_report_artifacts`. SQLite-backed, content-addressed by the manifest's `output_sha256` (PRIMARY KEY); `INSERT OR IGNORE` semantics return `was_existing: bool`; defensive hash-match validation between `sha256_text(output_text)` and the manifest's declared hash. Not coupled to `cbsrm/audit/chain.py` — `output_sha256` is the natural join key between the two. | `cbsrm/reporting/persistence.py` |
+| **Persistence CLI (v0.9)** | `cbsrm crisis-dossier --store-db PATH` — opens (or creates) a sqlite DB, persists the rendered output, prints one stderr line `stored: output_sha256=… was_existing=… db=…`. Stdout report bytes unchanged. Idempotent; second call with same content sets `was_existing=true`. | `cbsrm/cli.py` |
+| **Persistence API (v0.9)** | `build_app(audit_conn=None, report_store_db_path=None)` accepts an operator-configured store path (filesystem paths never accepted in HTTP requests). New `GET /reports/crisis-dossiers/{window_id}?store=true` adds a `stored` projection (`output_sha256`, `was_existing`, `byte_length`, `content_type`, `created_at_utc`); 400 with hint when `?store=true` but no store is configured. New `GET /reports/stored/{output_sha256}` lookup endpoint returns the persisted row or 404. Default envelope unchanged byte-for-byte when no new flags. | `cbsrm/api/routes.py` |
+| **Persistence Streamlit (v0.9)** | Sidebar "Report store (opt-in)" block in `dashboard/crisis_dossier_viewer.py` parallel to the audit-chain block. Reads DB path from env var `CBSRM_REPORT_STORE`; sidebar text input overrides per session. Stamps only on explicit "Persist report to store" button click. `build_viewer_artifacts` stays pure. | `dashboard/crisis_dossier_viewer.py` |
 | **Optional dep (v0.9)** | `cbsrm[html]` extra — `markdown>=3.5,<4`. Used by the HTML renderer; lazy-imported; raises `RuntimeError` with install hint when missing. CI install matrix updated to include `[html]`. | `pyproject.toml`, `.github/workflows/test.yml` |
 | **Sibling launch-copy branch** | `docs/v08-launch-copy-refresh` — already merged to `main` | merged |
 

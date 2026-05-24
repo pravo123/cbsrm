@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-754_passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-815_passing-brightgreen.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-0.8.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 
@@ -97,7 +97,7 @@ CBSRM is the public half of a paired system. The private companion (VolanX) appl
 
 ```bash
 pytest tests/ -v
-# 754 passing on current main in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
+# 815 passing on current main in <25s; all HTTP mocked; Monte Carlo seeded for determinism.
 ```
 
 ## Whitepaper
@@ -148,7 +148,7 @@ SSRN abstract + JEL codes: see [`SSRN_SUBMISSION.md`](SSRN_SUBMISSION.md).
 **v0.9+ (planned):**
 - Composer layer — unified `PipelineRecord` shape, uniform date convention, uniform identifier/version contract across the v0.8 stages
 - Cross-jurisdiction integrator (EUR / GBP / JPY events propagating into USD-asset connectedness)
-- PDF generation + file-persistence + SaaS download surface on top of the v0.8 report renderer
+- PDF generation (binary byte stream) + SaaS download surface on top of the v0.8 report renderer (note: HTML print-to-PDF foundation and SQLite content-addressed file persistence keyed on `output_sha256` have both shipped on `main` already; see the v0.8 launch section below)
 
 ## Contributing
 
@@ -175,13 +175,23 @@ HTML download button in the existing crisis-dossier viewer),
 deterministic export-time manifests
 (`cbsrm.reporting.build_report_manifest`, surfaced via
 `cbsrm crisis-dossier --manifest PATH`, `?manifest=true` on the JSON
-API, and a Streamlit manifest download button), and opt-in audit-chain
+API, and a Streamlit manifest download button), opt-in audit-chain
 stamping for exports across all three front-ends
 (`cbsrm.reporting.stamp_manifest_to_chain` /
 `stamp_manifest_to_db_path`, surfaced via `cbsrm crisis-dossier
 --audit-db PATH`, `?audit=true` on the JSON API, and a Streamlit
 sidebar "Stamp manifest to audit chain" button driven by
-`CBSRM_AUDIT_DB`). These v0.9 surfaces are **not** in the `v0.8.0`
+`CBSRM_AUDIT_DB`), and SQLite-backed content-addressed report
+persistence keyed on the manifest's `output_sha256`
+(`cbsrm.reporting.persistence` — `init_report_store`,
+`store_report_artifact`, `get_report_artifact`, `list_report_artifacts`
+— surfaced via `cbsrm crisis-dossier --store-db PATH`, `?store=true`
+on the JSON API plus a `GET /reports/stored/{output_sha256}` lookup
+endpoint, and a Streamlit sidebar "Persist report to store" button
+driven by `CBSRM_REPORT_STORE`). The persistence layer is intentionally
+**not** coupled to the audit chain in code; the two surfaces share the
+manifest's `output_sha256` as a natural join key, and either can be
+used standalone. These v0.9 surfaces are **not** in the `v0.8.0`
 tag — they live on `main` only.
 
 **macro shock (`score_event`) → crisis replay (`replay_macro_events`) →
@@ -194,9 +204,9 @@ cross-asset connectedness (`DYSpilloverIndicator`) → systemic DebtRank
 
 | Front-end | Command |
 |---|---|
-| **CLI**       | `cbsrm crisis-dossier WINDOW --format json\|markdown\|html [--title-prefix TEXT] [--manifest PATH] [--audit-db PATH]` · `cbsrm reports` |
-| **HTTP API**  | `GET /reports`, `…/crisis-dossiers`, `…/{window_id}[?manifest=true][&audit=true]`, `…/{window_id}/markdown`, `…/{window_id}/html` |
-| **Streamlit** | `streamlit run dashboard/crisis_dossier_viewer.py` (Markdown/JSON/HTML/Manifest downloads) · `streamlit run dashboard/report_catalog_viewer.py` |
+| **CLI**       | `cbsrm crisis-dossier WINDOW --format json\|markdown\|html [--title-prefix TEXT] [--manifest PATH] [--audit-db PATH] [--store-db PATH]` · `cbsrm reports` |
+| **HTTP API**  | `GET /reports`, `…/crisis-dossiers`, `…/{window_id}[?manifest=true][&audit=true][&store=true]`, `…/{window_id}/markdown`, `…/{window_id}/html`, `…/stored/{output_sha256}` |
+| **Streamlit** | `streamlit run dashboard/crisis_dossier_viewer.py` (Markdown/JSON/HTML/Manifest downloads + opt-in "Report store" sidebar driven by `CBSRM_REPORT_STORE`) · `streamlit run dashboard/report_catalog_viewer.py` |
 
 All three are deterministic, fixture-backed, offline (no FRED key, no
 network), and return bit-for-bit identical reports for the same window.

@@ -17,6 +17,12 @@ Used by:
   - Whitepaper §7 (numerical claims)
   - SaaS paid tier (vintage-replay reports for compliance)
 """
+from cbsrm.diagnostics.crisis_dossiers import (
+    CRISIS_DOSSIER_WINDOWS,
+    build_crisis_dossier,
+    get_fixture_snapshot,
+    list_dossier_windows,
+)
 from cbsrm.diagnostics.crisis_replay import (
     CrisisReplay,
     CrisisReplayReport,
@@ -39,4 +45,8 @@ __all__ = [
     "CrisisReplayReport",
     "replay_all_windows",
     "replay_to_markdown_dossier",
+    "build_crisis_dossier",
+    "CRISIS_DOSSIER_WINDOWS",
+    "list_dossier_windows",
+    "get_fixture_snapshot",
 ]

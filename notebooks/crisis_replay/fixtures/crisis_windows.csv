@@ -1,0 +1,4 @@
+window_id,title,period_start,period_end,n_macro_events,n_price_series,n_banks,seed_node,shock_summary
+2008Q4,Credit / Liquidity Crisis (Lehman aftermath),2008-09-15,2008-12-31,5,2,4,EPICENTRE_BANK,"Lehman bankruptcy triggered global wholesale-funding freeze; TARP / CPFF / AMLF launched"
+2020Q1,COVID Volatility Shock,2020-02-15,2020-04-30,4,2,4,MARKET_MAKER_BANK,"Pandemic lockdowns triggered fastest -34% equity drawdown in history; Fed cut to ZLB + unlimited QE"
+2023Q1,Regional Banking Stress (SVB / SBNY / FRC),2023-03-01,2023-05-01,4,3,4,REGIONAL_BANK,"SVB run + FDIC receivership Mar 10; concentrated duration-mismatched-AFS regional fragility"

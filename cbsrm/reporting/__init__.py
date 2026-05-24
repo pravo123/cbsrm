@@ -1,0 +1,46 @@
+"""
+cbsrm.reporting — deterministic rendering and export of research outputs.
+
+This subpackage turns the v0.8 research artifacts (today: crisis-window
+dossiers from :mod:`cbsrm.diagnostics.crisis_dossiers`) into clean,
+SaaS-ready surfaces — Markdown reports for human review, JSON payloads
+for storage / API responses / downstream tooling.
+
+Design contract
+~~~~~~~~~~~~~~~
+
+* **Offline.** No live API calls, no file writes, no network, no
+  filesystem access, no PDF generation, no web app, no auth, no
+  billing — pure in-memory transformations.
+* **Deterministic.** Same dossier in → same Markdown / JSON out. Safe
+  for snapshot tests, audited replay, and stable demo screenshots.
+* **Compositional, not duplicative.** Consumes the
+  :func:`cbsrm.diagnostics.crisis_dossiers.build_crisis_dossier` output;
+  does not re-implement any of the v0.8 surfaces (`score_event`,
+  `replay_macro_events`, `debt_rank`, `classify_phase`).
+
+Public surface (v0.8)
+~~~~~~~~~~~~~~~~~~~~~
+
+* :func:`render_dossier_markdown` — render a crisis-window dossier as a
+  publication-ready Markdown report.
+* :func:`build_report_payload` — produce a JSON-serializable dict
+  payload suitable for storage or a future SaaS report-download API.
+* :data:`REPORT_RENDERER_VERSION` — semantic version of the renderer
+  spec (independent of the dossier spec).
+* :data:`NFA_DISCLAIMER` — canonical "not financial advice" boilerplate
+  appended to every Markdown report.
+"""
+from cbsrm.reporting.report_renderer import (
+    NFA_DISCLAIMER,
+    REPORT_RENDERER_VERSION,
+    build_report_payload,
+    render_dossier_markdown,
+)
+
+__all__ = [
+    "render_dossier_markdown",
+    "build_report_payload",
+    "REPORT_RENDERER_VERSION",
+    "NFA_DISCLAIMER",
+]

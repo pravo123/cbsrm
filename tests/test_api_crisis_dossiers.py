@@ -319,3 +319,132 @@ def test_manifest_query_param_byte_identical_repeated(client):
     r2 = client.get("/reports/crisis-dossiers/2020Q1?manifest=true")
     assert r1.status_code == 200 and r2.status_code == 200
     assert r1.content == r2.content
+
+
+# ─── ?audit=true — chain stamping (v0.9 addition) ───────────────────
+
+
+def test_default_json_endpoint_has_no_audit_key(client):
+    """Default path (neither manifest nor audit) is unchanged."""
+    body = client.get("/reports/crisis-dossiers/2008Q4").json()
+    assert "manifest" not in body
+    assert "audit" not in body
+
+
+def test_manifest_true_alone_has_manifest_but_no_audit_key(client):
+    """``?manifest=true`` without ``audit`` keeps the prior v0.9
+    behavior — no chain row written."""
+    body = client.get(
+        "/reports/crisis-dossiers/2008Q4?manifest=true"
+    ).json()
+    assert "manifest" in body
+    assert "audit" not in body
+
+
+def test_audit_true_alone_auto_builds_manifest_and_audit(client):
+    """``?audit=true`` triggers the audit-stamp flow and forces the
+    manifest into the response (since the audit row contains it)."""
+    body = client.get(
+        "/reports/crisis-dossiers/2008Q4?audit=true"
+    ).json()
+    assert "manifest" in body
+    assert "audit" in body
+
+
+def test_manifest_and_audit_both_true(client):
+    body = client.get(
+        "/reports/crisis-dossiers/2008Q4?manifest=true&audit=true"
+    ).json()
+    assert "manifest" in body
+    assert "audit" in body
+
+
+def test_audit_payload_contains_row_metadata(client):
+    body = client.get(
+        "/reports/crisis-dossiers/2008Q4?audit=true"
+    ).json()
+    audit_row = body["audit"]
+    assert set(audit_row.keys()) == {
+        "row_id", "hash", "prev_hash", "ts", "subject", "kind",
+    }
+    assert isinstance(audit_row["row_id"], int)
+    assert audit_row["row_id"] > 0
+    assert isinstance(audit_row["hash"], str) and audit_row["hash"]
+    # ts is wall-clock UTC ISO-8601-ish — shape only.
+    assert "T" in audit_row["ts"]
+
+
+def test_audit_subject_pinned_for_2008q4(client):
+    body = client.get(
+        "/reports/crisis-dossiers/2008Q4?audit=true"
+    ).json()
+    assert (
+        body["audit"]["subject"]
+        == "report:crisis-dossier:2008Q4:json"
+    )
+
+
+def test_audit_kind_is_report_exported(client):
+    body = client.get(
+        "/reports/crisis-dossiers/2008Q4?audit=true"
+    ).json()
+    assert body["audit"]["kind"] == "REPORT_EXPORTED"
+
+
+def test_audit_row_visible_via_audit_endpoint(client):
+    """The row written by ``?audit=true`` must be queryable via the
+    pre-existing ``GET /audit/{subject}`` surface — proves the
+    bridge integrates with the existing audit-chain reader."""
+    # Use a unique window so this test doesn't see audit rows
+    # written by other tests on the shared client/audit_chain.
+    target = "2023Q1"
+    subject = f"report:crisis-dossier:{target}:json"
+    pre = client.get(f"/audit/{subject}").json()
+    pre_n = pre["n_rows"]
+
+    r = client.get(
+        f"/reports/crisis-dossiers/{target}?audit=true"
+    )
+    assert r.status_code == 200
+
+    post = client.get(f"/audit/{subject}").json()
+    assert post["n_rows"] == pre_n + 1
+    latest_row = post["rows"][0]  # query returns DESC
+    assert latest_row["kind"] == "REPORT_EXPORTED"
+    assert latest_row["subject"] == subject
+    # Payload round-trips to the manifest in the response.
+    assert latest_row["payload"]["report_id"] == "crisis-dossier"
+    assert latest_row["payload"]["window_id"] == target
+
+
+def test_no_audit_row_written_when_audit_false(client):
+    """``manifest=true`` (or default) without ``audit=true`` must
+    write no audit row."""
+    # Use a unique window to isolate from other audit-writing tests.
+    target = "2020Q1"
+    subject = f"report:crisis-dossier:{target}:json"
+    pre = client.get(f"/audit/{subject}").json()
+    pre_n = pre["n_rows"]
+
+    client.get(f"/reports/crisis-dossiers/{target}")
+    client.get(f"/reports/crisis-dossiers/{target}?manifest=true")
+
+    post = client.get(f"/audit/{subject}").json()
+    assert post["n_rows"] == pre_n
+
+
+def test_unknown_window_with_audit_true_returns_404_and_no_row():
+    """A 404 must NOT append an audit row. We use a fresh client so
+    we can pin row counts deterministically without interference."""
+    fresh = TestClient(build_app())
+    pre_n = fresh.get("/audit/report:crisis-dossier:BOGUS:json").json()[
+        "n_rows"
+    ]
+    r = fresh.get("/reports/crisis-dossiers/BOGUS?audit=true")
+    assert r.status_code == 404
+    detail = r.json()["detail"]
+    assert detail["window_id"] == "BOGUS"
+    post_n = fresh.get("/audit/report:crisis-dossier:BOGUS:json").json()[
+        "n_rows"
+    ]
+    assert post_n == pre_n

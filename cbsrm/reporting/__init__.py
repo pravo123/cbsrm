@@ -52,7 +52,19 @@ Public surface (v0.9 work in progress)
 * :func:`sha256_text`, :func:`sha256_jsonable` — hash helpers used by
   the manifest layer; safe to use stand-alone.
 * :data:`MANIFEST_VERSION` — semantic version of the manifest spec.
+* :func:`stamp_manifest_to_chain` — append a manifest as one row in
+  the existing :class:`cbsrm.audit.chain.AuditChain` and return the
+  row metadata.
+* :func:`manifest_subject` — derive the audit-chain subject string
+  from a manifest dict.
+* :data:`AUDIT_EVENT_KIND` — the string ``"REPORT_EXPORTED"`` used as
+  the audit-chain ``kind`` for report exports.
 """
+from cbsrm.reporting.audit_manifest import (
+    AUDIT_EVENT_KIND,
+    manifest_subject,
+    stamp_manifest_to_chain,
+)
 from cbsrm.reporting.html_renderer import (
     HTML_RENDERER_VERSION,
     render_dossier_html,
@@ -91,4 +103,7 @@ __all__ = [
     "sha256_text",
     "sha256_jsonable",
     "MANIFEST_VERSION",
+    "stamp_manifest_to_chain",
+    "manifest_subject",
+    "AUDIT_EVENT_KIND",
 ]

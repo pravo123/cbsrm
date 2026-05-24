@@ -22,7 +22,7 @@
 | Surface | Status | Reference |
 |---|---|---|
 | **`main`** | ahead of `v0.8.0` by additive v0.9 commits; CI green | `git log v0.8.0..main` |
-| **Tests on `main`** | **815 passed** (was 555 at `v0.8.0`; +260 from v0.9 additive slices) | `pytest tests/` |
+| **Tests on `main`** | **865 passed** (was 555 at `v0.8.0`; +310 from v0.9 additive slices) | `pytest tests/` |
 | **Report registry (v0.9)** | `cbsrm.reporting.get_report_catalog` / `list_report_ids` / `get_report_metadata`; 2 entries (`crisis-dossier`, `macro-composite`) | `cbsrm/reporting/registry.py` |
 | **Catalog CLI (v0.9)** | `cbsrm reports` — JSON dump of the registry catalog | `cbsrm/cli.py` |
 | **Catalog API (v0.9)** | `GET /reports` — JSON catalog endpoint | `cbsrm/api/routes.py` |
@@ -43,6 +43,7 @@
 | **Persistence CLI (v0.9)** | `cbsrm crisis-dossier --store-db PATH` — opens (or creates) a sqlite DB, persists the rendered output, prints one stderr line `stored: output_sha256=… was_existing=… db=…`. Stdout report bytes unchanged. Idempotent; second call with same content sets `was_existing=true`. | `cbsrm/cli.py` |
 | **Persistence API (v0.9)** | `build_app(audit_conn=None, report_store_db_path=None)` accepts an operator-configured store path (filesystem paths never accepted in HTTP requests). New `GET /reports/crisis-dossiers/{window_id}?store=true` adds a `stored` projection (`output_sha256`, `was_existing`, `byte_length`, `content_type`, `created_at_utc`); 400 with hint when `?store=true` but no store is configured. New `GET /reports/stored/{output_sha256}` lookup endpoint returns the persisted row or 404. Default envelope unchanged byte-for-byte when no new flags. | `cbsrm/api/routes.py` |
 | **Persistence Streamlit (v0.9)** | Sidebar "Report store (opt-in)" block in `dashboard/crisis_dossier_viewer.py` parallel to the audit-chain block. Reads DB path from env var `CBSRM_REPORT_STORE`; sidebar text input overrides per session. Stamps only on explicit "Persist report to store" button click. `build_viewer_artifacts` stays pure. | `dashboard/crisis_dossier_viewer.py` |
+| **Macro-composite executable builder (v0.9)** | `cbsrm.reporting.build_macro_composite_report(window_id) -> dict` + `cbsrm.reporting.render_macro_composite_markdown(report) -> str` + `list_macro_composite_windows()` + `MACRO_COMPOSITE_WINDOWS` + `MACRO_COMPOSITE_REPORT_VERSION`. Phase-classifier-only first cut; deterministic, offline, fixture-backed; JSON + Markdown for the same canonical windows as the crisis-dossier report (`2008Q4` / `2020Q1` / `2023Q1`); drift-guarded against `cbsrm.diagnostics.crisis_dossiers.get_fixture_snapshot`. Registry entry now ships `formats: ["json","markdown"]` and pinned `windows`. **CLI / API / Streamlit / manifest / audit / persistence wiring for this report is still deferred.** | `cbsrm/reporting/macro_composite_report.py`, `cbsrm/reporting/registry.py` |
 | **Optional dep (v0.9)** | `cbsrm[html]` extra — `markdown>=3.5,<4`. Used by the HTML renderer; lazy-imported; raises `RuntimeError` with install hint when missing. CI install matrix updated to include `[html]`. | `pyproject.toml`, `.github/workflows/test.yml` |
 | **Sibling launch-copy branch** | `docs/v08-launch-copy-refresh` — already merged to `main` | merged |
 

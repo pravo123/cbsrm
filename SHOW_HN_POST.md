@@ -2,6 +2,8 @@
 
 **Status:** ready to submit against `v0.8.0` (tag `v0.8.0`, commit `410e3ac`). Operator chooses one of the three titles below, pastes the body, posts the first comment immediately (timing matters for HN ranking).
 
+**Release anchor:** <https://github.com/pravo123/cbsrm/releases/tag/v0.8.0>
+
 **Best time to submit:** weekday 7:00-9:00 AM ET. Avoid weekends (HN traffic is lower; harder to reach front page).
 
 ---
@@ -56,11 +58,16 @@ Three options, ranked. HN title best practice: factual, specific, ≤ 80 chars, 
 > lines of NumPy, the Diebold-Yilmaz GFEVD is ~150, the DebtRank engine is
 > a pure-numpy U/D/I state-machine cascade.
 >
-> Live dashboard (Streamlit Community Cloud): <YOUR_STREAMLIT_URL_HERE>
-> (NB: v0.5 risk-pricing readings; the v0.8 crisis-dossier viewer is a
->  separate `streamlit run dashboard/crisis_dossier_viewer.py` page)
+> Live dashboard: not deployed yet — the v0.8 crisis-dossier viewer
+> runs locally and is offline (no FRED key required):
+>
+> ```
+> pip install cbsrm streamlit
+> streamlit run dashboard/crisis_dossier_viewer.py
+> ```
 >
 > Repo: https://github.com/pravo123/cbsrm  (tag `v0.8.0`)
+> Release notes: https://github.com/pravo123/cbsrm/releases/tag/v0.8.0
 > Whitepaper: in `whitepaper/cbsrm_methodology_v1.md`
 > Apache 2.0.
 >

@@ -68,6 +68,14 @@ def test_module_imports_without_streamlit(viewer):
     assert "streamlit" not in dir(viewer)
 
 
+# Tests below this line exercise build_viewer_artifacts(), which now
+# composes the v0.9 HTML renderer and therefore requires the optional
+# `markdown` package (installed via `cbsrm[html]`).  Skip cleanly when
+# the package is unavailable.  The streamlit-import-safety test above
+# does not depend on markdown and continues to run unconditionally.
+pytest.importorskip("markdown")
+
+
 @pytest.mark.parametrize("window", list_dossier_windows())
 def test_build_viewer_artifacts_for_each_window(viewer, window):
     artifacts = viewer.build_viewer_artifacts(window)
@@ -110,3 +118,37 @@ def test_repeated_calls_are_deterministic(viewer):
     a2 = viewer.build_viewer_artifacts("2008Q4")
     assert a1["markdown"] == a2["markdown"]
     assert a1["payload_json"] == a2["payload_json"]
+    assert a1["html"] == a2["html"]
+
+
+# ─── HTML artifact (v0.9 addition) ──────────────────────────────────
+
+
+@pytest.mark.parametrize("window", list_dossier_windows())
+def test_build_viewer_artifacts_includes_html_for_each_window(
+    viewer, window,
+):
+    artifacts = viewer.build_viewer_artifacts(window)
+    assert "html" in artifacts
+    html = artifacts["html"]
+    assert isinstance(html, str)
+    assert len(html) > 0
+    # Full HTML document with DOCTYPE + <html> shell
+    assert "<!DOCTYPE html>" in html
+    assert "<html" in html
+
+
+def test_build_viewer_artifacts_html_contains_window_id_and_disclaimer(
+    viewer,
+):
+    artifacts = viewer.build_viewer_artifacts("2008Q4")
+    html = artifacts["html"]
+    assert "2008Q4" in html
+    assert "Disclaimer" in html
+
+
+def test_build_viewer_artifacts_html_is_deterministic(viewer):
+    """Two calls with the same window must produce byte-identical HTML."""
+    h1 = viewer.build_viewer_artifacts("2020Q1")["html"]
+    h2 = viewer.build_viewer_artifacts("2020Q1")["html"]
+    assert h1 == h2

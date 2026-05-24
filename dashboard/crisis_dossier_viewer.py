@@ -27,7 +27,11 @@ import json
 from typing import Any
 
 from cbsrm.diagnostics import build_crisis_dossier, list_dossier_windows
-from cbsrm.reporting import build_report_payload, render_dossier_markdown
+from cbsrm.reporting import (
+    build_report_payload,
+    render_dossier_html,
+    render_dossier_markdown,
+)
 
 
 # ─── Pure helper (Streamlit-free) ────────────────────────────────────
@@ -48,6 +52,9 @@ def build_viewer_artifacts(window_id: str) -> dict[str, Any]:
         ``window_id``    — the input, echoed for caller convenience
         ``dossier``      — raw dossier dict from ``build_crisis_dossier``
         ``markdown``     — deterministic Markdown report (str)
+        ``html``         — deterministic HTML report (str), suitable for
+                           browser print-to-PDF (via
+                           :func:`cbsrm.reporting.render_dossier_html`)
         ``payload``      — ``{"report": {...}, "dossier": {...}}`` envelope
         ``payload_json`` — UTF-8-safe pretty-printed JSON serialisation of
                            ``payload`` (``ensure_ascii=False`` so the
@@ -57,6 +64,9 @@ def build_viewer_artifacts(window_id: str) -> dict[str, Any]:
     ------
     ValueError
         If ``window_id`` is not in the supported set.
+    RuntimeError
+        If the optional ``markdown`` package required by the HTML
+        renderer is not installed (``pip install cbsrm[html]``).
     """
     dossier = build_crisis_dossier(window_id)
     payload = build_report_payload(dossier)
@@ -64,6 +74,7 @@ def build_viewer_artifacts(window_id: str) -> dict[str, Any]:
         "window_id": window_id,
         "dossier": dossier,
         "markdown": render_dossier_markdown(dossier),
+        "html": render_dossier_html(dossier),
         "payload": payload,
         "payload_json": json.dumps(payload, indent=2, ensure_ascii=False),
     }
@@ -94,7 +105,7 @@ def render() -> None:
 
     artifacts = build_viewer_artifacts(window_id)
 
-    col_md, col_json = st.columns(2)
+    col_md, col_json, col_html = st.columns(3)
     with col_md:
         st.download_button(
             label="Download Markdown (.md)",
@@ -108,6 +119,13 @@ def render() -> None:
             data=artifacts["payload_json"].encode("utf-8"),
             file_name=f"crisis_dossier_{window_id}.json",
             mime="application/json",
+        )
+    with col_html:
+        st.download_button(
+            label="Download HTML (.html)",
+            data=artifacts["html"].encode("utf-8"),
+            file_name=f"cbsrm_crisis_dossier_{window_id}.html",
+            mime="text/html",
         )
 
     st.markdown("---")

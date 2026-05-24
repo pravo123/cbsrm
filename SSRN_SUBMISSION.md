@@ -2,6 +2,9 @@
 
 This file holds everything required to submit the CBSRM v0.5 methodology paper to SSRN. Copy each field to the corresponding form input.
 
+> **State as of `v0.8.0` release (tag `v0.8.0`, commit `410e3ac`):**
+> The methodology paper itself was drafted for the v0.5 risk-pricing release; the v0.8 work (macro-event surprise scorer, windowed replay, pure-numpy DebtRank, Acemoglu-style phase classifier, fixture-backed crisis-window dossiers, deterministic report renderer, plus CLI / FastAPI / Streamlit front-ends) extends the same Protocol-based architecture without modifying the v0.5 surface. For SSRN, treat `v0.8.0` as the **current public reference release** and `v0.5` as the **published methodology snapshot** the paper describes.
+
 ## Submission target
 
 - **Primary network:** FEN — Financial Economics Network
@@ -20,7 +23,7 @@ This file holds everything required to submit the CBSRM v0.5 methodology paper t
 
 ## Abstract (≤ 1,500 characters incl. spaces — SSRN limit)
 
-> CBSRM (Cross-Border Systemic Risk Monitor) is an open-source 7-layer Python platform that reproduces, under one Protocol and one cryptographic audit chain, the three most-cited systemic-risk measures in supervisory literature: SRISK (Brownlees & Engle 2017), ΔCoVaR (Adrian & Brunnermeier 2016), and MES (Acharya, Pedersen, Philippon & Richardson 2017). Alongside the risk-pricing layer, CBSRM ships a stress-indicator layer (CISS-US — full Holló-Kremer-Lo Duca 2012 reimplementation; ECB CISS for EA/US/UK; STLFSI4; OFR-FSI) and a macro-regime layer (yield-curve Estrella-Mishkin recession probit, NFP momentum, FFR change, broad-USD regime, USD/JPY regime, CPI surprise, oil macro, credit-spread regime, 4-state composite). Coverage spans five jurisdictions (US, euro area, UK, Japan, broad USD) with reviewed interpretation labels in five languages. Every computation writes a sha256-linked lifecycle event to an append-only audit chain. The Python Protocol-based architecture lets a new indicator or risk measure ship as one file plus one registration line, with no impact on existing modules. The implementation is pure NumPy at simulate-time (no SciPy / Cython / arch fitting dependency). 316 tests; Apache 2.0 license. We illustrate the system with the first live numerical readings (2026-05) across the five jurisdictions and validate the SRISK / ΔCoVaR / MES implementations against published analytical properties.
+> CBSRM (Cross-Border Systemic Risk Monitor) is an open-source 7-layer Python platform that reproduces, under one Protocol and one cryptographic audit chain, the three most-cited systemic-risk measures in supervisory literature: SRISK (Brownlees & Engle 2017), ΔCoVaR (Adrian & Brunnermeier 2016), and MES (Acharya, Pedersen, Philippon & Richardson 2017). Alongside the risk-pricing layer, CBSRM ships a stress-indicator layer (CISS-US — full Holló-Kremer-Lo Duca 2012 reimplementation; ECB CISS for EA/US/UK; STLFSI4; OFR-FSI) and a macro-regime layer (yield-curve Estrella-Mishkin recession probit, NFP momentum, FFR change, broad-USD regime, USD/JPY regime, CPI surprise, oil macro, credit-spread regime, 4-state composite). Coverage spans five jurisdictions (US, euro area, UK, Japan, broad USD) with reviewed interpretation labels in five languages. Every computation writes a sha256-linked lifecycle event to an append-only audit chain. The Python Protocol-based architecture lets a new indicator or risk measure ship as one file plus one registration line, with no impact on existing modules. The implementation is pure NumPy at simulate-time (no SciPy / Cython / arch fitting dependency). 555 tests under the current `v0.8.0` reference release; Apache 2.0 license. We illustrate the system with the first live numerical readings (2026-05) across the five jurisdictions and validate the SRISK / ΔCoVaR / MES implementations against published analytical properties.
 
 (Character count check: ~1,490 — within SSRN's 1,500 limit. If revised abstract exceeds, trim the live-readings sentence first.)
 
@@ -86,7 +89,7 @@ This file holds everything required to submit the CBSRM v0.5 methodology paper t
 
 ## Code availability statement (for the SSRN "data / code" field)
 
-> Source code: https://github.com/pravo123/cbsrm (Apache 2.0). All numerical claims in §§8 and 10–12 reproducible via the documented CLI; example walkthrough at `examples/quickstart.py`. Tests: 316 passing under continuous integration.
+> Source code: https://github.com/pravo123/cbsrm (Apache 2.0). All numerical claims in §§8 and 10–12 reproducible via the documented CLI; example walkthrough at `examples/quickstart.py`. Tests: 555 passing under the current `v0.8.0` reference release. The v0.8 series additionally ships CLI (`cbsrm crisis-dossier`), read-only HTTP API (`GET /reports/crisis-dossiers/…`), and standalone offline Streamlit (`streamlit run dashboard/crisis_dossier_viewer.py`) front-ends over the deterministic crisis-window dossier surface; all three return bit-for-bit identical reports.
 
 ## Funding statement
 
@@ -120,7 +123,7 @@ This file holds everything required to submit the CBSRM v0.5 methodology paper t
 - [ ] All keywords valid SSRN keywords (no typos)
 - [ ] JEL codes correctly formatted
 - [ ] Manuscript references the GitHub repo
-- [ ] Code link (https://github.com/pravo123/cbsrm) live and tagged v0.5.0
+- [ ] Code link (https://github.com/pravo123/cbsrm) live and tagged `v0.8.0` (current public release; the methodology paper itself describes v0.5)
 - [ ] Conflict of interest statement included (VolanX disclosure)
 - [ ] Cover letter mentions FEN sub-network
 - [ ] Author email provided in author registration

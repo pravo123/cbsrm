@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-739_passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-754_passing-brightgreen.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-0.8.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 
@@ -97,7 +97,7 @@ CBSRM is the public half of a paired system. The private companion (VolanX) appl
 
 ```bash
 pytest tests/ -v
-# 739 passing on current main in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
+# 754 passing on current main in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
 ```
 
 ## Whitepaper
@@ -176,11 +176,13 @@ deterministic export-time manifests
 (`cbsrm.reporting.build_report_manifest`, surfaced via
 `cbsrm crisis-dossier --manifest PATH`, `?manifest=true` on the JSON
 API, and a Streamlit manifest download button), and opt-in audit-chain
-stamping for exports (`cbsrm.reporting.stamp_manifest_to_chain`,
-surfaced via `cbsrm crisis-dossier --audit-db PATH` and `?audit=true`
-on the JSON API). These v0.9 surfaces are **not** in the `v0.8.0` tag
-— they live on `main` only. Streamlit audit-chain stamping is still
-deferred.
+stamping for exports across all three front-ends
+(`cbsrm.reporting.stamp_manifest_to_chain` /
+`stamp_manifest_to_db_path`, surfaced via `cbsrm crisis-dossier
+--audit-db PATH`, `?audit=true` on the JSON API, and a Streamlit
+sidebar "Stamp manifest to audit chain" button driven by
+`CBSRM_AUDIT_DB`). These v0.9 surfaces are **not** in the `v0.8.0`
+tag — they live on `main` only.
 
 **macro shock (`score_event`) → crisis replay (`replay_macro_events`) →
 cross-asset connectedness (`DYSpilloverIndicator`) → systemic DebtRank

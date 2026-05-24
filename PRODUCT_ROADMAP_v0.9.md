@@ -57,9 +57,9 @@ Additional v0.9 slices landed on `main` since the prior docs checkpoint:
 | **Audit-chain API surface** | `cbsrm/api/routes.py` (`?audit=true`) | Auto-builds manifest, appends `REPORT_EXPORTED` row, surfaces row metadata. |
 | **Audit-chain CLI surface** | `cbsrm/cli.py` (`--audit-db PATH`) | Opens/creates sqlite, stamps manifest, prints one stderr line; stdout unchanged. |
 
-Test count on current `main`: **739 passed** (+184 vs `v0.8.0` tag; zero regressions).
+Test count on current `main`: **754 passed** (+199 vs `v0.8.0` tag; zero regressions).
 
-Surfaces that remain NOT yet on `main`: Streamlit audit-chain stamping, real binary PDF byte stream, file persistence / downloadable artifacts, unified `PipelineRecord` composer, live-data adapters, multi-tenant accounts.
+Surfaces that remain NOT yet on `main`: real binary PDF byte stream, file persistence / downloadable artifacts, unified `PipelineRecord` composer, live-data adapters, multi-tenant accounts.
 
 ---
 
@@ -94,8 +94,9 @@ Leverage = how much it moves the product toward something a paying user touches.
 | Rank | Slice | Leverage | Risk | Rationale |
 |---|---|---|---|---|
 | 1 | ~~**Report registry**~~ — **SHIPPED on `main`** (see §0.1) | high | low | First registry entry was `crisis-dossier`; second metadata-only entry `macro-composite` followed. The `_REPORT_BUILDERS` insertion order is now pinned by tests. |
-| 1b | ~~**Export-time manifests + audit-chain bridge**~~ — **SHIPPED on `main`** (CLI + API; Streamlit audit deferred). | high | low | `cbsrm.reporting.build_report_manifest` + `stamp_manifest_to_chain` are now wired into `cbsrm crisis-dossier --manifest PATH --audit-db PATH` and `?manifest=true&audit=true`. `cbsrm/audit/chain.py` untouched. |
-| 2 | **Streamlit audit-chain stamping** — close out the audit-stamping trio. Operator decisions still open (audit DB lives where in a dashboard context — env var / sidebar / launch arg?). | medium | medium | Closes feature parity with the CLI + API audit surfaces. Smaller diff than persistence; gated only on the storage-location UX decision. |
+| 1b | ~~**Export-time manifests + audit-chain bridge**~~ — **SHIPPED on `main`** (CLI + API + Streamlit trio complete). | high | low | `cbsrm.reporting.build_report_manifest` + `stamp_manifest_to_chain` + `stamp_manifest_to_db_path` are wired into `cbsrm crisis-dossier --manifest PATH --audit-db PATH`, `?manifest=true&audit=true`, and the Streamlit sidebar "Stamp manifest to audit chain" button (env var `CBSRM_AUDIT_DB` + sidebar override). `cbsrm/audit/chain.py` untouched. |
+| 2 | ~~**Streamlit audit-chain stamping**~~ — **SHIPPED on `main`** (PR #18). Closes the v0.9 audit-stamping trio. | medium | medium | Opt-in sidebar UX; `build_viewer_artifacts` stays pure; stamp fires only on explicit button click. |
+| 2b | **CLI audit helper refactor** — collapse the CLI's inline `sqlite3.connect → AuditChain → stamp_manifest_to_chain → close` block to one call to the new `stamp_manifest_to_db_path` helper. | low | low | Pure cleanup. ~10-line diff. Behaviour unchanged; existing tests pass without modification. Reduces drift between the CLI and Streamlit code paths now that both can use the same path-based helper. |
 | 3 | **Report persistence + content-addressed storage** (sqlite or filesystem, sha256 → JSON / Markdown / HTML blobs, keyed on the manifest `output_sha256`) | high | low | Now also covers HTML artifacts. Lets the API and Streamlit show a real "Recent reports" surface; pairs naturally with the v0.9 manifest layer for content-addressed storage. No multi-tenant logic yet — single-operator. |
 | 3b | **Audit-chain persistence UX** — operator-config flow for picking a long-lived audit DB across surfaces (not just opt-in per-invocation). | medium | medium | Today: API `?audit=true` writes to the in-memory chain; CLI `--audit-db` opens a file each call. A persistent operator-config seam would let dashboards, scheduled CLI jobs, and the API all stamp the same chain without reconfiguration. |
 | 4 | **PDF export** — _HTML foundation SHIPPED_ on `main`; binary PDF byte stream still deferred (`render_dossier_pdf(dossier) -> bytes` via reportlab or weasyprint; `cbsrm[pdf]` extra) | medium | medium | The HTML path already covers most "operator wants a PDF for a meeting" use cases via browser File → Print. Binary PDF is only required for environments that cannot run a browser. Risk: dependency footprint — keep reportlab/weasyprint under `cbsrm[pdf]` extra so the core stays markdown-only. |
@@ -183,7 +184,7 @@ In order. Each one fits the rc-style discipline used through v0.8: feature branc
 - **Default mode is the v0.8 mode.** Every new surface defaults to the behavior that already exists. Opt-in for new behavior, not opt-out.
 - **No new network in tests.** The convention established in `tests/test_cli_crisis_dossier.py` and `tests/test_api_crisis_dossiers.py` (monkeypatch `urllib.request.urlopen` and `requests.Session.request` to fail) extends to every new test file.
 - **Optional deps stay optional.** PDF requires `cbsrm[pdf]`; live-data live mode does not require new deps (uses existing `cbsrm.data`); API hardening adds no required deps.
-- **Pre-merge gate:** full suite green (currently at 739 on `main`, +184 since `v0.8.0`; remaining slices will continue the growth), no `.py` changes outside the allowlist for each slice, CHANGELOG entry present.
+- **Pre-merge gate:** full suite green (currently at 754 on `main`, +199 since `v0.8.0`; remaining slices will continue the growth), no `.py` changes outside the allowlist for each slice, CHANGELOG entry present.
 - **Branch discipline:** one slice = one branch = one merge commit = one annotated tag where appropriate (`v0.8.1` after slice 1, etc., to keep the audit trail clean).
 
 ---
@@ -271,4 +272,6 @@ v0.9 work-in-progress slices on `main` (post-`v0.8.0` tag; no v0.8.x patch tag c
 [2026-05-24] slice=v0.9-mani-surfaces branch=feat/manifest-cli-api-streamlit  merge=d0798c3 tag=- tests=700 notes=Manifest exposure CLI/API/Streamlit (PR #14)
 [2026-05-24] slice=v0.9-api-audit     branch=feat/api-audit-export-stamping   merge=7f7057d tag=- tests=727 notes=API audit-chain export stamping (PR #15)
 [2026-05-24] slice=v0.9-cli-audit     branch=feat/cli-audit-export-stamping   merge=ebb2b1a tag=- tests=739 notes=CLI audit-chain export stamping (PR #16)
+[2026-05-24] slice=v0.9-docs-chk-2    branch=docs/v090-audit-status-checkpoint merge=2ac00bc tag=- tests=739 notes=Docs checkpoint v0.9 manifest+audit (PR #17)
+[2026-05-24] slice=v0.9-strm-audit    branch=feat/streamlit-audit-export-stamping merge=f6f6096 tag=- tests=754 notes=Streamlit audit-chain export stamping — trio complete (PR #18)
 ```

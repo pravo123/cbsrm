@@ -22,7 +22,7 @@
 | Surface | Status | Reference |
 |---|---|---|
 | **`main`** | ahead of `v0.8.0` by additive v0.9 commits; CI green | `git log v0.8.0..main` |
-| **Tests on `main`** | **739 passed** (was 555 at `v0.8.0`; +184 from v0.9 additive slices) | `pytest tests/` |
+| **Tests on `main`** | **754 passed** (was 555 at `v0.8.0`; +199 from v0.9 additive slices) | `pytest tests/` |
 | **Report registry (v0.9)** | `cbsrm.reporting.get_report_catalog` / `list_report_ids` / `get_report_metadata`; 2 entries (`crisis-dossier`, `macro-composite`) | `cbsrm/reporting/registry.py` |
 | **Catalog CLI (v0.9)** | `cbsrm reports` — JSON dump of the registry catalog | `cbsrm/cli.py` |
 | **Catalog API (v0.9)** | `GET /reports` — JSON catalog endpoint | `cbsrm/api/routes.py` |
@@ -38,7 +38,7 @@
 | **Audit-chain bridge (v0.9)** | `cbsrm.reporting.stamp_manifest_to_chain(chain, manifest)`; `manifest_subject(manifest)`; `AUDIT_EVENT_KIND = "REPORT_EXPORTED"`. Thin bridge from manifests to the existing `cbsrm/audit/chain.py` tamper-evident log; audit chain module untouched. | `cbsrm/reporting/audit_manifest.py` |
 | **Audit-chain API (v0.9)** | `GET /reports/crisis-dossiers/{window_id}?audit=true` — opt-in; auto-builds manifest, appends to the app's `AuditChain`, returns `{report, dossier, manifest, audit}`. Audit row queryable via existing `GET /audit/{subject}`. | `cbsrm/api/routes.py` |
 | **Audit-chain CLI (v0.9)** | `cbsrm crisis-dossier --audit-db PATH` — opens (or creates) a sqlite DB, stamps the export manifest, prints one stderr line `audit: row_id=… subject=… hash=…`. Stdout report bytes unchanged. | `cbsrm/cli.py` |
-| **Audit-chain Streamlit (v0.9)** | **Deferred** — operator-config UX (env var / sidebar input / launch arg) not yet decided. | — |
+| **Audit-chain Streamlit (v0.9)** | Sidebar "Stamp manifest to audit chain" button in `dashboard/crisis_dossier_viewer.py`. Reads DB path from env var `CBSRM_AUDIT_DB`; sidebar text input overrides per session. Stamps only on explicit button click — never on render or window selection. `build_viewer_artifacts` stays pure. | `dashboard/crisis_dossier_viewer.py` |
 | **Optional dep (v0.9)** | `cbsrm[html]` extra — `markdown>=3.5,<4`. Used by the HTML renderer; lazy-imported; raises `RuntimeError` with install hint when missing. CI install matrix updated to include `[html]`. | `pyproject.toml`, `.github/workflows/test.yml` |
 | **Sibling launch-copy branch** | `docs/v08-launch-copy-refresh` — already merged to `main` | merged |
 

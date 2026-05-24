@@ -8,6 +8,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — v0.8 work in progress
 
+**`cbsrm.reporting.report_renderer` — deterministic Markdown + JSON export of crisis-window dossiers**
+- Pure function `render_dossier_markdown(dossier, *, title_prefix=None) -> str` turns the output of `build_crisis_dossier` into a publication-ready Markdown report: title, window-id + period, shock summary, phase classification (label / posture / dominant drivers), macro event score table, replay table, network stress summary, research notes, spec/version metadata, and a canonical NFA disclaimer footer.
+- Pure function `build_report_payload(dossier) -> dict` wraps the dossier in a `{report: {...}, dossier: {...}}` envelope that round-trips cleanly through `json.dumps`. Recursive sanitizer handles numpy scalars, numpy arrays, pandas `Timestamp` values, sets/tuples, and non-finite floats (→ `None`).
+- New subpackage `cbsrm.reporting/` (first member; module split chosen so future renderers — single-jurisdiction macro report, multi-jurisdiction composite report, etc. — slot in next to this one without coupling).
+- Validation: non-Mapping input, missing required top-level keys, malformed `period`, and malformed `network_stress_summary` all raise `ValueError` with explicit guidance.
+- Empty inner sections (`macro_event_scores=[]`, `replay_summary=[]`, `dominant_drivers=[]`) render as explicit `_(none)_` placeholders so reports remain well-formed.
+- Offline by design — no live API calls, no file writes, no PDF generation, no web app, no auth, no billing. Explicit no-I/O regression test in the suite (no `urllib` / `requests` / `httpx` / `socket` / `sqlite3` / `subprocess` / file-`open` reachable in the rendering path).
+- Canonical NFA disclaimer exported as `cbsrm.reporting.NFA_DISCLAIMER`; renderer version pinned at `REPORT_RENDERER_VERSION = "1.0.0"`, independent of the dossier spec version.
+- 41 tests in `tests/test_report_renderer.py` covering: all 3 windows render, required Markdown sections, window-id / period / phase echoed, macro-event table, network-stress metrics, research notes preserved, spec versions, NFA disclaimer, title-prefix, determinism (Markdown and JSON), JSON payload schema, json.dumps round-trip, numpy scalar / Timestamp / NaN sanitization, validation paths, empty-section graceful rendering, no-I/O sanity, and an end-to-end dossier→Markdown→payload→JSON narrative.
+
 **`cbsrm.diagnostics.crisis_dossiers` — historical crisis-window research dossiers**
 - Pure function `build_crisis_dossier(window_id, *, fixtures=None, config=None)` composes the v0.8 stack (`macro_events.score_event` → `macro_replay.replay_macro_events` → `networks.debt_rank` → `macro.classify_phase`) into a single deterministic, fixture-backed research dossier. First reporting-ready artifact on top of v0.8.
 - Three pinned canonical windows: `2008Q4` (credit/liquidity crisis, Lehman aftermath), `2020Q1` (COVID volatility shock), `2023Q1` (regional banking stress — SVB/SBNY/FRC).

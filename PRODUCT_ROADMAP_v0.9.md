@@ -45,9 +45,21 @@ Additive only. Operator-gated merges, all green CI on `main`.
 | **HTML Streamlit download** | `dashboard/crisis_dossier_viewer.py` | Third download button next to `.md` / `.json` |
 | **CI install** | `.github/workflows/test.yml` | Extended to install `[html]` extra so the 10-job matrix exercises the HTML path |
 
-Test count on current `main`: **641 passed** (+86 vs `v0.8.0` tag; zero regressions).
+Additional v0.9 slices landed on `main` since the prior docs checkpoint:
 
-Surfaces that remain v0.8-only (NOT yet on `main`): real binary PDF byte stream, file persistence / downloadable artifacts, run manifests / audit logs, unified `PipelineRecord` composer, live-data adapters, multi-tenant accounts.
+| Slice | Modules | Notes |
+|---|---|---|
+| **Manifest foundation** | `cbsrm/reporting/manifest.py` | `build_report_manifest(...)`, `sha256_text`, `sha256_jsonable`, `MANIFEST_VERSION`. Deterministic-by-default (no wall-clock); JSON-serializable. |
+| **Manifest CLI surface** | `cbsrm/cli.py` (`--manifest PATH`) | Writes deterministic manifest JSON; stdout unchanged. |
+| **Manifest API surface** | `cbsrm/api/routes.py` (`?manifest=true`) | Adds `"manifest"` key only when opted in; default envelope unchanged. |
+| **Manifest Streamlit surface** | `dashboard/crisis_dossier_viewer.py` | 4th download button beside Markdown / JSON / HTML. |
+| **Audit-chain bridge** | `cbsrm/reporting/audit_manifest.py` | `stamp_manifest_to_chain`, `manifest_subject`, `AUDIT_EVENT_KIND="REPORT_EXPORTED"`. `cbsrm/audit/chain.py` untouched. |
+| **Audit-chain API surface** | `cbsrm/api/routes.py` (`?audit=true`) | Auto-builds manifest, appends `REPORT_EXPORTED` row, surfaces row metadata. |
+| **Audit-chain CLI surface** | `cbsrm/cli.py` (`--audit-db PATH`) | Opens/creates sqlite, stamps manifest, prints one stderr line; stdout unchanged. |
+
+Test count on current `main`: **739 passed** (+184 vs `v0.8.0` tag; zero regressions).
+
+Surfaces that remain NOT yet on `main`: Streamlit audit-chain stamping, real binary PDF byte stream, file persistence / downloadable artifacts, unified `PipelineRecord` composer, live-data adapters, multi-tenant accounts.
 
 ---
 
@@ -82,8 +94,12 @@ Leverage = how much it moves the product toward something a paying user touches.
 | Rank | Slice | Leverage | Risk | Rationale |
 |---|---|---|---|---|
 | 1 | ~~**Report registry**~~ — **SHIPPED on `main`** (see §0.1) | high | low | First registry entry was `crisis-dossier`; second metadata-only entry `macro-composite` followed. The `_REPORT_BUILDERS` insertion order is now pinned by tests. |
-| 2 | **Report persistence + content-addressed storage** (sqlite or filesystem, sha256 → JSON / Markdown / HTML blobs) | high | low | Now also covers HTML artifacts. Lets the API and Streamlit show a real "Recent reports" surface; pairs with audit-chain primitive so every persisted report has provenance. No multi-tenant logic yet — single-operator. |
-| 3 | **PDF export** — _HTML foundation SHIPPED_ on `main`; binary PDF byte stream still deferred (`render_dossier_pdf(dossier) -> bytes` via reportlab or weasyprint; `cbsrm[pdf]` extra) | medium | medium | The HTML path already covers most "operator wants a PDF for a meeting" use cases via browser File → Print. Binary PDF is only required for environments that cannot run a browser. Risk: dependency footprint — keep reportlab/weasyprint under `cbsrm[pdf]` extra so the core stays markdown-only. |
+| 1b | ~~**Export-time manifests + audit-chain bridge**~~ — **SHIPPED on `main`** (CLI + API; Streamlit audit deferred). | high | low | `cbsrm.reporting.build_report_manifest` + `stamp_manifest_to_chain` are now wired into `cbsrm crisis-dossier --manifest PATH --audit-db PATH` and `?manifest=true&audit=true`. `cbsrm/audit/chain.py` untouched. |
+| 2 | **Streamlit audit-chain stamping** — close out the audit-stamping trio. Operator decisions still open (audit DB lives where in a dashboard context — env var / sidebar / launch arg?). | medium | medium | Closes feature parity with the CLI + API audit surfaces. Smaller diff than persistence; gated only on the storage-location UX decision. |
+| 3 | **Report persistence + content-addressed storage** (sqlite or filesystem, sha256 → JSON / Markdown / HTML blobs, keyed on the manifest `output_sha256`) | high | low | Now also covers HTML artifacts. Lets the API and Streamlit show a real "Recent reports" surface; pairs naturally with the v0.9 manifest layer for content-addressed storage. No multi-tenant logic yet — single-operator. |
+| 3b | **Audit-chain persistence UX** — operator-config flow for picking a long-lived audit DB across surfaces (not just opt-in per-invocation). | medium | medium | Today: API `?audit=true` writes to the in-memory chain; CLI `--audit-db` opens a file each call. A persistent operator-config seam would let dashboards, scheduled CLI jobs, and the API all stamp the same chain without reconfiguration. |
+| 4 | **PDF export** — _HTML foundation SHIPPED_ on `main`; binary PDF byte stream still deferred (`render_dossier_pdf(dossier) -> bytes` via reportlab or weasyprint; `cbsrm[pdf]` extra) | medium | medium | The HTML path already covers most "operator wants a PDF for a meeting" use cases via browser File → Print. Binary PDF is only required for environments that cannot run a browser. Risk: dependency footprint — keep reportlab/weasyprint under `cbsrm[pdf]` extra so the core stays markdown-only. |
+| 4b | **Executable `macro-composite` report** — give the second registry entry a real builder + per-window or per-snapshot surface so the catalog stops being one-executable-plus-one-stub. | medium | medium | Operator-driven design: `cbsrm.macro.classify_regime` / `classify_phase` already exist as caller-driven helpers; this slice wires them through a deterministic snapshot recipe matching the crisis-dossier composition shape. |
 | 4 | **Hosted API hardening** (CORS, rate-limit middleware, request-IDs, structured logging, OpenAPI metadata polish, optional bearer-token gate) | medium | medium | Required before any non-local deploy. Risk is that "hosted" implies hosting; keep all infra-implying behavior gated behind explicit config so single-process usage stays the default. |
 | 5 | **Live-data-backed crisis dossier builder** (`build_crisis_dossier_live(start, end)`; uses existing `cbsrm.data` adapters; FALLS BACK to fixture mode if data fetch fails) | high | high | The biggest user-visible upgrade — turns research analytics into "show me how this looks for the *current* window." Risk is offline-determinism: must add an explicit `mode=fixture|live` parameter, keep `mode=fixture` as the default, and never let the live path silently flip a deterministic test. |
 | 6 | **Streamlit viewer multi-page upgrade** (`pages/01_crisis_dossier.py`, `pages/02_macro_composite.py`, `pages/03_systemic_network.py`) — surfaces the three pillars of v0.8 in one nav | medium | low | Pure Streamlit shape change. Keeps standalone `dashboard/crisis_dossier_viewer.py` as the legacy entrypoint for backward compatibility. |
@@ -167,7 +183,7 @@ In order. Each one fits the rc-style discipline used through v0.8: feature branc
 - **Default mode is the v0.8 mode.** Every new surface defaults to the behavior that already exists. Opt-in for new behavior, not opt-out.
 - **No new network in tests.** The convention established in `tests/test_cli_crisis_dossier.py` and `tests/test_api_crisis_dossiers.py` (monkeypatch `urllib.request.urlopen` and `requests.Session.request` to fail) extends to every new test file.
 - **Optional deps stay optional.** PDF requires `cbsrm[pdf]`; live-data live mode does not require new deps (uses existing `cbsrm.data`); API hardening adds no required deps.
-- **Pre-merge gate:** full suite green (currently at 641 on `main`, +86 since `v0.8.0`; remaining slices will continue the growth), no `.py` changes outside the allowlist for each slice, CHANGELOG entry present.
+- **Pre-merge gate:** full suite green (currently at 739 on `main`, +184 since `v0.8.0`; remaining slices will continue the growth), no `.py` changes outside the allowlist for each slice, CHANGELOG entry present.
 - **Branch discipline:** one slice = one branch = one merge commit = one annotated tag where appropriate (`v0.8.1` after slice 1, etc., to keep the audit trail clean).
 
 ---
@@ -250,4 +266,9 @@ v0.9 work-in-progress slices on `main` (post-`v0.8.0` tag; no v0.8.x patch tag c
 [2026-05-24] slice=v0.9-html-renderer branch=feat/report-html-renderer        merge=008684b tag=- tests=619 notes=render_dossier_html foundation (PR #9)
 [2026-05-24] slice=v0.9-html-cli-api  branch=feat/cli-api-html-format         merge=464eb99 tag=- tests=636 notes=CLI --format html + /html API route (PR #10)
 [2026-05-24] slice=v0.9-html-streaml  branch=feat/streamlit-html-download     merge=5a84cc6 tag=- tests=641 notes=Streamlit HTML download button (PR #11)
+[2026-05-24] slice=v0.9-docs-chk-1    branch=docs/v090-status-checkpoint      merge=62325d2 tag=- tests=641 notes=Docs checkpoint v0.9 catalog+HTML (PR #12)
+[2026-05-24] slice=v0.9-manifest      branch=feat/report-manifest             merge=8d4d0aa tag=- tests=677 notes=Deterministic manifest foundation (PR #13)
+[2026-05-24] slice=v0.9-mani-surfaces branch=feat/manifest-cli-api-streamlit  merge=d0798c3 tag=- tests=700 notes=Manifest exposure CLI/API/Streamlit (PR #14)
+[2026-05-24] slice=v0.9-api-audit     branch=feat/api-audit-export-stamping   merge=7f7057d tag=- tests=727 notes=API audit-chain export stamping (PR #15)
+[2026-05-24] slice=v0.9-cli-audit     branch=feat/cli-audit-export-stamping   merge=ebb2b1a tag=- tests=739 notes=CLI audit-chain export stamping (PR #16)
 ```

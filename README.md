@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-641_passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-739_passing-brightgreen.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-0.8.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 
@@ -97,7 +97,7 @@ CBSRM is the public half of a paired system. The private companion (VolanX) appl
 
 ```bash
 pytest tests/ -v
-# 641 passing on current main in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
+# 739 passing on current main in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
 ```
 
 ## Whitepaper
@@ -168,11 +168,19 @@ The v0.8 research flow shipped at tag `v0.8.0` and is on `main`, with
 three front-ends sharing one composition. Additive v0.9 work has since
 landed on `main` on top of the `v0.8.0` tag — a deterministic report
 registry/catalog (`cbsrm.reporting.get_report_catalog`, `cbsrm reports`,
-`GET /reports`, `dashboard/report_catalog_viewer.py`) and an HTML export
+`GET /reports`, `dashboard/report_catalog_viewer.py`), an HTML export
 foundation (`cbsrm.reporting.render_dossier_html`) with CLI/API/Streamlit
 parity (`--format html`, `/reports/crisis-dossiers/{window_id}/html`,
-HTML download button in the existing crisis-dossier viewer). These v0.9
-surfaces are **not** in the `v0.8.0` tag — they live on `main` only.
+HTML download button in the existing crisis-dossier viewer),
+deterministic export-time manifests
+(`cbsrm.reporting.build_report_manifest`, surfaced via
+`cbsrm crisis-dossier --manifest PATH`, `?manifest=true` on the JSON
+API, and a Streamlit manifest download button), and opt-in audit-chain
+stamping for exports (`cbsrm.reporting.stamp_manifest_to_chain`,
+surfaced via `cbsrm crisis-dossier --audit-db PATH` and `?audit=true`
+on the JSON API). These v0.9 surfaces are **not** in the `v0.8.0` tag
+— they live on `main` only. Streamlit audit-chain stamping is still
+deferred.
 
 **macro shock (`score_event`) → crisis replay (`replay_macro_events`) →
 cross-asset connectedness (`DYSpilloverIndicator`) → systemic DebtRank
@@ -184,9 +192,9 @@ cross-asset connectedness (`DYSpilloverIndicator`) → systemic DebtRank
 
 | Front-end | Command |
 |---|---|
-| **CLI**       | `cbsrm crisis-dossier WINDOW --format json\|markdown\|html [--title-prefix TEXT]` · `cbsrm reports` |
-| **HTTP API**  | `GET /reports`, `…/crisis-dossiers`, `…/{window_id}`, `…/{window_id}/markdown`, `…/{window_id}/html` |
-| **Streamlit** | `streamlit run dashboard/crisis_dossier_viewer.py` (Markdown/JSON/HTML downloads) · `streamlit run dashboard/report_catalog_viewer.py` |
+| **CLI**       | `cbsrm crisis-dossier WINDOW --format json\|markdown\|html [--title-prefix TEXT] [--manifest PATH] [--audit-db PATH]` · `cbsrm reports` |
+| **HTTP API**  | `GET /reports`, `…/crisis-dossiers`, `…/{window_id}[?manifest=true][&audit=true]`, `…/{window_id}/markdown`, `…/{window_id}/html` |
+| **Streamlit** | `streamlit run dashboard/crisis_dossier_viewer.py` (Markdown/JSON/HTML/Manifest downloads) · `streamlit run dashboard/report_catalog_viewer.py` |
 
 All three are deterministic, fixture-backed, offline (no FRED key, no
 network), and return bit-for-bit identical reports for the same window.

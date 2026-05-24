@@ -8,6 +8,17 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — v0.8 work in progress
 
+**`cbsrm.diagnostics.crisis_dossiers` — historical crisis-window research dossiers**
+- Pure function `build_crisis_dossier(window_id, *, fixtures=None, config=None)` composes the v0.8 stack (`macro_events.score_event` → `macro_replay.replay_macro_events` → `networks.debt_rank` → `macro.classify_phase`) into a single deterministic, fixture-backed research dossier. First reporting-ready artifact on top of v0.8.
+- Three pinned canonical windows: `2008Q4` (credit/liquidity crisis, Lehman aftermath), `2020Q1` (COVID volatility shock), `2023Q1` (regional banking stress — SVB/SBNY/FRC).
+- Output schema: `window_id`, `title`, `period`, `shock_summary`, `macro_event_scores`, `replay_summary`, `network_stress_summary`, `phase_label`, `dominant_drivers`, `risk_posture`, `research_notes`, `spec` (versioning + source attribution + composition trace).
+- Fixtures are calibrated to plausible contemporaneous prints (e.g. NFP −240k Nov 2008 release, NFP −701k Apr 2020 release) but are pinned in-module for bit-for-bit determinism; operators wanting production runs should swap in real source data via the existing `cbsrm.data` adapters.
+- 2023Q1 fixture deliberately demonstrates the macro-vs-network split: macro prints look benign, phase classifier returns `indeterminate`, but DebtRank against a thin-equity regional seed bank still reveals concentrated fragility.
+- Companion helpers: `list_dossier_windows()`, `get_fixture_snapshot(window_id)`, `CRISIS_DOSSIER_WINDOWS` tuple.
+- Manifest at `notebooks/crisis_replay/fixtures/crisis_windows.csv` (window_id / title / period / n_macro_events / n_price_series / n_banks / seed_node / shock_summary).
+- Offline by design — explicit no-I/O regression test in the suite (no urllib / requests / httpx / socket / sqlite3 / subprocess imports reachable from the module).
+- 32 tests in `tests/test_crisis_dossiers.py` covering all 3 window IDs, invalid IDs, schema completeness, phase-classifier integration, DebtRank integration, macro-event scoring integration, replay-surface integration, version metadata, caller-config echo, fixture-override seam, no-I/O sanity, narrative-text integrity, and determinism.
+
 **`cbsrm.macro.phase_classifier` — Acemoglu-style deterministic phase classifier**
 - Pure function `classify_phase(features, *, config=None)` labels a macro/market feature snapshot into one of 8 phases: `expansion`, `overheating`, `slowdown`, `contraction`, `disinflationary_recovery`, `stagflationary_stress`, `financial_stress`, `indeterminate`.
 - Feature inputs (all optional, all z-scored, caller-supplied): `growth_z`, `inflation_z`, `unemployment_z` (or its synonym `labor_slack_z`), `rates_z`, `credit_spread_z`, `volatility_z`, `liquidity_z`, `systemic_risk_z`. Minimum 3 features required for a non-indeterminate label.
@@ -40,10 +51,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 10 tests in `tests/test_macro_replay.py` covering returned schema, hotter-direction propagation, hand-calculated pre/post log returns on a linear ramp, missing-column / empty-input / non-positive-window / non-DataFrame `ValueError` paths, fixture round-trip, and unknown-event passthrough.
 
 ### Planned for v0.8 (remaining)
-- Historical crisis-window dossiers — 2008Q4 / 2020Q1 / 2023Q1 walkthroughs that drive Stage 1-4 across the canonical CRISIS_WINDOWS (separate from the per-event macro-replay surface that already shipped)
 - `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
 - LBS (locational banking statistics) + BIS EER (effective exchange rates)
-- *(Optional / downstream)* VolanX wiring of `macro_events.score_event` and `classify_phase` as decision-intelligence features (operator-tracked, not in-tree)
+- *(Optional / downstream)* VolanX wiring of `macro_events.score_event`, `classify_phase`, and `build_crisis_dossier` as decision-intelligence features (operator-tracked, not in-tree)
 
 ---
 

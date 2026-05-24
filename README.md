@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-815_passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-865_passing-brightgreen.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-0.8.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 
@@ -97,7 +97,7 @@ CBSRM is the public half of a paired system. The private companion (VolanX) appl
 
 ```bash
 pytest tests/ -v
-# 815 passing on current main in <25s; all HTTP mocked; Monte Carlo seeded for determinism.
+# 865 passing on current main in <25s; all HTTP mocked; Monte Carlo seeded for determinism.
 ```
 
 ## Whitepaper
@@ -191,8 +191,16 @@ endpoint, and a Streamlit sidebar "Persist report to store" button
 driven by `CBSRM_REPORT_STORE`). The persistence layer is intentionally
 **not** coupled to the audit chain in code; the two surfaces share the
 manifest's `output_sha256` as a natural join key, and either can be
-used standalone. These v0.9 surfaces are **not** in the `v0.8.0`
-tag — they live on `main` only.
+used standalone. The catalog's second entry, `macro-composite`, is now
+Python-executable through
+`cbsrm.reporting.build_macro_composite_report(window_id)` and
+`cbsrm.reporting.render_macro_composite_markdown(report)` — a
+phase-classifier-only first cut, deterministic and fixture-backed,
+returning JSON + Markdown for the same canonical windows
+(`2008Q4` / `2020Q1` / `2023Q1`); front-end (CLI / API / Streamlit) and
+export (manifest / audit / persistence) wiring for the macro-composite
+report is still deferred. These v0.9 surfaces are **not** in the
+`v0.8.0` tag — they live on `main` only.
 
 **macro shock (`score_event`) → crisis replay (`replay_macro_events`) →
 cross-asset connectedness (`DYSpilloverIndicator`) → systemic DebtRank

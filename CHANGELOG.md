@@ -8,6 +8,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — v0.8 work in progress
 
+**`cbsrm.api.routes` — read-only FastAPI crisis-dossier report endpoints**
+- `GET /reports/crisis-dossiers` → `{"windows": ["2008Q4", "2020Q1", "2023Q1"]}` (live from `list_dossier_windows()` so the set stays in sync as fixtures evolve).
+- `GET /reports/crisis-dossiers/{window_id}` → the `{report: {...}, dossier: {...}}` JSON envelope, identical to `cbsrm crisis-dossier WINDOW --format json`.
+- `GET /reports/crisis-dossiers/{window_id}/markdown` → `PlainTextResponse` with media type `text/markdown; charset=utf-8`; body identical to `cbsrm crisis-dossier WINDOW --format markdown`.
+- Unknown `window_id` → HTTP 404 with `{"detail": {"error": "...", "window_id": "...", "supported_windows": [...]}}`. No traceback exposed. Centralised in a private `_resolve_dossier_or_404` helper so the JSON and Markdown routes share the same error contract.
+- Pure pass-through over `cbsrm.diagnostics.build_crisis_dossier` + `cbsrm.reporting.build_report_payload` / `render_dossier_markdown`. No methodology added. Reporting/dossier internals unchanged.
+- Lazy imports inside each route body and inside `build_app` for FastAPI, Starlette `PlainTextResponse`, and the reporting/diagnostics layers, keeping `cbsrm.api.routes` import-safe in environments without the `cbsrm[api]` extras.
+- 15 tests in `tests/test_api_crisis_dossiers.py` covering: offline app construction (route registration check + monkeypatched `urllib`/`requests` failure), list endpoint shape, JSON endpoint envelope for `2008Q4`, all 3 windows × both endpoints, 404 detail shape on both endpoints (incl. supported-window list + no-traceback contract), Markdown `content-type` + UTF-8 charset + `→` byte-level integrity, and read-only determinism (repeated calls byte-identical).
+
 **`cbsrm crisis-dossier` — CLI export of crisis-window dossiers (JSON / Markdown)**
 - New subcommand `cbsrm crisis-dossier WINDOW [--format json|markdown] [--title-prefix TEXT]`. Default format is `json`; `--title-prefix` applies to Markdown rendering only and is silently ignored for JSON.
 - Composes `cbsrm.diagnostics.build_crisis_dossier` with `cbsrm.reporting.build_report_payload` / `render_dossier_markdown`. Pure pass-through — adds zero methodology, duplicates zero logic.

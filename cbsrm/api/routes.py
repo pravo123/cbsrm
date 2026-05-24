@@ -116,6 +116,88 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
             )
         return {"chain_ok": True, "broken_row_ids": []}
 
+    # ─── v0.8 crisis-window reports (read-only) ─────────────────────
+    #
+    # Thin mirror of the CLI `crisis-dossier` surface. Pure composition
+    # of `cbsrm.diagnostics.build_crisis_dossier` with the
+    # `cbsrm.reporting` payload/renderer. No methodology added here.
+    #
+    # Lazy imports keep the FastAPI module importable in environments
+    # without the optional reporting stack ready at boot.
+
+    def _resolve_dossier_or_404(window_id: str):
+        """Build a dossier for ``window_id`` or raise a 404 with the
+        supported-window list. Centralised so JSON and Markdown routes
+        share the same error contract."""
+        from cbsrm.diagnostics import (
+            build_crisis_dossier,
+            list_dossier_windows,
+        )
+
+        supported = list_dossier_windows()
+        if window_id not in supported:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": f"unknown crisis-dossier window '{window_id}'",
+                    "window_id": window_id,
+                    "supported_windows": list(supported),
+                },
+            )
+        try:
+            return build_crisis_dossier(window_id)
+        except ValueError as exc:
+            # Defence in depth — the membership check above should make
+            # this unreachable, but if the registry shape ever drifts
+            # the API still fails clean (no traceback leak).
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": str(exc),
+                    "window_id": window_id,
+                    "supported_windows": list(supported),
+                },
+            ) from None
+
+    @app.get("/reports/crisis-dossiers", tags=["reports"])
+    def list_crisis_dossiers() -> dict[str, Any]:
+        """List the supported crisis-dossier window IDs."""
+        from cbsrm.diagnostics import list_dossier_windows
+
+        return {"windows": list(list_dossier_windows())}
+
+    @app.get("/reports/crisis-dossiers/{window_id}", tags=["reports"])
+    def get_crisis_dossier(window_id: str) -> dict[str, Any]:
+        """Return the JSON report payload for one crisis window.
+
+        Shape: ``{"report": {...}, "dossier": {...}}`` — identical to
+        ``cbsrm crisis-dossier WINDOW --format json``.
+        """
+        from cbsrm.reporting import build_report_payload
+
+        dossier = _resolve_dossier_or_404(window_id)
+        return build_report_payload(dossier)
+
+    @app.get(
+        "/reports/crisis-dossiers/{window_id}/markdown",
+        tags=["reports"],
+        response_class=None,  # set per-call below
+    )
+    def get_crisis_dossier_markdown(window_id: str):
+        """Return the Markdown report for one crisis window.
+
+        Media type: ``text/markdown; charset=utf-8``. Body is identical
+        to ``cbsrm crisis-dossier WINDOW --format markdown``.
+        """
+        from fastapi.responses import PlainTextResponse
+        from cbsrm.reporting import render_dossier_markdown
+
+        dossier = _resolve_dossier_or_404(window_id)
+        return PlainTextResponse(
+            content=render_dossier_markdown(dossier),
+            media_type="text/markdown; charset=utf-8",
+        )
+
     return app
 
 

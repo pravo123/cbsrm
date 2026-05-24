@@ -42,7 +42,10 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
 
     if audit_conn is None:
         audit_conn = sqlite3.connect(":memory:", check_same_thread=False)
-    audit = AuditChain(audit_conn)
+    # Closure variable is renamed from ``audit`` to ``audit_chain`` so
+    # the v0.9 JSON crisis-dossier endpoint can expose an ``audit:
+    # bool`` query parameter without a name collision.
+    audit_chain = AuditChain(audit_conn)
 
     app = FastAPI(
         title="CBSRM — Cross-Border Systemic Risk Monitor",
@@ -92,7 +95,7 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
 
     @app.get("/audit/{subject}", tags=["audit"])
     def get_audit(subject: str, limit: int = 100) -> dict[str, Any]:
-        rows = audit.query_subject(subject, limit=limit)
+        rows = audit_chain.query_subject(subject, limit=limit)
         return {
             "subject": subject,
             "n_rows": len(rows),
@@ -108,7 +111,7 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
 
     @app.post("/audit/verify", tags=["audit"])
     def verify_audit() -> dict[str, Any]:
-        ok, broken = audit.verify()
+        ok, broken = audit_chain.verify()
         if not ok:
             raise HTTPException(
                 status_code=409,
@@ -187,25 +190,39 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
 
     @app.get("/reports/crisis-dossiers/{window_id}", tags=["reports"])
     def get_crisis_dossier(
-        window_id: str, manifest: bool = False,
+        window_id: str,
+        manifest: bool = False,
+        audit: bool = False,
     ) -> dict[str, Any]:
         """Return the JSON report payload for one crisis window.
 
-        Shape: ``{"report": {...}, "dossier": {...}}`` — identical to
-        ``cbsrm crisis-dossier WINDOW --format json``.
+        Shape (matrix of the two query flags):
 
-        When ``?manifest=true`` is supplied, a deterministic export-time
-        manifest is appended under the ``"manifest"`` key:
-        ``{"report": {...}, "dossier": {...}, "manifest": {...}}``.
+        +----------+-------+-------------------------------------------+
+        | manifest | audit | response keys                             |
+        +==========+=======+===========================================+
+        | false    | false | ``report``, ``dossier`` (v0.8 unchanged)  |
+        | true     | false | ``report``, ``dossier``, ``manifest``     |
+        | false    | true  | ``report``, ``dossier``, ``manifest``,    |
+        |          |       | ``audit`` (manifest auto-built)           |
+        | true     | true  | ``report``, ``dossier``, ``manifest``,    |
+        |          |       | ``audit``                                 |
+        +----------+-------+-------------------------------------------+
+
+        When ``?audit=true`` the manifest is appended to the app's
+        :class:`AuditChain` as one ``REPORT_EXPORTED`` row, and the
+        response ``audit`` key carries the row metadata
+        (``row_id``, ``hash``, ``prev_hash``, ``ts``, ``subject``,
+        ``kind``). The chain row's ``ts`` is wall-clock UTC set inside
+        :meth:`AuditChain.append`; the manifest's own
+        ``generated_at_utc`` field is independent
+        (deterministic-by-default).
 
         The manifest's ``output_sha256`` hashes the *core* canonical
         payload JSON text (matching the CLI ``--format json`` output
         byte-for-byte), not the self-referential response envelope
         that includes the manifest. This keeps CLI ↔ API hash parity
-        for the same window.
-
-        Default (``manifest=false``) preserves the existing envelope
-        byte-for-byte.
+        for the same window across all four matrix rows.
         """
         import json as _json
 
@@ -213,10 +230,13 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
 
         dossier = _resolve_dossier_or_404(window_id)
         payload = build_report_payload(dossier)
-        if not manifest:
+        if not manifest and not audit:
             return payload
 
-        from cbsrm.reporting import build_report_manifest
+        from cbsrm.reporting import (
+            build_report_manifest,
+            stamp_manifest_to_chain,
+        )
 
         canonical = (
             _json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
@@ -230,7 +250,12 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
             dossier=dossier,
             payload=payload,
         )
-        return {**payload, "manifest": manifest_dict}
+
+        response: dict[str, Any] = {**payload, "manifest": manifest_dict}
+        if audit:
+            audit_row = stamp_manifest_to_chain(audit_chain, manifest_dict)
+            response["audit"] = audit_row
+        return response
 
     @app.get(
         "/reports/crisis-dossiers/{window_id}/markdown",

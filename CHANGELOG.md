@@ -25,6 +25,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `GET /reports` → `{"reports": [...]}` JSON catalog, using the same lazy-FastAPI route style as the rest of `cbsrm/api/routes.py`. Pure pass-through over `cbsrm.reporting.get_report_catalog()`. Does not execute any report, does not change any existing endpoint, does not introduce a new dependency.
 - Existing `/reports/crisis-dossiers`, `/reports/crisis-dossiers/{window_id}`, and `/reports/crisis-dossiers/{window_id}/markdown` routes preserved bit-for-bit.
 
+**`cbsrm reports` — CLI catalog command**
+- New subcommand `cbsrm reports` prints the deterministic registry catalog as JSON (`indent=2`, `ensure_ascii=False`), using the existing `_write_stdout_utf8_safe` helper for Windows-cp1252-safe output. Pure pass-through over `cbsrm.reporting.get_report_catalog()`. Mirrors the `GET /reports` API endpoint for CLI/API parity. Metadata-only — the command never executes a report, never touches the network, never writes to disk. No existing CLI command modified.
+
 ---
 
 ## [0.8.0] — 2026-05-24

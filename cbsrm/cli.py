@@ -722,6 +722,27 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_reports(_args: argparse.Namespace) -> int:
+    """Print the deterministic report registry catalog as JSON.
+
+    Pure pass-through over :func:`cbsrm.reporting.get_report_catalog`.
+    The command is metadata-only — it never executes a report, never
+    touches the network, and never writes to disk. Mirrors the
+    ``GET /reports`` HTTP endpoint for CLI/API parity.
+    """
+    from cbsrm.reporting import get_report_catalog
+
+    catalog = get_report_catalog()
+    # Match the formatting convention of ``crisis-dossier --format json``
+    # above: indent=2, ensure_ascii=False, UTF-8-safe stdout. The catalog
+    # is plain ASCII today, but mirroring keeps the surface uniform if a
+    # future entry carries non-ASCII (e.g. en-dashes in titles).
+    _write_stdout_utf8_safe(
+        json.dumps(catalog, indent=2, ensure_ascii=False) + "\n"
+    )
+    return 0
+
+
 def _write_stdout_utf8_safe(text: str) -> None:
     """Write `text` to stdout as UTF-8 even on Windows cp1252 consoles.
 
@@ -947,6 +968,19 @@ def main(argv: list[str] | None = None) -> int:
              "(markdown format only; ignored for json)",
     )
     p_cd.set_defaults(func=cmd_crisis_dossier)
+
+    # ─── v0.9 report registry catalog ───────────────────────────────
+    sub.add_parser(
+        "reports",
+        help="Print the deterministic report catalog as JSON "
+             "(metadata only; no report is executed)",
+        description=(
+            "Print the deterministic report registry catalog as JSON. "
+            "Metadata-only: this command does not execute any report, "
+            "make network calls, or write to disk. Mirrors the "
+            "`GET /reports` HTTP endpoint for CLI/API parity."
+        ),
+    ).set_defaults(func=cmd_reports)
 
     args = p.parse_args(argv)
     return args.func(args)

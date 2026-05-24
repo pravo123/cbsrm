@@ -8,6 +8,15 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — v0.8 work in progress
 
+**`cbsrm crisis-dossier` — CLI export of crisis-window dossiers (JSON / Markdown)**
+- New subcommand `cbsrm crisis-dossier WINDOW [--format json|markdown] [--title-prefix TEXT]`. Default format is `json`; `--title-prefix` applies to Markdown rendering only and is silently ignored for JSON.
+- Composes `cbsrm.diagnostics.build_crisis_dossier` with `cbsrm.reporting.build_report_payload` / `render_dossier_markdown`. Pure pass-through — adds zero methodology, duplicates zero logic.
+- Unknown windows exit with code 2 and a clean `error: unknown crisis-dossier window 'XYZ'. Supported windows: …` message on stderr (no traceback). Supported set is discovered live via `list_dossier_windows()` so it stays in sync as new dossier fixtures land.
+- UTF-8-safe stdout writer (`_write_stdout_utf8_safe`) bypasses the Windows cp1252 console codepage by going through `sys.stdout.buffer.write(...encode("utf-8"))` when available, with a graceful text fallback. The renderer emits `→` and em-dashes; the old `print()` path would have crashed on a default Windows console.
+- JSON output uses `ensure_ascii=False` so the literal `→` composition arrow round-trips through `json.loads` without escape-sequence noise.
+- Offline by design — no live API calls, no file writes; explicit `test_no_external_network_io` regression test monkeypatches `urllib.request.urlopen` and `requests.Session.request` to fail on any call.
+- 18 tests in `tests/test_cli_crisis_dossier.py` covering: default format, explicit JSON format, all 3 supported windows × both formats, Markdown structural sections (H2 headers + disclaimer), title-prefix application, unicode delivery (`→` literal in JSON and Markdown), unknown-window error path (no traceback, supported set listed), argparse rejection of invalid `--format` and missing window, byte-identical re-runs (determinism), and the no-network-IO contract.
+
 **`cbsrm.reporting.report_renderer` — deterministic Markdown + JSON export of crisis-window dossiers**
 - Pure function `render_dossier_markdown(dossier, *, title_prefix=None) -> str` turns the output of `build_crisis_dossier` into a publication-ready Markdown report: title, window-id + period, shock summary, phase classification (label / posture / dominant drivers), macro event score table, replay table, network stress summary, research notes, spec/version metadata, and a canonical NFA disclaimer footer.
 - Pure function `build_report_payload(dossier) -> dict` wraps the dossier in a `{report: {...}, dossier: {...}}` envelope that round-trips cleanly through `json.dumps`. Recursive sanitizer handles numpy scalars, numpy arrays, pandas `Timestamp` values, sets/tuples, and non-finite floats (→ `None`).

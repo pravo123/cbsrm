@@ -35,6 +35,7 @@ from cbsrm.reporting import (
     render_dossier_html,
     render_dossier_markdown,
     stamp_manifest_to_db_path,
+    store_report_artifact,
 )
 
 
@@ -63,6 +64,33 @@ def resolve_audit_db_path(
             return candidate
     env_map = env if env is not None else os.environ
     candidate = (env_map.get("CBSRM_AUDIT_DB") or "").strip()
+    return candidate or None
+
+
+def resolve_report_store_path(
+    *,
+    sidebar_override: str | None,
+    env: Mapping[str, str] | None = None,
+) -> str | None:
+    """Decide which report-artifact store DB path the Streamlit page
+    should use. Parallel to :func:`resolve_audit_db_path`.
+
+    Precedence:
+
+    1. ``sidebar_override`` (non-blank after ``.strip()``) — wins.
+    2. ``env["CBSRM_REPORT_STORE"]`` (non-blank after ``.strip()``) —
+       fallback.
+    3. Otherwise ``None``.
+
+    ``env`` defaults to :data:`os.environ`. Whitespace-only strings
+    are treated as unset on either side.
+    """
+    if sidebar_override is not None:
+        candidate = sidebar_override.strip()
+        if candidate:
+            return candidate
+    env_map = env if env is not None else os.environ
+    candidate = (env_map.get("CBSRM_REPORT_STORE") or "").strip()
     return candidate or None
 
 
@@ -222,6 +250,47 @@ def render() -> None:
         except sqlite3.OperationalError as exc:
             st.sidebar.error(
                 f"Cannot open audit DB '{db_path}': {exc}"
+            )
+
+    # ─── Sidebar: opt-in report-artifact store ─────────────────────
+    with st.sidebar:
+        st.markdown("### Report store (opt-in)")
+        store_sidebar_override = st.text_input(
+            "Report store DB path (overrides CBSRM_REPORT_STORE)",
+            value="",
+        )
+        store_path = resolve_report_store_path(
+            sidebar_override=store_sidebar_override,
+        )
+        if store_path:
+            st.caption(f"Configured: `{store_path}`")
+        else:
+            st.caption(
+                "Not configured. Set `CBSRM_REPORT_STORE` or "
+                "enter a path above."
+            )
+        do_store = st.button(
+            "Persist report to store",
+            disabled=(store_path is None),
+        )
+
+    if do_store and store_path:
+        try:
+            stored = store_report_artifact(
+                store_path,
+                output_text=artifacts["markdown"],
+                manifest=artifacts["manifest"],
+            )
+            st.sidebar.success(
+                f"Stored artifact\n\n"
+                f"output_sha256: `{stored['output_sha256']}`\n\n"
+                f"was_existing: `{stored['was_existing']}`\n\n"
+                f"byte_length: `{stored['byte_length']}`\n\n"
+                f"created_at_utc: `{stored['created_at_utc']}`"
+            )
+        except sqlite3.OperationalError as exc:
+            st.sidebar.error(
+                f"Cannot open report store '{store_path}': {exc}"
             )
 
     st.markdown("---")

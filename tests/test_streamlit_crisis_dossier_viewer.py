@@ -300,3 +300,98 @@ def test_viewer_manifest_stamps_through_db_path_helper(viewer, tmp_path):
     assert audit_row["subject"] == "report:crisis-dossier:2008Q4:markdown"
     assert audit_row["kind"] == "REPORT_EXPORTED"
     assert db_path.is_file()
+
+
+# ─── resolve_report_store_path (v0.9 addition) ──────────────────────
+
+
+def test_resolve_report_store_path_uses_sidebar_override(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override="/sidebar/store.db",
+        env={"CBSRM_REPORT_STORE": "/env/store.db"},
+    )
+    assert out == "/sidebar/store.db"
+
+
+def test_resolve_report_store_path_falls_back_to_env_var(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override="",
+        env={"CBSRM_REPORT_STORE": "/env/store.db"},
+    )
+    assert out == "/env/store.db"
+
+
+def test_resolve_report_store_path_returns_none_when_neither_set(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override="", env={},
+    )
+    assert out is None
+
+
+def test_resolve_report_store_path_blank_sidebar_lets_env_win(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override="   ",
+        env={"CBSRM_REPORT_STORE": "/env/store.db"},
+    )
+    assert out == "/env/store.db"
+
+
+def test_resolve_report_store_path_strips_env_value(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override=None,
+        env={"CBSRM_REPORT_STORE": "  /env/store.db  "},
+    )
+    assert out == "/env/store.db"
+
+
+def test_resolve_report_store_path_blank_env_returns_none(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override=None,
+        env={"CBSRM_REPORT_STORE": "   "},
+    )
+    assert out is None
+
+
+def test_resolve_report_store_path_none_sidebar_uses_env_default(viewer):
+    out = viewer.resolve_report_store_path(
+        sidebar_override=None,
+        env={"CBSRM_REPORT_STORE": "/env/store.db"},
+    )
+    assert out == "/env/store.db"
+
+
+# ─── Integration: viewer artifacts -> persistence DB path ───────────
+
+
+def test_viewer_artifacts_persist_through_store_report_artifact(
+    viewer, tmp_path,
+):
+    """End-to-end: build viewer artifacts, then persist the Markdown
+    output + manifest into a sqlite store via the public helper.
+    Pins the sha256 / store contract without touching Streamlit."""
+    import hashlib
+
+    from cbsrm.reporting import (
+        get_report_artifact,
+        store_report_artifact,
+    )
+
+    artifacts = viewer.build_viewer_artifacts("2008Q4")
+    db_path = tmp_path / "viewer-store.db"
+    stored = store_report_artifact(
+        str(db_path),
+        output_text=artifacts["markdown"],
+        manifest=artifacts["manifest"],
+    )
+    expected_hash = hashlib.sha256(
+        artifacts["markdown"].encode("utf-8"),
+    ).hexdigest()
+    assert stored["output_sha256"] == expected_hash
+    assert stored["format"] == "markdown"
+    assert stored["source"] == "streamlit"
+    assert stored["was_existing"] is False
+    # And the same hash round-trips via `get`.
+    fetched = get_report_artifact(str(db_path), expected_hash)
+    assert fetched is not None
+    assert fetched["output_text"] == artifacts["markdown"]
+    assert fetched["manifest"] == artifacts["manifest"]

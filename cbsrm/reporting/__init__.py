@@ -41,7 +41,16 @@ Public surface (v0.9 work in progress)
   :class:`ValueError` for unknown ids.
 * :data:`REPORT_REGISTRY_VERSION` — semantic version of the registry
   spec (independent of the renderer and dossier specs).
+* :func:`render_dossier_html` — render a crisis-window dossier as
+  deterministic HTML suitable for browser print-to-PDF. Requires the
+  optional ``markdown`` package (``pip install cbsrm[html]``).
+* :data:`HTML_RENDERER_VERSION` — semantic version of the HTML
+  renderer spec.
 """
+from cbsrm.reporting.html_renderer import (
+    HTML_RENDERER_VERSION,
+    render_dossier_html,
+)
 from cbsrm.reporting.registry import (
     REPORT_REGISTRY_VERSION,
     get_report_catalog,
@@ -64,4 +73,6 @@ __all__ = [
     "list_report_ids",
     "get_report_metadata",
     "REPORT_REGISTRY_VERSION",
+    "render_dossier_html",
+    "HTML_RENDERER_VERSION",
 ]

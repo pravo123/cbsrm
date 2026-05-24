@@ -6,18 +6,35 @@
 
 ## 0. Current shipped state (verified)
 
+### 0.1 — Released tag `v0.8.0` (frozen)
+
 | Surface | Status | Reference |
 |---|---|---|
 | **Tag** | `v0.8.0` annotated on origin | commit `410e3ac9f3e2d3e79484571ef16fc92cd3099d10` |
-| **`main`** | `== origin/main == v0.8.0^{commit}` | clean |
-| **Tests** | **555 passed** on `v0.8.0` | `pytest tests/` |
-| **CLI** | `cbsrm crisis-dossier WINDOW [--format json\|markdown] [--title-prefix TEXT]` | `cbsrm/cli.py` |
-| **HTTP API** | `GET /reports/crisis-dossiers`, `…/{window_id}`, `…/{window_id}/markdown` (read-only, lazy FastAPI) | `cbsrm/api/routes.py` |
-| **Streamlit viewer** | `streamlit run dashboard/crisis_dossier_viewer.py` (offline, no FRED key) | `dashboard/crisis_dossier_viewer.py` |
+| **Tests at tag** | **555 passed** on `v0.8.0` | `pytest tests/` at the tag commit |
+| **CLI (v0.8)** | `cbsrm crisis-dossier WINDOW [--format json\|markdown] [--title-prefix TEXT]` | `cbsrm/cli.py` |
+| **HTTP API (v0.8)** | `GET /reports/crisis-dossiers`, `…/{window_id}`, `…/{window_id}/markdown` (read-only, lazy FastAPI) | `cbsrm/api/routes.py` |
+| **Streamlit viewer (v0.8)** | `streamlit run dashboard/crisis_dossier_viewer.py` (offline, no FRED key) | `dashboard/crisis_dossier_viewer.py` |
 | **Six methodology stages** | `score_event` → `replay_macro_events` → `debt_rank` → `classify_phase` → `build_crisis_dossier` → `render_dossier_markdown` / `build_report_payload` | composed pipeline |
-| **Sibling launch-copy branch** | `docs/v08-launch-copy-refresh` (commit `54c6241`, pushed) — refreshes `SHOW_HN_POST.md` + `SSRN_SUBMISSION.md` for v0.8 | open PR-ready |
 
-**RC sequence into v0.8.0:** `rc1` → `rc2` → `rc3` → `rc4` → `rc5` → `rc6` → `v0.8.0`. All tags on origin.
+### 0.2 — Current `main` (v0.9 work in progress; NOT in the `v0.8.0` tag)
+
+| Surface | Status | Reference |
+|---|---|---|
+| **`main`** | ahead of `v0.8.0` by additive v0.9 commits; CI green | `git log v0.8.0..main` |
+| **Tests on `main`** | **641 passed** (was 555 at `v0.8.0`; +86 from v0.9 additive slices) | `pytest tests/` |
+| **Report registry (v0.9)** | `cbsrm.reporting.get_report_catalog` / `list_report_ids` / `get_report_metadata`; 2 entries (`crisis-dossier`, `macro-composite`) | `cbsrm/reporting/registry.py` |
+| **Catalog CLI (v0.9)** | `cbsrm reports` — JSON dump of the registry catalog | `cbsrm/cli.py` |
+| **Catalog API (v0.9)** | `GET /reports` — JSON catalog endpoint | `cbsrm/api/routes.py` |
+| **Catalog Streamlit (v0.9)** | `streamlit run dashboard/report_catalog_viewer.py` | `dashboard/report_catalog_viewer.py` |
+| **HTML renderer (v0.9)** | `cbsrm.reporting.render_dossier_html(dossier, *, title_prefix=None, embed_stylesheet=True) -> str`; deterministic full HTML doc suitable for browser print-to-PDF; binary PDF byte-stream NOT in scope yet | `cbsrm/reporting/html_renderer.py` |
+| **HTML CLI (v0.9)** | `cbsrm crisis-dossier WINDOW --format html` | `cbsrm/cli.py` |
+| **HTML API (v0.9)** | `GET /reports/crisis-dossiers/{window_id}/html` (`text/html; charset=utf-8`) | `cbsrm/api/routes.py` |
+| **HTML Streamlit (v0.9)** | "Download HTML (.html)" button in the existing crisis-dossier viewer | `dashboard/crisis_dossier_viewer.py` |
+| **Optional dep (v0.9)** | `cbsrm[html]` extra — `markdown>=3.5,<4`. Used by the HTML renderer; lazy-imported; raises `RuntimeError` with install hint when missing. CI install matrix updated to include `[html]`. | `pyproject.toml`, `.github/workflows/test.yml` |
+| **Sibling launch-copy branch** | `docs/v08-launch-copy-refresh` — already merged to `main` | merged |
+
+The v0.9 surfaces above are **only on `main`**. They are not in the `v0.8.0` tag and should not be implied to be by any external launch copy.
 
 ---
 

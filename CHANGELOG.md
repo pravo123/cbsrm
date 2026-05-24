@@ -6,14 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-> **Status:** v0.8 surface is at release candidate `v0.8.0-rc6` (annotated
-> tag pushed; latest merge `7e4842c`). All six research-flow stages and
-> the report renderer are landed, plus three front-ends with bit-for-bit
-> parity: the `cbsrm crisis-dossier` CLI export command, three read-only
-> FastAPI `/reports/crisis-dossiers/…` routes, and a standalone offline
-> Streamlit page (`dashboard/crisis_dossier_viewer.py`). 555/555 tests
-> passing. Source versions in `pyproject.toml` / `cbsrm/__init__.py` are
-> deferred for a single bump at the v0.8.0 final tag.
+> **Status:** v0.8.0 shipped 2026-05-24 (annotated tag `v0.8.0` at commit
+> `410e3ac9`). The v0.9 work-in-progress block below tracks additive
+> slices on top of v0.8.0; the first one — the report registry/catalog —
+> is already on `main`. Source versions in `pyproject.toml` /
+> `cbsrm/__init__.py` are deferred for a single bump at the v0.9.0 final
+> tag, consistent with the v0.8 release pattern.
 
 ### Added — v0.9 work in progress
 
@@ -27,7 +25,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `GET /reports` → `{"reports": [...]}` JSON catalog, using the same lazy-FastAPI route style as the rest of `cbsrm/api/routes.py`. Pure pass-through over `cbsrm.reporting.get_report_catalog()`. Does not execute any report, does not change any existing endpoint, does not introduce a new dependency.
 - Existing `/reports/crisis-dossiers`, `/reports/crisis-dossiers/{window_id}`, and `/reports/crisis-dossiers/{window_id}/markdown` routes preserved bit-for-bit.
 
-### Added — v0.8 work in progress
+---
+
+## [0.8.0] — 2026-05-24
+
+> Annotated tag `v0.8.0` at commit `410e3ac9`. 555/555 tests passing at
+> the release commit. Three front-ends (CLI / FastAPI / Streamlit) with
+> bit-for-bit parity over the v0.8 research flow. Offline-deterministic
+> posture pinned by tests.
+
+### Added — v0.8.0 milestone: crisis-window research flow + report renderer + CLI/API/Streamlit front-ends
 
 **`dashboard/crisis_dossier_viewer.py` — offline Streamlit crisis-dossier viewer**
 - Standalone Streamlit page (separate file from `dashboard/streamlit_app.py`, which is left untouched) that mirrors the v0.8 report surface on the desktop: selectbox over `list_dossier_windows()` → `build_crisis_dossier` → `render_dossier_markdown` displayed inline plus Markdown (`.md`) and JSON (`.json`) download buttons. The JSON download uses `ensure_ascii=False` so the literal `→` composition arrow survives in the file.
@@ -106,7 +113,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Runnable walkthrough at `notebooks/crisis_replay/macro_event_replay.py` driving deterministic fixtures (`fixtures/events.csv` mixing CPI/NFP/UNRATE 2023-2024, `fixtures/prices.csv` covering all event dates ± 15 days for SPY_PROXY / TLT_PROXY).
 - 10 tests in `tests/test_macro_replay.py` covering returned schema, hotter-direction propagation, hand-calculated pre/post log returns on a linear ramp, missing-column / empty-input / non-positive-window / non-DataFrame `ValueError` paths, fixture round-trip, and unknown-event passthrough.
 
-### Planned for v0.8 (remaining)
+### Deferred from v0.8.0 (carried into v0.9)
 - `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
 - LBS (locational banking statistics) + BIS EER (effective exchange rates)
 - *(Optional / downstream)* VolanX wiring of `macro_events.score_event`, `classify_phase`, and `build_crisis_dossier` as decision-intelligence features (operator-tracked, not in-tree)

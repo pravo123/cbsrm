@@ -4,8 +4,8 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-555_passing-brightgreen.svg)](#tests)
-[![Version](https://img.shields.io/badge/version-0.8.0--rc6-blueviolet.svg)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-579_passing-brightgreen.svg)](#tests)
+[![Version](https://img.shields.io/badge/version-0.8.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 
 CBSRM reproduces, in modern typed Python, the canonical systemic-risk and financial-stability measures used by central banks, supervisory authorities, and the academic literature — under one Protocol, one audit chain, and one reproducibility guarantee. Apache 2.0.
@@ -25,7 +25,7 @@ CBSRM reproduces, in modern typed Python, the canonical systemic-risk and financ
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-## What's inside (v0.8.0-rc6)
+## What's inside (v0.8.0)
 
 | Layer | Modules | Reference |
 |-------|---------|-----------|
@@ -97,7 +97,7 @@ CBSRM is the public half of a paired system. The private companion (VolanX) appl
 
 ```bash
 pytest tests/ -v
-# 555 passing in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
+# 579 passing on current main in <20s; all HTTP mocked; Monte Carlo seeded for determinism.
 ```
 
 ## Whitepaper
@@ -128,7 +128,7 @@ If CBSRM informs research or supervisory work, please cite:
   year         = {2026},
   publisher    = {GitHub / WaverVanir International},
   url          = {https://github.com/pravo123/cbsrm},
-  note         = {Apache 2.0; version 0.8.0-rc6}
+  note         = {Apache 2.0; version 0.8.0}
 }
 ```
 
@@ -136,12 +136,12 @@ SSRN abstract + JEL codes: see [`SSRN_SUBMISSION.md`](SSRN_SUBMISSION.md).
 
 ## Roadmap
 
-**Shipped through v0.8.0-rc6:**
+**Shipped through v0.8.0:**
 - v0.6 — BIS Stats SDMX adapter (OTC derivatives, consolidated banking statistics) + Streamlit dashboard
 - v0.7 — Sahm Rule + Diebold-Yilmaz spillover index
 - v0.8 — macro event surprise scorer, windowed macro replay, pure-numpy DebtRank, Acemoglu-style phase classifier, deterministic crisis-window dossiers, Markdown + JSON report renderer, plus three front-ends sharing the same composition: CLI (`cbsrm crisis-dossier`), read-only HTTP API (`/reports/crisis-dossiers`), and standalone offline Streamlit viewer (`dashboard/crisis_dossier_viewer.py`)
 
-**Remaining for v0.8 final:**
+**Deferred from v0.8.0 (carried into v0.9):**
 - `arch`-backed GJR-GARCH-DCC fitter (end-to-end SRISK / MES from raw return histories)
 - BIS LBS (locational banking statistics) + EER (effective exchange rates) adapters
 
@@ -162,10 +162,12 @@ This work compounds when applied. Substantive conversations with quant research 
 
 Apache 2.0 — see [`LICENSE`](LICENSE).
 
-## v0.8 launch (release candidate `v0.8.0-rc6`)
+## v0.8 launch (released as `v0.8.0`; v0.9 work in progress on `main`)
 
-The v0.8 research flow is fully landed on `main`, with three front-ends
-sharing one composition:
+The v0.8 research flow shipped at tag `v0.8.0` and is on `main`, with
+three front-ends sharing one composition. (v0.9 additive work — e.g.
+the report registry/catalog layer — has since landed on `main` on top
+of the `v0.8.0` tag.)
 
 **macro shock (`score_event`) → crisis replay (`replay_macro_events`) →
 cross-asset connectedness (`DYSpilloverIndicator`) → systemic DebtRank

@@ -1,6 +1,8 @@
 # Show HN submission package — CBSRM
 
-**Status:** ready to submit. Operator chooses one of the three titles below, pastes the body, posts the first comment immediately (timing matters for HN ranking).
+**Status:** ready to submit against `v0.8.0` (tag `v0.8.0`, commit `410e3ac`). Operator chooses one of the three titles below, pastes the body, posts the first comment immediately (timing matters for HN ranking).
+
+**Release anchor:** <https://github.com/pravo123/cbsrm/releases/tag/v0.8.0>
 
 **Best time to submit:** weekday 7:00-9:00 AM ET. Avoid weekends (HN traffic is lower; harder to reach front page).
 
@@ -10,14 +12,14 @@
 
 Three options, ranked. HN title best practice: factual, specific, ≤ 80 chars, no clickbait, no "I built".
 
-1. **Recommended:** `Show HN: CBSRM – open-source SRISK / CoVaR / Sahm Rule in pure Python`
-   *(70 chars; cites three named methodologies that quant readers recognize instantly; "open-source" + "pure Python" are HN-friendly signals)*
+1. **Recommended:** `Show HN: CBSRM – open-source SRISK / CoVaR / DebtRank in pure Python`
+   *(69 chars; cites three named methodologies that quant readers recognize instantly; "open-source" + "pure Python" are HN-friendly signals; DebtRank lands the v0.8 systemic-network angle)*
 
-2. **Alternate:** `Show HN: A 7-layer cross-border systemic risk monitor (Apache 2.0)`
-   *(67 chars; emphasizes architecture + license; weaker than #1 because it doesn't name a specific methodology)*
+2. **Alternate:** `Show HN: CBSRM v0.8 – systemic risk + crisis dossier reports (Apache 2.0)`
+   *(74 chars; emphasizes the v0.8 reporting surface that's actually demoable; good if the Streamlit demo URL is live)*
 
-3. **Alternate:** `Show HN: Reimplementing the supervisory systemic-risk toolkit in NumPy`
-   *(67 chars; sells the methodological-rigor angle; risky because "supervisory" is jargony for general HN)*
+3. **Alternate:** `Show HN: A 7-layer cross-border systemic risk monitor (Apache 2.0)`
+   *(67 chars; architecture-first framing; weaker because it doesn't name a specific methodology)*
 
 ---
 
@@ -36,24 +38,42 @@ Three options, ranked. HN title best practice: factual, specific, ≤ 80 chars, 
 > central banks and supervisory teams use: SRISK (Brownlees-Engle 2017), ΔCoVaR
 > (Adrian-Brunnermeier 2016), MES (Acharya et al 2017), Holló-Kremer-Lo Duca
 > CISS for US / EA / UK / Japan, the Sahm Rule, Diebold-Yilmaz spillover index,
-> 10 macro indicators across 5 jurisdictions (US / EA / UK / Japan / broad USD),
-> interpretation labels in 5 languages, and a sha256-linked audit chain that
-> tracks every fetch / computation / served value.
+> pure-numpy DebtRank (Battiston et al 2012), an Acemoglu-style 8-phase macro
+> classifier, 10 macro indicators across 5 jurisdictions (US / EA / UK / Japan /
+> broad USD), interpretation labels in 5 languages, and a sha256-linked audit
+> chain that tracks every fetch / computation / served value.
 >
-> Built solo in ~7 weeks. 363 tests passing. Whitepaper has 14 methodology
-> sections (~14k words). No SciPy / arch / statsmodels dependency at compute
-> time — the GJR-GARCH-DCC Monte Carlo for SRISK / MES is ~300 lines of NumPy,
-> the Diebold-Yilmaz GFEVD is ~150.
+> v0.8 (just shipped, tag `v0.8.0`) adds a discrete-event macro surprise scorer
+> (12 prints: CPI / NFP / FOMC / ISM / …), windowed crisis replay, and
+> deterministic fixture-backed crisis-window dossiers for 2008Q4 (Lehman),
+> 2020Q1 (COVID), and 2023Q1 (SVB/SBNY/FRC). The dossier surface ships
+> three bit-for-bit-identical front-ends sharing one composition:
+>   - CLI: `cbsrm crisis-dossier 2008Q4 --format markdown`
+>   - HTTP: `GET /reports/crisis-dossiers/2008Q4/markdown` (read-only FastAPI)
+>   - Streamlit: `streamlit run dashboard/crisis_dossier_viewer.py`
 >
-> Live dashboard (Streamlit Community Cloud): <YOUR_STREAMLIT_URL_HERE>
+> Built solo. 555 tests passing on the current release. Whitepaper has 14
+> methodology sections (~14k words). No SciPy / arch / statsmodels dependency
+> at compute time — the GJR-GARCH-DCC Monte Carlo for SRISK / MES is ~300
+> lines of NumPy, the Diebold-Yilmaz GFEVD is ~150, the DebtRank engine is
+> a pure-numpy U/D/I state-machine cascade.
 >
-> Repo: https://github.com/pravo123/cbsrm
+> Live dashboard: not deployed yet — the v0.8 crisis-dossier viewer
+> runs locally and is offline (no FRED key required):
+>
+> ```
+> pip install cbsrm streamlit
+> streamlit run dashboard/crisis_dossier_viewer.py
+> ```
+>
+> Repo: https://github.com/pravo123/cbsrm  (tag `v0.8.0`)
+> Release notes: https://github.com/pravo123/cbsrm/releases/tag/v0.8.0
 > Whitepaper: in `whitepaper/cbsrm_methodology_v1.md`
 > Apache 2.0.
 >
 > Happy to answer questions about the methodology choices, the audit-chain
-> design, or why the pure-Python path was worth the extra work vs depending
-> on the academic-canonical R packages.
+> design, the three-front-end composition, or why the pure-Python path was
+> worth the extra work vs depending on the academic-canonical R packages.
 
 ---
 
@@ -77,7 +97,16 @@ The first comment on a Show HN post is the second-highest-converting surface aft
 >    This is the part that took the longest to design and is the most
 >    differentiated from existing academic implementations.
 >
-> 3. **Public ships the methodology, private engine ships separately** —
+> 3. **One composition, three front-ends** — the v0.8 crisis-dossier
+>    surface is `score_event → replay_macro_events → debt_rank →
+>    classify_phase → build_crisis_dossier → render_dossier_markdown /
+>    build_report_payload`. The CLI subcommand, the read-only FastAPI
+>    routes, and the standalone Streamlit page are all thin pass-throughs
+>    over that pipeline; tests pin them to bit-for-bit identical output
+>    for the same window. The Streamlit viewer imports Streamlit lazily
+>    so the helper module is unit-testable without it.
+>
+> 4. **Public ships the methodology, private engine ships separately** —
 >    CBSRM is the open-source half; a private companion (VolanX) applies
 >    the same data + indicator + audit primitives to a multi-broker
 >    derivatives execution platform. The public side is the credibility
@@ -90,7 +119,10 @@ The first comment on a Show HN post is the second-highest-converting surface aft
 
 ## Operator pre-flight checklist
 
-- [ ] Streamlit demo URL is live (see `dashboard/STREAMLIT_DEPLOY.md`)
+- [ ] Streamlit demo URL is live (see `dashboard/STREAMLIT_DEPLOY.md`). Deploy `dashboard/streamlit_app.py` AND a second app entry for `dashboard/crisis_dossier_viewer.py`, OR pick one as the headline demo. The crisis-dossier viewer is the more impressive demo for v0.8 because it needs no FRED key.
+- [ ] Repo is on `v0.8.0` (`git ls-remote --tags origin v0.8.0` returns `3871d72…`) — the GitHub Releases page should show `v0.8.0` as the Latest release
+- [ ] GitHub Release notes for `v0.8.0` published (see draft at the bottom of this slice's report)
+- [ ] At least one screenshot of the crisis-dossier viewer captured (the existing `dashboard/screenshot.png` is the v0.5 dashboard; the v0.8 viewer needs its own)
 - [ ] First-comment text drafted in a notepad ready to paste
 - [ ] HN account at least 7 days old with > 3 karma (or your post will be heavily down-weighted)
 - [ ] You're sitting at the computer when you submit (post → reload HN front page → confirm "newest" placement → drop the first comment within 60 seconds → engage with replies as they arrive for the first 2-3 hours; that's the window the front-page algorithm cares about)

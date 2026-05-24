@@ -233,3 +233,40 @@ def test_returned_objects_are_deepcopies_not_shared_refs():
     assert c1["reports"][0]["windows"] is not c2["reports"][0]["windows"]
     # And the deep equality contract still holds.
     assert copy.deepcopy(c1) == c1 == c2
+
+
+# ─── macro-composite (second registry entry) ───────────────────────
+
+
+def test_catalog_contains_macro_composite():
+    assert "macro-composite" in list_report_ids()
+
+
+def test_macro_composite_metadata_is_complete():
+    meta = get_report_metadata("macro-composite")
+    assert meta["id"] == "macro-composite"
+    assert meta["title"]  # non-empty
+    assert meta["description"]
+    assert meta["formats"] == ["json"]
+    surfaces = meta["surfaces"]
+    assert surfaces["cli"] == "cbsrm reports"
+    assert surfaces["api"] == ["GET /reports"]
+    assert "report_catalog_viewer.py" in surfaces["streamlit"]
+
+
+def test_macro_composite_windows_are_empty_by_design():
+    """macro-composite is metadata-only with no fixture-backed window
+    set. The empty windows list is the contract — if a future slice
+    adds a window set, both the registry and this assertion must be
+    updated together."""
+    meta = get_report_metadata("macro-composite")
+    assert meta["windows"] == []
+
+
+def test_catalog_lists_both_reports_in_deterministic_order():
+    """``get_report_catalog`` preserves the insertion order of
+    ``_REPORT_BUILDERS``. The pinned order is crisis-dossier first
+    (v0.8 milestone), macro-composite second (first v0.9 entry)."""
+    catalog = get_report_catalog()
+    ids = [r["id"] for r in catalog["reports"]]
+    assert ids == ["crisis-dossier", "macro-composite"]

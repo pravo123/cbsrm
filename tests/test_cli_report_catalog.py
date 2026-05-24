@@ -132,6 +132,18 @@ def test_reports_rejects_unknown_argument(capsys):
 # ─── determinism ────────────────────────────────────────────────────
 
 
+def test_reports_includes_macro_composite(capsys):
+    """The CLI catalog command must surface every registered report.
+    After the v0.9 second-report slice, the JSON must include both
+    crisis-dossier and macro-composite."""
+    rc, out, _err = _run(["reports"], capsys)
+    assert rc == 0
+    payload = json.loads(out)
+    ids = [entry["id"] for entry in payload["reports"]]
+    assert "crisis-dossier" in ids
+    assert "macro-composite" in ids
+
+
 def test_reports_output_is_byte_identical_across_runs(capsys):
     """Two CLI invocations must produce byte-identical stdout."""
     rc1, out1, _ = _run(["reports"], capsys)

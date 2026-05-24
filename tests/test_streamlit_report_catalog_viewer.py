@@ -169,6 +169,16 @@ def test_build_catalog_view_is_deterministic(viewer):
     assert json.dumps(v1) == json.dumps(v2)
 
 
+def test_build_catalog_view_includes_macro_composite(viewer):
+    """The landing-page view must surface every registered report.
+    After the v0.9 second-report slice, the view must include both
+    crisis-dossier and macro-composite."""
+    view = viewer.build_catalog_view()
+    ids = [r["id"] for r in view["reports"]]
+    assert "crisis-dossier" in ids
+    assert "macro-composite" in ids
+
+
 def test_build_catalog_view_returns_fresh_copies(viewer):
     """Mutating output of one call must not affect a subsequent call —
     confirms the registry's deep-copy contract propagates through the

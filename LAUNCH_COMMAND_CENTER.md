@@ -22,7 +22,7 @@
 | Surface | Status | Reference |
 |---|---|---|
 | **`main`** | ahead of `v0.8.0` by additive v0.9 commits; CI green | `git log v0.8.0..main` |
-| **Tests on `main`** | **641 passed** (was 555 at `v0.8.0`; +86 from v0.9 additive slices) | `pytest tests/` |
+| **Tests on `main`** | **739 passed** (was 555 at `v0.8.0`; +184 from v0.9 additive slices) | `pytest tests/` |
 | **Report registry (v0.9)** | `cbsrm.reporting.get_report_catalog` / `list_report_ids` / `get_report_metadata`; 2 entries (`crisis-dossier`, `macro-composite`) | `cbsrm/reporting/registry.py` |
 | **Catalog CLI (v0.9)** | `cbsrm reports` — JSON dump of the registry catalog | `cbsrm/cli.py` |
 | **Catalog API (v0.9)** | `GET /reports` — JSON catalog endpoint | `cbsrm/api/routes.py` |
@@ -31,6 +31,14 @@
 | **HTML CLI (v0.9)** | `cbsrm crisis-dossier WINDOW --format html` | `cbsrm/cli.py` |
 | **HTML API (v0.9)** | `GET /reports/crisis-dossiers/{window_id}/html` (`text/html; charset=utf-8`) | `cbsrm/api/routes.py` |
 | **HTML Streamlit (v0.9)** | "Download HTML (.html)" button in the existing crisis-dossier viewer | `dashboard/crisis_dossier_viewer.py` |
+| **Manifest foundation (v0.9)** | `cbsrm.reporting.build_report_manifest(...)`; `sha256_text`; `sha256_jsonable`; `MANIFEST_VERSION`. Deterministic-by-default (no wall-clock); JSON-serializable; describes report export with versions + output sha256 + optional payload sha256 + disclaimer-present flag. | `cbsrm/reporting/manifest.py` |
+| **Manifest CLI (v0.9)** | `cbsrm crisis-dossier --manifest PATH` — writes deterministic manifest JSON to PATH; stdout report bytes unchanged. | `cbsrm/cli.py` |
+| **Manifest API (v0.9)** | `GET /reports/crisis-dossiers/{window_id}?manifest=true` — appends `"manifest"` key to JSON envelope; default response unchanged byte-for-byte. | `cbsrm/api/routes.py` |
+| **Manifest Streamlit (v0.9)** | "Download Manifest (.manifest.json)" button next to Markdown / JSON / HTML buttons in the crisis-dossier viewer. | `dashboard/crisis_dossier_viewer.py` |
+| **Audit-chain bridge (v0.9)** | `cbsrm.reporting.stamp_manifest_to_chain(chain, manifest)`; `manifest_subject(manifest)`; `AUDIT_EVENT_KIND = "REPORT_EXPORTED"`. Thin bridge from manifests to the existing `cbsrm/audit/chain.py` tamper-evident log; audit chain module untouched. | `cbsrm/reporting/audit_manifest.py` |
+| **Audit-chain API (v0.9)** | `GET /reports/crisis-dossiers/{window_id}?audit=true` — opt-in; auto-builds manifest, appends to the app's `AuditChain`, returns `{report, dossier, manifest, audit}`. Audit row queryable via existing `GET /audit/{subject}`. | `cbsrm/api/routes.py` |
+| **Audit-chain CLI (v0.9)** | `cbsrm crisis-dossier --audit-db PATH` — opens (or creates) a sqlite DB, stamps the export manifest, prints one stderr line `audit: row_id=… subject=… hash=…`. Stdout report bytes unchanged. | `cbsrm/cli.py` |
+| **Audit-chain Streamlit (v0.9)** | **Deferred** — operator-config UX (env var / sidebar input / launch arg) not yet decided. | — |
 | **Optional dep (v0.9)** | `cbsrm[html]` extra — `markdown>=3.5,<4`. Used by the HTML renderer; lazy-imported; raises `RuntimeError` with install hint when missing. CI install matrix updated to include `[html]`. | `pyproject.toml`, `.github/workflows/test.yml` |
 | **Sibling launch-copy branch** | `docs/v08-launch-copy-refresh` — already merged to `main` | merged |
 

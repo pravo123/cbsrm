@@ -649,3 +649,177 @@ def test_audit_db_unwritable_path_fails_cleanly(tmp_path, capsys):
     assert "cannot open audit db" in err
     assert str(bad_path) in err
     assert "Traceback" not in err
+
+
+# ─── --store-db flag (v0.9 addition) ────────────────────────────────
+
+
+def _store_rows(db_path):
+    """Open the report-store DB and return all artifact rows."""
+    import sqlite3
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        return conn.execute(
+            "SELECT output_sha256, report_id, window_id, format, source "
+            "FROM cbsrm_report_artifacts ORDER BY created_at_utc ASC"
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def test_store_db_creates_sqlite_and_persists_one_row(tmp_path, capsys):
+    db = tmp_path / "store.db"
+    assert not db.exists()
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    assert rc == 0
+    assert db.is_file()
+    rows = _store_rows(db)
+    assert len(rows) == 1
+    _hash, report_id, window_id, fmt, source = rows[0]
+    assert report_id == "crisis-dossier"
+    assert window_id == "2008Q4"
+    assert fmt == "json"
+    assert source == "cli"
+
+
+def test_store_db_first_call_was_existing_false(tmp_path, capsys):
+    db = tmp_path / "store.db"
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    assert rc == 0
+    assert "was_existing=False" in err
+
+
+def test_store_db_second_call_was_existing_true(tmp_path, capsys):
+    db = tmp_path / "store.db"
+    _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    assert rc == 0
+    assert "was_existing=True" in err
+    # Idempotency: still only one row in the store.
+    assert len(_store_rows(db)) == 1
+
+
+def test_store_db_stderr_line_shape(tmp_path, capsys):
+    db = tmp_path / "store.db"
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    assert rc == 0
+    # Line shape: `stored: output_sha256=<hex> was_existing=<bool> db=<path>`
+    assert err.startswith("stored:")
+    assert "output_sha256=" in err
+    hash_token = err.split("output_sha256=", 1)[1].split()[0]
+    assert len(hash_token) == 64
+    assert all(c in "0123456789abcdef" for c in hash_token)
+    assert "was_existing=" in err
+    assert f"db={db}" in err
+
+
+def test_store_db_stdout_byte_identical_with_and_without(
+    tmp_path, capsys,
+):
+    """The store-db flag must be purely additive: stdout report bytes
+    are byte-identical with vs without `--store-db`."""
+    rc1, out_without, _ = _run(
+        ["crisis-dossier", "2008Q4", "--format", "json"], capsys,
+    )
+    db = tmp_path / "store.db"
+    rc2, out_with, _ = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    assert rc1 == 0 and rc2 == 0
+    assert out_without == out_with
+
+
+def test_store_db_alone_no_manifest_no_audit(tmp_path, capsys):
+    """`--store-db` alone works; no manifest file or audit DB needed."""
+    db = tmp_path / "store.db"
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(db)],
+        capsys,
+    )
+    assert rc == 0
+    # tmp_path contains only the store DB; no stray manifest file.
+    other = [p for p in tmp_path.iterdir() if p != db]
+    assert other == []
+
+
+def test_store_db_with_audit_db_both_fire(tmp_path, capsys):
+    """`--store-db` and `--audit-db` together both write."""
+    store_db = tmp_path / "store.db"
+    audit_db = tmp_path / "audit.db"
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json",
+         "--store-db", str(store_db),
+         "--audit-db", str(audit_db)],
+        capsys,
+    )
+    assert rc == 0
+    assert "audit:" in err
+    assert "stored:" in err
+    assert len(_store_rows(store_db)) == 1
+    # Audit DB has one REPORT_EXPORTED row too.
+    import sqlite3
+    conn = sqlite3.connect(str(audit_db))
+    try:
+        n = conn.execute(
+            "SELECT COUNT(*) FROM cbsrm_audit_log "
+            "WHERE kind = 'REPORT_EXPORTED'"
+        ).fetchone()[0]
+    finally:
+        conn.close()
+    assert n == 1
+
+
+@pytest.mark.parametrize("fmt", ["json", "markdown", "html"])
+def test_store_db_parametrized_over_formats(fmt, tmp_path, capsys):
+    if fmt == "html":
+        pytest.importorskip("markdown")
+    db = tmp_path / "store.db"
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2020Q1",
+         "--format", fmt, "--store-db", str(db)],
+        capsys,
+    )
+    assert rc == 0
+    rows = _store_rows(db)
+    assert len(rows) == 1
+    _hash, _report, window, stored_fmt, _src = rows[0]
+    assert window == "2020Q1"
+    assert stored_fmt == fmt
+
+
+def test_store_db_bad_path_fails_cleanly(tmp_path, capsys):
+    bad = tmp_path / "missing_parent" / "store.db"
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--store-db", str(bad)],
+        capsys,
+    )
+    assert rc == 2
+    assert "cannot open report store" in err
+    assert str(bad) in err
+    assert "Traceback" not in err

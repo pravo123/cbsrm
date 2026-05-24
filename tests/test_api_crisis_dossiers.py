@@ -448,3 +448,138 @@ def test_unknown_window_with_audit_true_returns_404_and_no_row():
         "n_rows"
     ]
     assert post_n == pre_n
+
+
+# ─── ?store=true on JSON endpoint + lookup endpoint (v0.9) ──────────
+
+
+def _store_client(tmp_path) -> TestClient:
+    """Build a client whose app has a real sqlite report store
+    configured at ``tmp_path / "store.db"``."""
+    return TestClient(
+        build_app(report_store_db_path=str(tmp_path / "store.db"))
+    )
+
+
+def test_default_envelope_unchanged_without_store(client):
+    body = client.get("/reports/crisis-dossiers/2008Q4").json()
+    assert "stored" not in body
+
+
+def test_store_query_returns_400_when_unconfigured(client):
+    r = client.get("/reports/crisis-dossiers/2008Q4?store=true")
+    assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert detail["error"] == "report store is not configured"
+    assert "build_app" in detail["hint"]
+    assert "Traceback" not in r.text
+
+
+def test_store_query_adds_stored_key_when_configured(tmp_path):
+    fresh = _store_client(tmp_path)
+    body = fresh.get(
+        "/reports/crisis-dossiers/2008Q4?store=true"
+    ).json()
+    assert "manifest" in body  # auto-built
+    assert "stored" in body
+
+
+def test_stored_key_has_exact_metadata_fields(tmp_path):
+    fresh = _store_client(tmp_path)
+    body = fresh.get(
+        "/reports/crisis-dossiers/2008Q4?store=true"
+    ).json()
+    assert set(body["stored"].keys()) == {
+        "output_sha256", "was_existing", "byte_length",
+        "content_type", "created_at_utc",
+    }
+    assert body["stored"]["content_type"] == "application/json"
+    assert body["stored"]["was_existing"] is False
+    assert body["stored"]["byte_length"] > 0
+
+
+def test_store_was_existing_flips_on_second_call(tmp_path):
+    fresh = _store_client(tmp_path)
+    r1 = fresh.get(
+        "/reports/crisis-dossiers/2008Q4?store=true"
+    ).json()
+    r2 = fresh.get(
+        "/reports/crisis-dossiers/2008Q4?store=true"
+    ).json()
+    assert r1["stored"]["was_existing"] is False
+    assert r2["stored"]["was_existing"] is True
+    # Same content -> same hash.
+    assert (
+        r1["stored"]["output_sha256"] == r2["stored"]["output_sha256"]
+    )
+
+
+def test_manifest_audit_store_all_three_keys_present(tmp_path):
+    fresh = _store_client(tmp_path)
+    body = fresh.get(
+        "/reports/crisis-dossiers/2008Q4"
+        "?manifest=true&audit=true&store=true"
+    ).json()
+    assert "manifest" in body
+    assert "audit" in body
+    assert "stored" in body
+    # The audit row's payload should reference the same manifest
+    # whose output_sha256 became the stored key — content-addressed
+    # join via output_sha256.
+    assert (
+        body["audit"]["subject"]
+        == "report:crisis-dossier:2008Q4:json"
+    )
+
+
+def test_lookup_endpoint_404_for_unknown_hash(tmp_path):
+    fresh = _store_client(tmp_path)
+    r = fresh.get("/reports/stored/" + "0" * 64)
+    assert r.status_code == 404
+    detail = r.json()["detail"]
+    assert detail["error"] == "artifact not found"
+    assert detail["output_sha256"] == "0" * 64
+
+
+def test_lookup_endpoint_returns_full_row_for_stored_artifact(tmp_path):
+    fresh = _store_client(tmp_path)
+    # Persist via the JSON endpoint, then fetch via the lookup route.
+    stored = fresh.get(
+        "/reports/crisis-dossiers/2008Q4?store=true"
+    ).json()["stored"]
+    r = fresh.get(f"/reports/stored/{stored['output_sha256']}")
+    assert r.status_code == 200
+    row = r.json()
+    # Full row keys (from get_report_artifact).
+    assert set(row.keys()) >= {
+        "output_sha256", "report_id", "window_id", "format",
+        "source", "output_text", "manifest", "content_type",
+        "byte_length", "created_at_utc",
+    }
+    assert row["output_sha256"] == stored["output_sha256"]
+    assert row["report_id"] == "crisis-dossier"
+    assert row["window_id"] == "2008Q4"
+    assert row["format"] == "json"
+    assert row["source"] == "api"
+
+
+def test_lookup_endpoint_400_when_store_unconfigured(client):
+    r = client.get("/reports/stored/" + "0" * 64)
+    assert r.status_code == 400
+    detail = r.json()["detail"]
+    assert detail["error"] == "report store is not configured"
+    assert "build_app" in detail["hint"]
+
+
+def test_default_json_endpoint_byte_identical_on_configured_app(
+    tmp_path,
+):
+    """Configuring the store must NOT change the default-path
+    response. Configured client + no ``?store`` query -> envelope
+    byte-identical to the v0.8 unconfigured shape."""
+    fresh_unconfigured = TestClient(build_app())
+    fresh_configured = _store_client(tmp_path)
+    r1 = fresh_unconfigured.get("/reports/crisis-dossiers/2008Q4")
+    r2 = fresh_configured.get("/reports/crisis-dossiers/2008Q4")
+    assert r1.status_code == 200 and r2.status_code == 200
+    assert r1.json() == r2.json()

@@ -739,8 +739,13 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
     # bit-identical bytes.
     manifest_path = getattr(args, "manifest", None)
     audit_db_path = getattr(args, "audit_db", None)
+    store_db_path = getattr(args, "store_db", None)
     manifest: dict | None = None
-    if manifest_path is not None or audit_db_path is not None:
+    if (
+        manifest_path is not None
+        or audit_db_path is not None
+        or store_db_path is not None
+    ):
         from cbsrm.reporting import build_report_manifest
 
         manifest = build_report_manifest(
@@ -785,6 +790,34 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
             f"audit: row_id={audit_row['row_id']} "
             f"subject={audit_row['subject']} "
             f"hash={audit_row['hash']}",
+            file=sys.stderr,
+        )
+
+    if store_db_path is not None:
+        assert manifest is not None  # for type checkers
+        from cbsrm.reporting import store_report_artifact
+
+        try:
+            stored = store_report_artifact(
+                store_db_path,
+                output_text=output_text,
+                manifest=manifest,
+            )
+        except sqlite3.OperationalError as exc:
+            print(
+                f"error: cannot open report store '{store_db_path}': {exc}",
+                file=sys.stderr,
+            )
+            return 2
+
+        # Same convention as the audit-db line: one concise stderr
+        # record so the operator can correlate stored bytes with
+        # downstream audit rows and API lookups. Stdout is reserved
+        # for the report itself.
+        print(
+            f"stored: output_sha256={stored['output_sha256']} "
+            f"was_existing={stored['was_existing']} "
+            f"db={store_db_path}",
             file=sys.stderr,
         )
 
@@ -1048,6 +1081,16 @@ def main(argv: list[str] | None = None) -> int:
              "row and a one-line audit record is printed to stderr. "
              "The DB file is created if it does not exist. Stdout "
              "report output is unchanged.",
+    )
+    p_cd.add_argument(
+        "--store-db", default=None, metavar="PATH",
+        help="Optional path to a sqlite report-artifact store. When "
+             "supplied, the rendered report text plus its manifest are "
+             "persisted content-addressed by output_sha256 (INSERT OR "
+             "IGNORE on collision). One stderr record is printed: "
+             "`stored: output_sha256=<hash> was_existing=<bool> "
+             "db=<path>`. The DB file is created if it does not exist. "
+             "Stdout report output is unchanged.",
     )
     p_cd.set_defaults(func=cmd_crisis_dossier)
 

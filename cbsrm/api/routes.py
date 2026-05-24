@@ -27,11 +27,23 @@ from cbsrm import __version__
 from cbsrm.audit.chain import AuditChain
 
 
-def build_app(audit_conn: sqlite3.Connection | None = None):
+def build_app(
+    audit_conn: sqlite3.Connection | None = None,
+    report_store_db_path: str | None = None,
+):
     """Construct the FastAPI app. Returns the app instance.
 
     Pass an audit_conn to share an audit chain across the service; if None
     an in-memory sqlite is used (audit chain non-persistent).
+
+    Pass ``report_store_db_path`` to enable the v0.9 sqlite report-artifact
+    store. When set, the store's schema is initialised at app-construction
+    time (`init_report_store(...)`), and the JSON crisis-dossier endpoint
+    accepts ``?store=true`` plus a new ``GET /reports/stored/{output_sha256}``
+    lookup endpoint becomes meaningful. When **None** (default), both
+    surfaces return ``HTTP 400`` with a clear hint instead of writing to
+    any path. The route layer never reads a filesystem path from the
+    request — operator-config only, to keep the attack surface flat.
     """
     try:
         from fastapi import FastAPI, HTTPException
@@ -46,6 +58,15 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
     # the v0.9 JSON crisis-dossier endpoint can expose an ``audit:
     # bool`` query parameter without a name collision.
     audit_chain = AuditChain(audit_conn)
+
+    # Initialise the report-artifact store schema once, at
+    # app-construction time. Fails fast on unwritable paths
+    # (sqlite3.OperationalError) so the operator sees the misconfig
+    # before any request lands.
+    if report_store_db_path is not None:
+        from cbsrm.reporting import init_report_store
+
+        init_report_store(report_store_db_path)
 
     app = FastAPI(
         title="CBSRM — Cross-Border Systemic Risk Monitor",
@@ -193,6 +214,7 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
         window_id: str,
         manifest: bool = False,
         audit: bool = False,
+        store: bool = False,
     ) -> dict[str, Any]:
         """Return the JSON report payload for one crisis window.
 
@@ -228,9 +250,23 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
 
         from cbsrm.reporting import build_report_payload
 
+        # Fail-fast before any rendering: ?store=true on an
+        # unconfigured app is a misconfiguration, not a 5xx.
+        if store and report_store_db_path is None:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "report store is not configured",
+                    "hint": (
+                        "Configure build_app(report_store_db_path=...) "
+                        "before using ?store=true."
+                    ),
+                },
+            )
+
         dossier = _resolve_dossier_or_404(window_id)
         payload = build_report_payload(dossier)
-        if not manifest and not audit:
+        if not manifest and not audit and not store:
             return payload
 
         from cbsrm.reporting import (
@@ -255,6 +291,23 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
         if audit:
             audit_row = stamp_manifest_to_chain(audit_chain, manifest_dict)
             response["audit"] = audit_row
+        if store:
+            from cbsrm.reporting import store_report_artifact
+
+            stored = store_report_artifact(
+                report_store_db_path,  # type: ignore[arg-type]
+                output_text=canonical,
+                manifest=manifest_dict,
+            )
+            # Narrow projection: don't duplicate output_text /
+            # manifest already present in the envelope.
+            response["stored"] = {
+                "output_sha256":  stored["output_sha256"],
+                "was_existing":   stored["was_existing"],
+                "byte_length":    stored["byte_length"],
+                "content_type":   stored["content_type"],
+                "created_at_utc": stored["created_at_utc"],
+            }
         return response
 
     @app.get(
@@ -298,6 +351,47 @@ def build_app(audit_conn: sqlite3.Connection | None = None):
             content=render_dossier_html(dossier),
             media_type="text/html; charset=utf-8",
         )
+
+    # ─── Report-artifact store lookup (v0.9) ────────────────────────
+    #
+    # Read-only fetch by ``output_sha256`` from the operator-configured
+    # sqlite store. Returns 400 when the app was not built with a
+    # ``report_store_db_path``, mirroring the JSON endpoint's
+    # ``?store=true`` behaviour — clients can detect "feature wired
+    # but unconfigured" vs "artifact absent" by status code.
+    #
+    # No filesystem path is ever read from the request; the only path
+    # in scope is the operator-supplied ``report_store_db_path``
+    # captured in this closure.
+
+    @app.get(
+        "/reports/stored/{output_sha256}", tags=["reports"],
+    )
+    def get_stored_artifact(output_sha256: str) -> dict[str, Any]:
+        """Return the full stored report artifact for a sha256 key."""
+        if report_store_db_path is None:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "report store is not configured",
+                    "hint": (
+                        "Configure build_app(report_store_db_path=...) "
+                        "to enable /reports/stored/{output_sha256}."
+                    ),
+                },
+            )
+        from cbsrm.reporting import get_report_artifact
+
+        row = get_report_artifact(report_store_db_path, output_sha256)
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail={
+                    "error": "artifact not found",
+                    "output_sha256": output_sha256,
+                },
+            )
+        return row
 
     return app
 

@@ -8,6 +8,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added — v0.8 work in progress
 
+**`cbsrm.networks.debt_rank` — pure-numpy DebtRank systemic-risk engine** (Battiston, Puliga, Kaushik, Tasca, Caldarelli 2012, *Scientific Reports*)
+- Function `debt_rank(L, E, h0, v=None, max_iter=100, tol=1e-9)` returns a dict with `distress_final`, `distress_initial`, `debt_rank` (scalar), `node_contributions`, `iterations`, `converged`, `leverage_matrix`, and `economic_weights`.
+- Constructs the leverage matrix `W[i,j] = min(L[i,j] / E[i], 1)` (self-loops zeroed, rows with non-positive equity zeroed) and runs the U/D/I state-machine cascade described in the paper.
+- Caller may supply custom economic-importance weights `v` (auto-renormalized with a `RuntimeWarning` if they do not sum to 1); default is uniform `1/N`.
+- Validation: shape mismatches, negative `L`, out-of-range `h0`, and negative `v` raise `ValueError`; negative equities are clipped to 0 with a `RuntimeWarning`.
+- 20 tests in `tests/test_debt_rank.py` cover the 2/3-node chain cascades, scaling invariance, self-loop invariance, custom-`v` semantics, `max_iter` truncation, and every validation path. Pairs with the v0.7 Diebold-Yilmaz spillover indicator on the market-return side.
+
 **`cbsrm.macro.macro_events` — discrete macro-event surprise scorer**
 - Pure function `score_event(event, actual, consensus, previous=None, unit=None, history=None)` returns a normalised surprise (`surprise`, `surprise_z`, `abs_z`), a `direction` (`hotter_than_expected` / `cooler_than_expected` / `in_line`), a `severity` bucket (`trivial` / `mild` / `moderate` / `large` / `extreme`), and a coarse `risk_bias` tag (`rates_up_equities_down` etc).
 - Event registry covers 12 prints: CPI, CORE_CPI, PCE, CORE_PCE, NFP, UNRATE, INITIAL_CLAIMS, GDP, RETAIL_SALES, ISM_MANUFACTURING, ISM_SERVICES, FOMC_RATE. Per-event polarity (e.g. UNRATE: higher = cooler) and conservative historical-surprise σ anchors so z-scoring works with zero caller-supplied history.

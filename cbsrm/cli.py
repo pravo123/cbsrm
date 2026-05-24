@@ -681,6 +681,71 @@ def cmd_verify_audit(args: argparse.Namespace) -> int:
     return 0 if ok else 3
 
 
+def cmd_crisis_dossier(args: argparse.Namespace) -> int:
+    """Export a deterministic crisis-window dossier as JSON or Markdown.
+
+    Pure, offline, side-effect-free. Composes
+    `cbsrm.diagnostics.build_crisis_dossier` with the
+    `cbsrm.reporting` renderer; does not duplicate any methodology.
+    """
+    from cbsrm.diagnostics import build_crisis_dossier, list_dossier_windows
+    from cbsrm.reporting import build_report_payload, render_dossier_markdown
+
+    supported = list_dossier_windows()
+    if args.window not in supported:
+        print(
+            f"error: unknown crisis-dossier window '{args.window}'. "
+            f"Supported windows: {', '.join(supported)}.",
+            file=sys.stderr,
+        )
+        return 2
+
+    try:
+        dossier = build_crisis_dossier(args.window)
+    except ValueError as exc:
+        # Defence in depth — list_dossier_windows() above should have caught
+        # this, but if the registry shape ever changes, fail clean here too.
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.format == "markdown":
+        title_prefix = getattr(args, "title_prefix", None)
+        md = render_dossier_markdown(dossier, title_prefix=title_prefix)
+        _write_stdout_utf8_safe(md)
+        return 0
+
+    # default / "json"
+    payload = build_report_payload(dossier)
+    # ensure_ascii=False keeps em-dashes / arrows readable; UTF-8-safe stdout
+    # handles the encoding even on Windows cp1252 consoles.
+    _write_stdout_utf8_safe(json.dumps(payload, indent=2, ensure_ascii=False) + "\n")
+    return 0
+
+
+def _write_stdout_utf8_safe(text: str) -> None:
+    """Write `text` to stdout as UTF-8 even on Windows cp1252 consoles.
+
+    Falls back to a best-effort text write (with ``errors='replace'``) when
+    a binary buffer is unavailable (e.g. some pytest capsys variants), so
+    the CLI never aborts on non-ASCII rendered content like ``→`` or em-dashes.
+    """
+    buf = getattr(sys.stdout, "buffer", None)
+    if buf is not None:
+        buf.write(text.encode("utf-8"))
+        try:
+            sys.stdout.flush()
+        except Exception:
+            pass
+        return
+    try:
+        sys.stdout.write(text)
+    except UnicodeEncodeError:
+        # Last-resort fallback: replace unencodable chars so the command
+        # still produces well-formed output rather than crashing.
+        encoding = getattr(sys.stdout, "encoding", "ascii") or "ascii"
+        sys.stdout.write(text.encode(encoding, errors="replace").decode(encoding))
+
+
 # ─── Argparse wiring ─────────────────────────────────────────────────
 
 
@@ -861,6 +926,27 @@ def main(argv: list[str] | None = None) -> int:
     p_verify = sub.add_parser("verify-audit")
     p_verify.add_argument("--db", required=True)
     p_verify.set_defaults(func=cmd_verify_audit)
+
+    # ─── v0.8 reporting export ──────────────────────────────────────
+    p_cd = sub.add_parser(
+        "crisis-dossier",
+        help="Export a deterministic crisis-window dossier (JSON or Markdown)",
+    )
+    p_cd.add_argument(
+        "window",
+        help="Crisis-window id (e.g. 2008Q4 / 2020Q1 / 2023Q1). "
+             "Run with an unsupported value to see the full supported list.",
+    )
+    p_cd.add_argument(
+        "--format", default="json", choices=["json", "markdown"],
+        help="Output format (default: json)",
+    )
+    p_cd.add_argument(
+        "--title-prefix", default=None,
+        help="Optional prefix prepended to the Markdown report title "
+             "(markdown format only; ignored for json)",
+    )
+    p_cd.set_defaults(func=cmd_crisis_dossier)
 
     args = p.parse_args(argv)
     return args.func(args)

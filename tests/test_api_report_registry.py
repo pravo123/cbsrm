@@ -83,6 +83,16 @@ def test_reports_catalog_is_byte_identical_across_calls(client):
 # ─── no execution side effects ─────────────────────────────────────
 
 
+def test_reports_catalog_includes_macro_composite(client):
+    """The catalog endpoint must surface every registered report. After
+    the v0.9 second-report slice, the response must include both
+    crisis-dossier and macro-composite."""
+    body = client.get("/reports").json()
+    ids = [entry["id"] for entry in body["reports"]]
+    assert "crisis-dossier" in ids
+    assert "macro-composite" in ids
+
+
 def test_reports_catalog_does_not_build_a_dossier(monkeypatch):
     """Hitting ``GET /reports`` must NOT invoke the dossier builder.
     The catalog is metadata-only; this is the load-bearing contract

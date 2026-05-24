@@ -82,9 +82,54 @@ def _crisis_dossier_entry() -> dict[str, Any]:
     }
 
 
+def _macro_composite_entry() -> dict[str, Any]:
+    """Build the macro-composite registry entry.
+
+    Metadata-only: the v0.9 registry lists this report so the catalog
+    abstraction is exercised with a real second entry, but the report
+    has no fixture-backed window set and no dedicated executable
+    surface yet. ``windows`` is empty by design. Operators run a macro
+    classification directly via :func:`cbsrm.macro.classify_regime` /
+    :func:`cbsrm.macro.classify_phase` on their own feature data.
+
+    The ``surfaces`` field deliberately points back at the catalog
+    endpoints (``cbsrm reports`` / ``GET /reports`` / the landing-page
+    Streamlit command) rather than fabricating per-report endpoints
+    that do not exist on top of v0.8.
+    """
+    return {
+        "id": "macro-composite",
+        "title": "Macro Composite Snapshot",
+        "description": (
+            "Caller-driven macro-regime classification snapshot composed "
+            "from the v0.7 macro composite (yield curve / NFP momentum / "
+            "FFR / DXY) and the v0.8 phase classifier. Metadata-only "
+            "entry in the v0.9 registry: there is no fixture-backed "
+            "window set and no dedicated executable surface yet. "
+            "Operators run a classification directly via "
+            "cbsrm.macro.classify_regime and cbsrm.macro.classify_phase "
+            "on their own feature data."
+        ),
+        "formats": ["json"],
+        "windows": [],
+        "surfaces": {
+            "cli": "cbsrm reports",
+            "api": ["GET /reports"],
+            "streamlit": (
+                "streamlit run dashboard/report_catalog_viewer.py"
+            ),
+        },
+    }
+
+
 # Ordered tuple of metadata builders. New reports are appended here;
-# `get_report_catalog` deep-copies their output on every call.
-_REPORT_BUILDERS: tuple = (_crisis_dossier_entry,)
+# `get_report_catalog` deep-copies their output on every call. Catalog
+# insertion order is deterministic and pinned by
+# ``test_catalog_lists_both_reports_in_deterministic_order``.
+_REPORT_BUILDERS: tuple = (
+    _crisis_dossier_entry,
+    _macro_composite_entry,
+)
 
 
 # ─── Public API ─────────────────────────────────────────────────────

@@ -733,8 +733,14 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
 
     _write_stdout_utf8_safe(output_text)
 
+    # Build the manifest once if either side-effect (file write,
+    # audit-chain stamping) was requested. Reusing the same dict
+    # guarantees the manifest file and the audit row describe
+    # bit-identical bytes.
     manifest_path = getattr(args, "manifest", None)
-    if manifest_path is not None:
+    audit_db_path = getattr(args, "audit_db", None)
+    manifest: dict | None = None
+    if manifest_path is not None or audit_db_path is not None:
         from cbsrm.reporting import build_report_manifest
 
         manifest = build_report_manifest(
@@ -746,9 +752,45 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
             dossier=dossier,
             payload=payload,
         )
+
+    if manifest_path is not None:
+        assert manifest is not None  # for type checkers
         Path(manifest_path).write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
+        )
+
+    if audit_db_path is not None:
+        assert manifest is not None  # for type checkers
+        import sqlite3
+
+        from cbsrm.audit.chain import AuditChain
+        from cbsrm.reporting import stamp_manifest_to_chain
+
+        try:
+            conn = sqlite3.connect(audit_db_path)
+        except sqlite3.OperationalError as exc:
+            print(
+                f"error: cannot open audit db '{audit_db_path}': {exc}",
+                file=sys.stderr,
+            )
+            return 2
+
+        try:
+            chain = AuditChain(conn)
+            audit_row = stamp_manifest_to_chain(chain, manifest)
+        finally:
+            conn.close()
+
+        # One concise stderr line so the operator can locate the row
+        # later via `cbsrm verify-audit --db PATH` or by querying the
+        # subject through the API's /audit/{subject} surface. Stdout
+        # is reserved for the report bytes.
+        print(
+            f"audit: row_id={audit_row['row_id']} "
+            f"subject={audit_row['subject']} "
+            f"hash={audit_row['hash']}",
+            file=sys.stderr,
         )
 
     return 0
@@ -1003,6 +1045,14 @@ def main(argv: list[str] | None = None) -> int:
         "--manifest", default=None, metavar="PATH",
         help="Optional path to write the deterministic export-time "
              "manifest JSON. Stdout report output is unchanged.",
+    )
+    p_cd.add_argument(
+        "--audit-db", default=None, metavar="PATH",
+        help="Optional path to a sqlite audit-chain DB. When supplied, "
+             "the export manifest is appended as one REPORT_EXPORTED "
+             "row and a one-line audit record is printed to stderr. "
+             "The DB file is created if it does not exist. Stdout "
+             "report output is unchanged.",
     )
     p_cd.set_defaults(func=cmd_crisis_dossier)
 

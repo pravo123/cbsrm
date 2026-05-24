@@ -422,3 +422,230 @@ def test_stdout_byte_identical_with_and_without_manifest_flag(
     )
     assert rc1 == 0 and rc2 == 0
     assert out_without == out_with
+
+
+# ─── --audit-db flag (v0.9 addition) ────────────────────────────────
+
+
+def _audit_rows(db_path):
+    """Open the sqlite DB and return all audit rows ordered by id."""
+    import sqlite3
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        return conn.execute(
+            """SELECT id, ts, kind, subject, payload_json, hash, prev_hash
+                 FROM cbsrm_audit_log ORDER BY id ASC"""
+        ).fetchall()
+    finally:
+        conn.close()
+
+
+def test_audit_db_creates_sqlite_and_writes_one_row(tmp_path, capsys):
+    db_path = tmp_path / "audit.db"
+    assert not db_path.exists()
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc == 0
+    assert db_path.is_file()
+    rows = _audit_rows(db_path)
+    assert len(rows) == 1
+
+
+def test_audit_db_stderr_line_shape(tmp_path, capsys):
+    db_path = tmp_path / "audit.db"
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc == 0
+    # The stderr line must start with "audit:" and contain row_id /
+    # subject / hash. Hash is 64 hex chars from sha256.
+    assert err.startswith("audit:")
+    assert "row_id=" in err
+    assert "subject=report:crisis-dossier:2008Q4:json" in err
+    assert "hash=" in err
+    # Locate and check the hash is hex-looking.
+    hash_token = err.split("hash=", 1)[1].strip().split()[0]
+    assert len(hash_token) == 64
+    assert all(c in "0123456789abcdef" for c in hash_token)
+
+
+def test_audit_db_does_not_change_stdout(tmp_path, capsys):
+    """The audit-db flag must be purely additive: stdout report bytes
+    are byte-identical with or without `--audit-db`."""
+    rc1, out_without, _ = _run(
+        ["crisis-dossier", "2008Q4", "--format", "json"], capsys,
+    )
+    db_path = tmp_path / "audit.db"
+    rc2, out_with, _ = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc1 == 0 and rc2 == 0
+    assert out_without == out_with
+
+
+def test_audit_db_without_manifest_still_audits(tmp_path, capsys):
+    """`--audit-db` alone (no `--manifest`) still appends the audit row
+    and writes no manifest file."""
+    db_path = tmp_path / "audit.db"
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc == 0
+    rows = _audit_rows(db_path)
+    assert len(rows) == 1
+    # Only the audit DB exists in tmp_path; no stray manifest file.
+    other = [p for p in tmp_path.iterdir() if p != db_path]
+    assert other == []
+
+
+def test_audit_db_with_manifest_writes_both_and_manifest_file_unchanged(
+    tmp_path, capsys,
+):
+    """When both flags are supplied, the manifest file is identical to
+    the no-audit case (no embedded audit metadata)."""
+    mpath_audit = tmp_path / "m_with_audit.json"
+    db_path = tmp_path / "audit.db"
+    rc1, _, _ = _run(
+        ["crisis-dossier", "2008Q4", "--format", "json",
+         "--manifest", str(mpath_audit), "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc1 == 0
+
+    mpath_no_audit = tmp_path / "m_no_audit.json"
+    rc2, _, _ = _run(
+        ["crisis-dossier", "2008Q4", "--format", "json",
+         "--manifest", str(mpath_no_audit)],
+        capsys,
+    )
+    assert rc2 == 0
+
+    # Manifest file content is byte-identical with and without
+    # `--audit-db`. No audit metadata leaks into the manifest file.
+    assert (
+        mpath_audit.read_bytes() == mpath_no_audit.read_bytes()
+    )
+    # And the audit DB has exactly one row.
+    assert len(_audit_rows(db_path)) == 1
+
+
+@pytest.mark.parametrize("fmt", ["json", "markdown", "html"])
+def test_audit_db_subject_format_suffix(fmt, tmp_path, capsys):
+    if fmt == "html":
+        pytest.importorskip("markdown")
+    db_path = tmp_path / "audit.db"
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2020Q1",
+         "--format", fmt, "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc == 0
+    rows = _audit_rows(db_path)
+    assert len(rows) == 1
+    _, _ts, kind, subject, _pj, _h, _ph = rows[0]
+    assert kind == "REPORT_EXPORTED"
+    assert subject == f"report:crisis-dossier:2020Q1:{fmt}"
+
+
+def test_audit_payload_source_is_cli(tmp_path, capsys):
+    import json as _json
+
+    db_path = tmp_path / "audit.db"
+    rc, _out, _err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc == 0
+    rows = _audit_rows(db_path)
+    payload_json = rows[0][4]
+    payload = _json.loads(payload_json)
+    assert payload["source"] == "cli"
+    assert payload["report_id"] == "crisis-dossier"
+    assert payload["window_id"] == "2008Q4"
+    assert payload["format"] == "json"
+
+
+def test_audit_two_runs_append_two_linked_rows(tmp_path, capsys):
+    db_path = tmp_path / "audit.db"
+    rc1, _, _ = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    rc2, _, _ = _run(
+        ["crisis-dossier", "2020Q1",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc1 == 0 and rc2 == 0
+    rows = _audit_rows(db_path)
+    assert len(rows) == 2
+    # Linked chain: row 2's prev_hash equals row 1's hash.
+    r1_id, _, _, _, _, r1_hash, r1_prev = rows[0]
+    r2_id, _, _, _, _, r2_hash, r2_prev = rows[1]
+    assert r2_id == r1_id + 1
+    assert r1_prev is None
+    assert r2_prev == r1_hash
+    assert r2_hash != r1_hash
+
+
+def test_chain_verify_passes_after_cli_audit_writes(tmp_path, capsys):
+    """Re-open the audit DB after the CLI run and verify the chain
+    via the existing :meth:`AuditChain.verify` API."""
+    import sqlite3
+
+    from cbsrm.audit.chain import AuditChain
+
+    db_path = tmp_path / "audit.db"
+    rc1, _, _ = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    rc2, _, _ = _run(
+        ["crisis-dossier", "2020Q1",
+         "--format", "markdown", "--audit-db", str(db_path)],
+        capsys,
+    )
+    rc3, _, _ = _run(
+        ["crisis-dossier", "2023Q1",
+         "--format", "json", "--audit-db", str(db_path)],
+        capsys,
+    )
+    assert rc1 == 0 and rc2 == 0 and rc3 == 0
+
+    conn = sqlite3.connect(str(db_path))
+    try:
+        chain = AuditChain(conn)
+        ok, broken = chain.verify()
+    finally:
+        conn.close()
+    assert ok is True
+    assert broken == []
+
+
+def test_audit_db_unwritable_path_fails_cleanly(tmp_path, capsys):
+    """A path under a non-existent parent dir should fail with exit
+    code 2, a clean stderr message, and no traceback."""
+    bad_path = tmp_path / "missing_parent" / "audit.db"
+    rc, _out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "json", "--audit-db", str(bad_path)],
+        capsys,
+    )
+    assert rc == 2
+    assert err
+    assert "cannot open audit db" in err
+    assert str(bad_path) in err
+    assert "Traceback" not in err

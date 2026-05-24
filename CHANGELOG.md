@@ -30,11 +30,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - 10 tests in `tests/test_macro_replay.py` covering returned schema, hotter-direction propagation, hand-calculated pre/post log returns on a linear ramp, missing-column / empty-input / non-positive-window / non-DataFrame `ValueError` paths, fixture round-trip, and unknown-event passthrough.
 
 ### Planned for v0.8 (remaining)
-- 2008Q4 / 2020Q1 / 2023Q1 crisis-replay notebooks (will consume `macro_events`)
-- Network-contagion via `marcobardoscia/neva` (DebtRank)
+- Historical crisis-window dossiers — 2008Q4 / 2020Q1 / 2023Q1 walkthroughs that drive Stage 1-4 across the canonical CRISIS_WINDOWS (separate from the per-event macro-replay surface that already shipped)
 - `arch`-backed GJR-GARCH-DCC fitter for end-to-end SRISK from raw returns
 - LBS (locational banking statistics) + BIS EER (effective exchange rates)
 - Acemoglu phase classifier
+- *(Optional / downstream)* VolanX wiring of `macro_events.score_event` as a decision-intelligence feature (operator-tracked, not in-tree)
 
 ---
 

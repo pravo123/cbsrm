@@ -5,7 +5,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
 [![Tests](https://img.shields.io/badge/tests-944_passing-brightgreen.svg)](#tests)
-[![Version](https://img.shields.io/badge/version-0.8.0-blueviolet.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.9.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 
 CBSRM reproduces, in modern typed Python, the canonical systemic-risk and financial-stability measures used by central banks, supervisory authorities, and the academic literature — under one Protocol, one audit chain, and one reproducibility guarantee. Apache 2.0.

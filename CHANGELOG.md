@@ -6,14 +6,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-> **Status:** v0.8.0 shipped 2026-05-24 (annotated tag `v0.8.0` at commit
-> `410e3ac9`). The v0.9 work-in-progress block below tracks additive
-> slices on top of v0.8.0; the first one — the report registry/catalog —
-> is already on `main`. Source versions in `pyproject.toml` /
-> `cbsrm/__init__.py` are deferred for a single bump at the v0.9.0 final
-> tag, consistent with the v0.8 release pattern.
+## [0.9.0] - 2026-05-25
 
-### Added — v0.9 work in progress
+### Added
 
 **v0.9 RC readiness — docs-only copy polish**
 - Refreshed `LAUNCH_COMMAND_CENTER.md` to clear stale current-state copy surfaced by the Prompt 59 read-only audit: §10 "Do not do yet" row for `v0.9.0` tag rephrased to "no `v0.9.0` final tag has been cut yet; v0.9 work is additive on `main` until the explicit ship gate" (was the over-broad "no v0.9 work has landed yet" — five v0.9 macro-composite slices are now on `main`); §11 launch-day step 1 updated to point at the current `main` count (944) while preserving the historical `v0.8.0` figure (555); §7 and §8 sibling-branch checklist rows annotated to explicitly mark the "555 tests" copy as v0.8.0 historical launch material so it is not misread as current v0.9 outbound copy.

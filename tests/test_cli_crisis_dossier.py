@@ -161,7 +161,7 @@ def test_invalid_format_choice_argparse_rejects(capsys):
     """argparse should reject unknown ``--format`` values with SystemExit
     rather than reaching the handler."""
     with pytest.raises(SystemExit) as excinfo:
-        main(["crisis-dossier", "2008Q4", "--format", "pdf"])
+        main(["crisis-dossier", "2008Q4", "--format", "xml"])
     assert excinfo.value.code != 0
 
 
@@ -732,6 +732,51 @@ def test_store_db_stderr_line_shape(tmp_path, capsys):
     assert all(c in "0123456789abcdef" for c in hash_token)
     assert "was_existing=" in err
     assert f"db={db}" in err
+
+
+# ─── PDF format (Block 4) ───────────────────────────────────────────
+
+
+def test_pdf_format_writes_file(tmp_path, capsys):
+    pytest.importorskip("reportlab")
+    out_path = tmp_path / "dossier.pdf"
+    rc, out, err = _run(
+        ["crisis-dossier", "2008Q4",
+         "--format", "pdf", "--output", str(out_path)],
+        capsys,
+    )
+    assert rc == 0, err
+    # PDF bytes never go to stdout.
+    assert out == ""
+    assert out_path.is_file()
+    data = out_path.read_bytes()
+    assert data.startswith(b"%PDF")
+    assert b"%%EOF" in data
+    # A one-line stderr note confirms the write.
+    assert "pdf:" in err
+    assert str(out_path) in err
+
+
+def test_pdf_format_requires_output(capsys):
+    pytest.importorskip("reportlab")
+    rc, out, err = _run(["crisis-dossier", "2008Q4", "--format", "pdf"], capsys)
+    assert rc == 2
+    assert out == ""
+    assert "--output" in err
+    assert "Traceback" not in err
+
+
+def test_pdf_format_unknown_window_fails_clean(tmp_path, capsys):
+    pytest.importorskip("reportlab")
+    out_path = tmp_path / "x.pdf"
+    rc, _out, err = _run(
+        ["crisis-dossier", "9999Q9",
+         "--format", "pdf", "--output", str(out_path)],
+        capsys,
+    )
+    assert rc == 2
+    assert not out_path.exists()
+    assert "unknown crisis-dossier window" in err
 
 
 def test_store_db_stdout_byte_identical_with_and_without(

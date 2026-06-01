@@ -246,6 +246,41 @@ def test_html_endpoint_is_byte_identical_across_calls(client):
     assert r1.content == r2.content
 
 
+# ─── /reports/crisis-dossiers/{window_id}/pdf (Block 4) ─────────────
+
+
+def test_pdf_endpoint_route_is_registered():
+    app = build_app()
+    paths = {r.path for r in app.routes}  # type: ignore[attr-defined]
+    assert "/reports/crisis-dossiers/{window_id}/pdf" in paths
+
+
+def test_pdf_endpoint_returns_application_pdf(client):
+    pytest.importorskip("reportlab")
+    r = client.get("/reports/crisis-dossiers/2008Q4/pdf")
+    assert r.status_code == 200
+    assert r.headers["content-type"] == "application/pdf"
+    assert r.content.startswith(b"%PDF")
+    assert b"%%EOF" in r.content
+
+
+@pytest.mark.parametrize("window", list_dossier_windows())
+def test_pdf_endpoint_serves_all_windows(window, client):
+    pytest.importorskip("reportlab")
+    r = client.get(f"/reports/crisis-dossiers/{window}/pdf")
+    assert r.status_code == 200
+    assert r.content.startswith(b"%PDF")
+
+
+def test_pdf_endpoint_404_for_unknown_window(client):
+    pytest.importorskip("reportlab")
+    r = client.get("/reports/crisis-dossiers/BOGUS/pdf")
+    assert r.status_code == 404
+    detail = r.json()["detail"]
+    assert detail["window_id"] == "BOGUS"
+    assert "Traceback" not in r.text
+
+
 # ─── ?manifest=true on the JSON endpoint (v0.9 addition) ────────────
 
 

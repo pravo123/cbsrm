@@ -45,6 +45,9 @@ indicators = [
 html = [
     "markdown>=3.5,<4",
 ]
+pdf = [
+    "reportlab>=4",
+]
 dev = [
     "pytest>=8.0",
     "pytest-cov>=4.1",
@@ -54,7 +57,7 @@ dev = [
     "mypy>=1.8",
 ]
 all = [
-    "cbsrm[api,indicators,html,dev]",
+    "cbsrm[api,indicators,html,pdf,dev]",
 ]
 
 [project.urls]

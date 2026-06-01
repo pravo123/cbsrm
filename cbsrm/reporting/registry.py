@@ -69,11 +69,16 @@ def _crisis_dossier_entry() -> dict[str, Any]:
         "formats": ["json", "markdown"],
         "windows": list(list_dossier_windows()),
         "surfaces": {
-            "cli": "cbsrm crisis-dossier WINDOW --format json|markdown",
+            "cli": (
+                "cbsrm crisis-dossier WINDOW "
+                "--format json|markdown|html|pdf [--output PATH]"
+            ),
             "api": [
                 "GET /reports/crisis-dossiers",
                 "GET /reports/crisis-dossiers/{window_id}",
                 "GET /reports/crisis-dossiers/{window_id}/markdown",
+                "GET /reports/crisis-dossiers/{window_id}/html",
+                "GET /reports/crisis-dossiers/{window_id}/pdf",
             ],
             "streamlit": (
                 "streamlit run dashboard/crisis_dossier_viewer.py"
@@ -140,13 +145,57 @@ def _macro_composite_entry() -> dict[str, Any]:
     }
 
 
+def _crisis_dossier_live_entry() -> dict[str, Any]:
+    """Build the live-data crisis-dossier registry entry.
+
+    Companion to the fixture-backed ``crisis-dossier`` report. Composes
+    :func:`cbsrm.diagnostics.build_crisis_dossier_live` with the
+    :class:`cbsrm.diagnostics.LiveDossierClients` adapter. The price panel
+    is sourced LIVE from FRED; the macro-event prints, interbank network,
+    and phase features are PINNED from a selectable crisis-window fixture
+    (no public live source for consensus prints or bank-level exposures).
+    ``windows`` is empty because the surface is parametrised by an
+    arbitrary ``[start, end]`` window rather than a fixed catalog. There is
+    no Streamlit viewer for the live surface in this slice.
+    """
+    return {
+        "id": "crisis-dossier-live",
+        "title": "Crisis Dossier (Live)",
+        "description": (
+            "Live-data crisis-window dossier. Sources the price panel live "
+            "from FRED (SP500, DGS10) and composes the same dossier shape as "
+            "the fixture-backed crisis-dossier via "
+            "cbsrm.diagnostics.build_crisis_dossier_live. Macro-event prints, "
+            "the interbank network, and phase features are pinned from a "
+            "selectable crisis-window fixture (no public live source) and "
+            "labelled as such in the dossier. The dossier metadata records "
+            "data_source = 'live' | 'local_cache'."
+        ),
+        "formats": ["json", "markdown", "html", "pdf"],
+        "windows": [],
+        "surfaces": {
+            "cli": (
+                "cbsrm crisis-dossier-live --start S --end E "
+                "--format json|markdown|html|pdf [--network-window W]"
+            ),
+            "api": [
+                "GET /reports/crisis-dossiers-live?start=&end=&network_window=",
+                "GET /reports/crisis-dossiers-live/markdown"
+                "?start=&end=&network_window=",
+            ],
+            "streamlit": "(none — CLI/API only in this slice)",
+        },
+    }
+
+
 # Ordered tuple of metadata builders. New reports are appended here;
 # `get_report_catalog` deep-copies their output on every call. Catalog
 # insertion order is deterministic and pinned by
-# ``test_catalog_lists_both_reports_in_deterministic_order``.
+# ``test_catalog_lists_reports_in_deterministic_order``.
 _REPORT_BUILDERS: tuple = (
     _crisis_dossier_entry,
     _macro_composite_entry,
+    _crisis_dossier_live_entry,
 )
 
 

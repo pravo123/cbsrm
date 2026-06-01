@@ -279,10 +279,11 @@ def test_macro_composite_windows_match_pinned_set():
     assert meta["windows"] == list_macro_composite_windows()
 
 
-def test_catalog_lists_both_reports_in_deterministic_order():
+def test_catalog_lists_reports_in_deterministic_order():
     """``get_report_catalog`` preserves the insertion order of
     ``_REPORT_BUILDERS``. The pinned order is crisis-dossier first
-    (v0.8 milestone), macro-composite second (first v0.9 entry)."""
+    (v0.8 milestone), macro-composite second (first v0.9 entry),
+    crisis-dossier-live third (Block 2 live surface)."""
     catalog = get_report_catalog()
     ids = [r["id"] for r in catalog["reports"]]
-    assert ids == ["crisis-dossier", "macro-composite"]
+    assert ids == ["crisis-dossier", "macro-composite", "crisis-dossier-live"]

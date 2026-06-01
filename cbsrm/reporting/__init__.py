@@ -107,6 +107,10 @@ from cbsrm.reporting.report_renderer import (
     build_report_payload,
     render_dossier_markdown,
 )
+from cbsrm.reporting.pdf_renderer import (
+    PDF_RENDERER_VERSION,
+    render_dossier_pdf,
+)
 
 __all__ = [
     "render_dossier_markdown",
@@ -119,6 +123,8 @@ __all__ = [
     "REPORT_REGISTRY_VERSION",
     "render_dossier_html",
     "HTML_RENDERER_VERSION",
+    "render_dossier_pdf",
+    "PDF_RENDERER_VERSION",
     "build_report_manifest",
     "sha256_text",
     "sha256_jsonable",

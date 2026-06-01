@@ -27,9 +27,25 @@ from cbsrm import __version__
 from cbsrm.audit.chain import AuditChain
 
 
+def _make_live_clients(network_window: str):
+    """Factory for the live-dossier client adapter.
+
+    Module-scoped so tests can monkeypatch it with a fake (avoiding any
+    real FRED network call). Production returns a real
+    :class:`cbsrm.diagnostics.LiveDossierClients`.
+    """
+    from cbsrm.diagnostics import LiveDossierClients
+
+    return LiveDossierClients(network_window=network_window)
+
+
 def build_app(
     audit_conn: sqlite3.Connection | None = None,
     report_store_db_path: str | None = None,
+    *,
+    allowed_origins: list[str] | None = None,
+    auth_token: str | None = None,
+    rate_limit_per_min: int | None = None,
 ):
     """Construct the FastAPI app. Returns the app instance.
 
@@ -44,9 +60,25 @@ def build_app(
     surfaces return ``HTTP 400`` with a clear hint instead of writing to
     any path. The route layer never reads a filesystem path from the
     request — operator-config only, to keep the attack surface flat.
+
+    Hosting-hardening (all opt-in, default = current open behaviour):
+
+    * ``allowed_origins`` — when set, a CORS middleware echoes these origins;
+      when None no CORS middleware is mounted.
+    * ``auth_token`` — when set, write/heavy endpoints (``POST /audit/verify``,
+      the report-store lookup, and crisis-dossier requests that persist/audit
+      via ``?audit``/``?store``) require ``Authorization: Bearer <token>``;
+      a missing/invalid token gets a 401. Read-only catalog/health/report
+      GETs stay open. When None, no endpoint is protected (back-compat).
+    * ``rate_limit_per_min`` — when set, a dependency-light in-memory
+      fixed-window per-client-IP limiter returns 429 once the threshold is
+      exceeded within a 60-second window. When None, no limiting.
+
+    Every response carries an ``X-Request-ID`` header (echoed from the
+    inbound header when present, else a fresh uuid4 hex).
     """
     try:
-        from fastapi import FastAPI, HTTPException
+        from fastapi import FastAPI, Header, HTTPException
     except ImportError as e:
         raise RuntimeError(
             "FastAPI not installed. Install with: pip install cbsrm[api]"
@@ -78,6 +110,71 @@ def build_app(
             "and methodology details."
         ),
     )
+
+    # ─── Hosting hardening (all opt-in) ─────────────────────────────
+
+    # CORS — mounted only when origins are configured.
+    if allowed_origins is not None:
+        from fastapi.middleware.cors import CORSMiddleware
+
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=list(allowed_origins),
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    # Rate limiter — dependency-light in-memory fixed window, per client IP.
+    # Added BEFORE the request-id middleware so request-id stays outermost and
+    # is set even on a 429 short-circuit.
+    if rate_limit_per_min is not None:
+        import time
+        from collections import defaultdict
+
+        from fastapi.responses import JSONResponse
+
+        _hits: dict[str, list[float]] = defaultdict(list)
+
+        @app.middleware("http")
+        async def _rate_limit_mw(request, call_next):
+            client = request.client.host if request.client else "unknown"
+            now = time.monotonic()
+            window_start = now - 60.0
+            recent = [t for t in _hits[client] if t >= window_start]
+            if len(recent) >= rate_limit_per_min:
+                _hits[client] = recent
+                return JSONResponse(
+                    status_code=429,
+                    content={"error": "rate limit exceeded",
+                             "limit_per_min": rate_limit_per_min},
+                )
+            recent.append(now)
+            _hits[client] = recent
+            return await call_next(request)
+
+    # Request-ID — added last so it is the OUTERMOST middleware and tags
+    # every response (including a 429 from the limiter above).
+    import uuid
+
+    @app.middleware("http")
+    async def _request_id_mw(request, call_next):
+        rid = request.headers.get("X-Request-ID") or uuid.uuid4().hex
+        response = await call_next(request)
+        response.headers["X-Request-ID"] = rid
+        return response
+
+    def _require_auth(authorization: str | None) -> None:
+        """Enforce a bearer token on protected endpoints when configured.
+
+        No-op when ``auth_token`` is None (default open behaviour)."""
+        if auth_token is None:
+            return
+        if authorization != f"Bearer {auth_token}":
+            raise HTTPException(
+                status_code=401,
+                detail={"error": "missing or invalid bearer token"},
+            )
 
     @app.get("/", tags=["meta"])
     def root() -> dict[str, Any]:
@@ -131,7 +228,10 @@ def build_app(
         }
 
     @app.post("/audit/verify", tags=["audit"])
-    def verify_audit() -> dict[str, Any]:
+    def verify_audit(
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        _require_auth(authorization)
         ok, broken = audit_chain.verify()
         if not ok:
             raise HTTPException(
@@ -215,6 +315,7 @@ def build_app(
         manifest: bool = False,
         audit: bool = False,
         store: bool = False,
+        authorization: str | None = Header(default=None),
     ) -> dict[str, Any]:
         """Return the JSON report payload for one crisis window.
 
@@ -249,6 +350,11 @@ def build_app(
         import json as _json
 
         from cbsrm.reporting import build_report_payload
+
+        # Heavy/persisting requests (?audit / ?store) are gated; the
+        # plain read-only JSON dossier stays open for back-compat.
+        if audit or store:
+            _require_auth(authorization)
 
         # Fail-fast before any rendering: ?store=true on an
         # unconfigured app is a misconfiguration, not a 5xx.
@@ -352,6 +458,113 @@ def build_app(
             media_type="text/html; charset=utf-8",
         )
 
+    @app.get(
+        "/reports/crisis-dossiers/{window_id}/pdf",
+        tags=["reports"],
+        response_class=None,  # set per-call below
+    )
+    def get_crisis_dossier_pdf(window_id: str):
+        """Return the PDF report for one crisis window.
+
+        Media type: ``application/pdf``. Body is a 3-page executive
+        dossier identical to ``cbsrm crisis-dossier WINDOW --format pdf``.
+        Requires the optional ``cbsrm[pdf]`` extra (``reportlab``) on the
+        server; a missing dependency surfaces as a clean 503.
+        """
+        from fastapi.responses import Response
+        from cbsrm.reporting import render_dossier_pdf
+
+        dossier = _resolve_dossier_or_404(window_id)
+        try:
+            pdf_bytes = render_dossier_pdf(dossier)
+        except RuntimeError as exc:
+            # ReportLab not installed on the server — operator misconfig,
+            # not a client error. Clean 503, no traceback leak.
+            raise HTTPException(
+                status_code=503,
+                detail={"error": str(exc), "hint": "pip install cbsrm[pdf]"},
+            ) from None
+        return Response(content=pdf_bytes, media_type="application/pdf")
+
+    # ─── Block 2: live-data crisis dossier ──────────────────────────
+    #
+    # Composes the live builder + LiveDossierClients adapter. The price
+    # panel is sourced live (FRED); macro / network / phase layers are
+    # pinned from a fixture (no public live source) and labelled in the
+    # dossier. This path triggers network I/O → treated as a heavy
+    # endpoint: gated behind the bearer token when one is configured.
+    # The client adapter is built via the module-level `_make_live_clients`
+    # factory (operator-config only — no request-supplied paths/secrets;
+    # tests monkeypatch the factory to stay offline).
+
+    def _build_live_dossier_or_502(
+        start: str, end: str, network_window: str,
+    ) -> dict[str, Any]:
+        from cbsrm.diagnostics import build_crisis_dossier_live
+
+        try:
+            clients = _make_live_clients(network_window)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": str(exc)},
+            ) from None
+        try:
+            return build_crisis_dossier_live(
+                start, end, clients=clients, cache=None,
+            )
+        except ValueError as exc:
+            # Live data unavailable + no cache — upstream failure, clean 502.
+            raise HTTPException(
+                status_code=502,
+                detail={
+                    "error": "live data unavailable",
+                    "detail": str(exc),
+                },
+            ) from None
+
+    @app.get("/reports/crisis-dossiers-live", tags=["reports"])
+    def get_crisis_dossier_live(
+        start: str,
+        end: str,
+        network_window: str = "2008Q4",
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
+        """Return the JSON report payload for a live [start, end] window.
+
+        The response ``dossier.metadata.data_source`` is ``"live"`` when
+        the price panel was fetched, ``"local_cache"`` on a cached
+        fallback. Gated by the bearer token when configured (this path
+        performs network I/O).
+        """
+        from cbsrm.reporting import build_report_payload
+
+        _require_auth(authorization)
+        dossier = _build_live_dossier_or_502(start, end, network_window)
+        return build_report_payload(dossier)
+
+    @app.get(
+        "/reports/crisis-dossiers-live/markdown",
+        tags=["reports"],
+        response_class=None,  # set per-call below
+    )
+    def get_crisis_dossier_live_markdown(
+        start: str,
+        end: str,
+        network_window: str = "2008Q4",
+        authorization: str | None = Header(default=None),
+    ):
+        """Return the Markdown report for a live [start, end] window."""
+        from fastapi.responses import PlainTextResponse
+        from cbsrm.reporting import render_dossier_markdown
+
+        _require_auth(authorization)
+        dossier = _build_live_dossier_or_502(start, end, network_window)
+        return PlainTextResponse(
+            content=render_dossier_markdown(dossier),
+            media_type="text/markdown; charset=utf-8",
+        )
+
     # ─── v0.9 macro-composite report (read-only, first cut) ─────────
     #
     # Sibling of the crisis-dossier surface: three routes mirroring
@@ -449,8 +662,12 @@ def build_app(
     @app.get(
         "/reports/stored/{output_sha256}", tags=["reports"],
     )
-    def get_stored_artifact(output_sha256: str) -> dict[str, Any]:
+    def get_stored_artifact(
+        output_sha256: str,
+        authorization: str | None = Header(default=None),
+    ) -> dict[str, Any]:
         """Return the full stored report artifact for a sha256 key."""
+        _require_auth(authorization)
         if report_store_db_path is None:
             raise HTTPException(
                 status_code=400,

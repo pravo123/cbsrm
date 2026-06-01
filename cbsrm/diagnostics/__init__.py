@@ -29,6 +29,11 @@ from cbsrm.diagnostics.crisis_replay import (
     replay_all_windows,
     replay_to_markdown_dossier,
 )
+from cbsrm.diagnostics.live_dossiers import (
+    LIVE_DOSSIER_VERSION,
+    build_crisis_dossier_live,
+)
+from cbsrm.diagnostics.live_clients import LiveDossierClients
 from cbsrm.diagnostics.replication import (
     CRISIS_WINDOWS,
     ReplicationReport,
@@ -49,4 +54,7 @@ __all__ = [
     "CRISIS_DOSSIER_WINDOWS",
     "list_dossier_windows",
     "get_fixture_snapshot",
+    "build_crisis_dossier_live",
+    "LIVE_DOSSIER_VERSION",
+    "LiveDossierClients",
 ]

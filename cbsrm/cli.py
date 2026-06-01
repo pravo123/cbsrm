@@ -716,6 +716,34 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
     title_prefix = getattr(args, "title_prefix", None)
     payload: dict | None = None
 
+    # PDF is a binary format — it cannot go to stdout and does not flow
+    # through the text manifest/store path. It requires --output and
+    # returns early after writing the file.
+    if args.format == "pdf":
+        output_path = getattr(args, "output", None)
+        if not output_path:
+            print(
+                "error: --format pdf requires --output PATH "
+                "(PDF bytes are not written to stdout).",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            from cbsrm.reporting import render_dossier_pdf
+        except ImportError as exc:  # pragma: no cover - missing extra
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        try:
+            pdf_bytes = render_dossier_pdf(dossier, output_path=output_path)
+        except RuntimeError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print(
+            f"pdf: wrote {len(pdf_bytes)} bytes to {output_path}",
+            file=sys.stderr,
+        )
+        return 0
+
     if args.format == "markdown":
         output_text = render_dossier_markdown(dossier, title_prefix=title_prefix)
     elif args.format == "html":
@@ -821,6 +849,91 @@ def cmd_crisis_dossier(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
 
+    return 0
+
+
+def _make_live_clients(network_window: str):
+    """Factory for the live-dossier client adapter.
+
+    Wrapped at module scope so tests can monkeypatch it with a fake
+    (avoiding any real FRED network call). Production returns a real
+    :class:`cbsrm.diagnostics.LiveDossierClients`.
+    """
+    from cbsrm.diagnostics import LiveDossierClients
+
+    return LiveDossierClients(network_window=network_window)
+
+
+def cmd_crisis_dossier_live(args: argparse.Namespace) -> int:
+    """Export a LIVE-data crisis dossier for a [start, end] window.
+
+    Sources the price panel live (FRED) and composes the same dossier
+    shape as ``crisis-dossier`` via
+    :func:`cbsrm.diagnostics.build_crisis_dossier_live`. Macro / network /
+    phase layers are pinned from the selected ``--network-window`` fixture
+    (no public live source) and labelled as such in the dossier. On a
+    live-fetch failure with no cache, fails clean (exit 1, no traceback).
+    """
+    from cbsrm.diagnostics import build_crisis_dossier_live
+    from cbsrm.reporting import build_report_payload, render_dossier_markdown
+
+    try:
+        clients = _make_live_clients(args.network_window)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    try:
+        dossier = build_crisis_dossier_live(
+            args.start, args.end, clients=clients, cache=None,
+        )
+    except ValueError as exc:
+        # Live fetch failed and no cache hit — clean operator-facing error.
+        print(f"error: live dossier unavailable: {exc}", file=sys.stderr)
+        return 1
+
+    title_prefix = getattr(args, "title_prefix", None)
+
+    if args.format == "pdf":
+        output_path = getattr(args, "output", None)
+        if not output_path:
+            print(
+                "error: --format pdf requires --output PATH "
+                "(PDF bytes are not written to stdout).",
+                file=sys.stderr,
+            )
+            return 2
+        try:
+            from cbsrm.reporting import render_dossier_pdf
+
+            pdf_bytes = render_dossier_pdf(dossier, output_path=output_path)
+        except RuntimeError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print(
+            f"pdf: wrote {len(pdf_bytes)} bytes to {output_path} "
+            f"(data_source={dossier['metadata']['data_source']})",
+            file=sys.stderr,
+        )
+        return 0
+
+    if args.format == "markdown":
+        output_text = render_dossier_markdown(dossier, title_prefix=title_prefix)
+    elif args.format == "html":
+        from cbsrm.reporting import render_dossier_html
+
+        output_text = render_dossier_html(dossier, title_prefix=title_prefix)
+    else:  # json
+        payload = build_report_payload(dossier)
+        output_text = json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+
+    _write_stdout_utf8_safe(output_text)
+    # One stderr line records provenance without polluting stdout bytes.
+    print(
+        f"live: data_source={dossier['metadata']['data_source']} "
+        f"window={args.start}..{args.end}",
+        file=sys.stderr,
+    )
     return 0
 
 
@@ -1097,8 +1210,14 @@ def main(argv: list[str] | None = None) -> int:
              "Run with an unsupported value to see the full supported list.",
     )
     p_cd.add_argument(
-        "--format", default="json", choices=["json", "markdown", "html"],
-        help="Output format (default: json)",
+        "--format", default="json", choices=["json", "markdown", "html", "pdf"],
+        help="Output format (default: json). 'pdf' requires --output and "
+             "the optional cbsrm[pdf] extra (reportlab).",
+    )
+    p_cd.add_argument(
+        "--output", default=None, metavar="PATH",
+        help="Output file path. Required for --format pdf (binary); "
+             "ignored for the text formats which write to stdout.",
     )
     p_cd.add_argument(
         "--title-prefix", default=None,
@@ -1129,6 +1248,41 @@ def main(argv: list[str] | None = None) -> int:
              "Stdout report output is unchanged.",
     )
     p_cd.set_defaults(func=cmd_crisis_dossier)
+
+    # ─── Block 2: live-data crisis dossier ──────────────────────────
+    p_cdl = sub.add_parser(
+        "crisis-dossier-live",
+        help="Export a LIVE-data crisis dossier for a [start, end] window "
+             "(price panel live from FRED; macro/network/phase pinned)",
+    )
+    p_cdl.add_argument(
+        "--start", required=True, metavar="YYYY-MM-DD",
+        help="Window start date (ISO).",
+    )
+    p_cdl.add_argument(
+        "--end", required=True, metavar="YYYY-MM-DD",
+        help="Window end date (ISO).",
+    )
+    p_cdl.add_argument(
+        "--format", default="json", choices=["json", "markdown", "html", "pdf"],
+        help="Output format (default: json). 'pdf' requires --output.",
+    )
+    p_cdl.add_argument(
+        "--output", default=None, metavar="PATH",
+        help="Output file path. Required for --format pdf.",
+    )
+    p_cdl.add_argument(
+        "--network-window", default="2008Q4",
+        choices=["2008Q4", "2020Q1", "2023Q1"],
+        help="Which pinned crisis fixture supplies the macro/network/phase "
+             "layers (default: 2008Q4).",
+    )
+    p_cdl.add_argument(
+        "--title-prefix", default=None,
+        help="Optional prefix prepended to the report title "
+             "(markdown/html only).",
+    )
+    p_cdl.set_defaults(func=cmd_crisis_dossier_live)
 
     # ─── v0.9 macro-composite report (CLI exposure, first cut) ──────
     from cbsrm.reporting import (

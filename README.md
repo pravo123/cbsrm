@@ -7,6 +7,9 @@
 [![Tests](https://img.shields.io/badge/tests-944_passing-brightgreen.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-0.9.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
+[![Live demo](https://img.shields.io/badge/live_demo-Risk_Terminal-1f6feb.svg)](https://pravo123.github.io/cbsrm/)
+
+**▶ Live demo — [CBSRM Risk Terminal](https://pravo123.github.io/cbsrm/):** a self-contained, offline, audit-traceable dashboard of the five systemic-risk lenses (CISS-family stress, SRISK, ΔCoVaR/MES, DebtRank, the 4-state macro regime) plus the SHA-256 model-governance audit chain — every number computed from the public `cbsrm` classes. Governance / risk-measurement only; not investment advice. Source: [`dashboard/cbsrm_terminal.html`](dashboard/cbsrm_terminal.html).
 
 CBSRM reproduces, in modern typed Python, the canonical systemic-risk and financial-stability measures used by central banks, supervisory authorities, and the academic literature — under one Protocol, one audit chain, and one reproducibility guarantee. Apache 2.0.
 

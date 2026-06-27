@@ -31,19 +31,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Build current-conditions snapshot
+      - name: Build snapshots (current + full history)
         env:
           FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
-        run: python tools/build_current_snapshot.py
+        run: |
+          python tools/build_current_snapshot.py
+          python tools/build_history_snapshot.py
 
       - name: Commit if changed
         run: |
-          if git diff --quiet -- site/current.json; then
-            echo "current.json unchanged — nothing to commit."
+          if git diff --quiet -- site/current.json site/history.json; then
+            echo "snapshots unchanged — nothing to commit."
           else
             git config user.name  "cbsrm-bot"
             git config user.email "bot@users.noreply.github.com"
-            git add site/current.json
-            git commit -m "chore(current): refresh systemic-risk snapshot [skip ci]"
+            git add site/current.json site/history.json
+            git commit -m "chore(data): refresh systemic-risk snapshots [skip ci]"
             git push
           fi

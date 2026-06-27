@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CBSRM · Systemic Risk Terminal</title>
+<meta name="description" content="CBSRM — Cross-Border Systemic Risk Monitor. A self-contained financial-stability measurement terminal: CISS-family system stress, SRISK capital shortfall, ΔCoVaR/MES tail spillover, DebtRank network contagion, the 4-state macro regime, and a SHA-256 model-governance audit chain. Apache-2.0. Not investment advice.">
+<style>
+  /* ============================================================
+     CBSRM Risk Terminal — "Obsidian Ledger"
+     Self-contained. Zero external dependencies. All SVG hand-rolled.
+     Governance / systemic-risk MEASUREMENT only. Not investment advice.
+     ============================================================ */
+  :root{
+    --bg:#0A0C10; --surface:#0F141B; --surface-2:#11161F;
+    --border:#1C2330; --border-strong:#283242;
+    --accent:#3A78C9;
+    --text:#E4E9F2; --text-strong:#F2F5FA; --text-muted:#8C99AE; --text-dim:#828FA4;
+    --benign:#4F9E84; --watch:#C9A24B; --elevated:#D98A3A; --severe:#C2545A;
+    --hash-bg:#0F1B17; --hash-bd:#1E3A30;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:13px; line-height:1.5;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:1440px;margin:0 auto;}
+  .tn{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+  .mono{font-family:var(--mono);}
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+  /* tone helpers */
+  .is-benign{color:var(--benign)} .is-watch{color:var(--watch)}
+  .is-elevated{color:var(--elevated)} .is-severe{color:var(--severe)}
+  .is-neutral{color:var(--text-muted)}
+
+  /* ---- masthead ---- */
+  .rt-mast{display:flex;align-items:center;justify-content:space-between;
+    gap:18px;padding:16px 24px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .rt-brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .rt-wordmark{font-family:var(--mono);font-size:15px;font-weight:600;color:var(--text-strong);letter-spacing:.02em;}
+  .rt-wordmark .dot{color:var(--accent);}
+  .rt-overline{font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);}
+  .rt-tag{font-family:var(--mono);font-size:10px;color:var(--text-dim);}
+  .rt-mast__right{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .rt-seg{display:inline-flex;gap:5px;}
+  .rt-seg button{cursor:pointer;padding:4px 11px;border-radius:5px;background:var(--surface-2);
+    border:1px solid var(--border-strong);color:var(--text-muted);font:11px/1 var(--mono);}
+  .rt-seg button[aria-pressed="true"]{background:#1A2230;border-color:#3A4A63;color:var(--text-strong);}
+  .rt-seg button:hover{border-color:#3A4A63;color:var(--text);}
+  .rt-seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .rt-lozenge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;
+    color:var(--benign);background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:5px;padding:4px 9px;}
+  .rt-lozenge .seal-dot{width:7px;height:7px;border-radius:50%;background:var(--benign);}
+  .rt-ghostbtn{font:11px/1 var(--mono);color:var(--text-muted);background:transparent;
+    border:1px solid var(--border-strong);border-radius:5px;padding:5px 11px;cursor:default;}
+  .rt-ghostbtn:hover{border-color:#3A4A63;color:var(--text);}
+
+  /* ---- lede ---- */
+  .rt-lede{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start;}
+  .rt-lede__main{flex:1 1 540px;min-width:300px;}
+  .rt-lede__title{font-size:13px;font-weight:600;color:var(--text-strong);margin:0 0 6px;}
+  .rt-lede__title .per{color:var(--text-dim);font-weight:400;font-family:var(--mono);font-size:11px;margin-left:8px;}
+  .rt-lede__abstract{font-size:14px;font-style:italic;color:var(--text-muted);max-width:92ch;margin:0;}
+  .rt-lede__notes{font-size:11.5px;color:var(--text-dim);margin:9px 0 0;max-width:96ch;}
+  .rt-verdict{flex:0 0 auto;display:flex;flex-direction:column;gap:6px;align-items:flex-end;text-align:right;}
+  .rt-badge{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    padding:5px 11px;border-radius:5px;border:1px solid var(--border-strong);background:var(--surface-2);}
+  .rt-badge small{display:block;font-size:9px;letter-spacing:.14em;color:var(--text-dim);margin-bottom:2px;}
+
+  /* ---- KPI strip ---- */
+  .rt-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);
+    border-bottom:1px solid var(--border);}
+  .rt-kpi{background:var(--bg);padding:12px 16px;}
+  .rt-kpi__label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+  .rt-kpi__val{font-family:var(--mono);font-size:21px;font-weight:600;color:var(--text-strong);
+    font-variant-numeric:tabular-nums;line-height:1.1;}
+  .rt-kpi__val .u{font-size:11px;color:var(--text-muted);margin-left:4px;font-weight:400;}
+  .rt-kpi__sub{font-size:10.5px;margin-top:4px;letter-spacing:.04em;font-family:var(--mono);}
+
+  /* ---- panel grid ---- */
+  .rt-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;background:var(--border);}
+  .rt-panel{background:var(--bg);padding:14px 16px;min-width:0;}
+  .col-5{grid-column:span 5} .col-7{grid-column:span 7}
+  .col-12{grid-column:span 12}
+  .rt-panel__hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;}
+  .rt-panel__title{font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);}
+  .rt-cite{font-family:var(--mono);font-size:10px;color:var(--text-dim);text-align:right;}
+  .rt-oneliner{font-size:12px;color:var(--text-muted);margin:-4px 0 12px;max-width:60ch;}
+  svg{display:block;max-width:100%;height:auto;overflow:visible;}
+  .axis-lbl{font-family:var(--mono);font-size:9px;fill:var(--text-dim);}
+  .val-lbl{font-family:var(--mono);font-size:10px;fill:var(--text);font-variant-numeric:tabular-nums;}
+
+  /* z-bar list beside gauge */
+  .rt-zbars{display:flex;flex-direction:column;gap:7px;justify-content:center;}
+  .rt-zrow{display:grid;grid-template-columns:78px 1fr 42px;align-items:center;gap:8px;}
+  .rt-zrow .nm{font-family:var(--mono);font-size:10px;color:var(--text-muted);}
+  .rt-zrow .track{height:7px;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;position:relative;overflow:hidden;}
+  .rt-zrow .fill{position:absolute;top:0;bottom:0;left:0;}
+  .rt-zrow .zv{font-family:var(--mono);font-size:10px;text-align:right;color:var(--text);font-variant-numeric:tabular-nums;}
+
+  /* chips */
+  .rt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .rt-chip{font-family:var(--mono);font-size:9.5px;color:var(--text-muted);background:var(--surface-2);
+    border:1px solid var(--border);border-radius:4px;padding:3px 7px;letter-spacing:.03em;}
+  .rt-chip.fired{color:var(--severe);border-color:#3A2630;background:#1A1014;}
+  .rt-chip.none{color:var(--text-dim);}
+
+  /* param strip */
+  .rt-params{font-family:var(--mono);font-size:9.5px;color:var(--text-dim);margin-top:9px;letter-spacing:.02em;}
+
+  /* methodology expander */
+  details.rt-method{margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;}
+  details.rt-method>summary{cursor:pointer;font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--text-muted);list-style:none;}
+  details.rt-method>summary::-webkit-details-marker{display:none;}
+  details.rt-method>summary::before{content:"▸ ";color:var(--accent);}
+  details.rt-method[open]>summary::before{content:"▾ ";}
+  details.rt-method>summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .rt-method__body{margin-top:9px;font-size:11.5px;color:var(--text-muted);}
+  .rt-method__body p{margin:0 0 8px;}
+  .rt-method__formula{font-family:var(--mono);font-size:11px;color:var(--text);background:var(--surface-2);
+    border:1px solid var(--border);border-radius:4px;padding:8px 10px;margin:0 0 9px;overflow-x:auto;}
+  .rt-bands{display:grid;gap:4px;margin:0 0 9px;}
+  .rt-band{display:grid;grid-template-columns:96px 1fr;gap:8px;font-size:11px;align-items:baseline;}
+  .rt-band .bl{font-family:var(--mono);font-size:10px;letter-spacing:.04em;}
+  .rt-method__cro{border-left:2px solid var(--accent);padding-left:10px;color:var(--text);font-size:11.5px;}
+  .rt-method__cro b{color:var(--text-strong);}
+  .rt-caveat{font-size:10.5px;color:var(--text-dim);margin-top:9px;font-style:italic;}
+
+  /* disclaimer */
+  .rt-disc{margin:0 24px;padding:11px 14px;border:1px dashed var(--border-strong);border-radius:6px;
+    font-size:11px;color:var(--text-dim);margin-top:1px;}
+  .rt-disc b{color:var(--text-muted);}
+
+  /* audit footer */
+  .rt-audit{padding:18px 24px;border-top:1px solid var(--border);margin-top:18px;}
+  .rt-audit__seal{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+  .rt-chain{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+  .rt-block{background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:6px;padding:10px 12px;min-width:210px;flex:1 1 210px;}
+  .rt-block .rid{font-family:var(--mono);font-size:9px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;}
+  .rt-block .win{font-family:var(--mono);font-size:13px;color:var(--text-strong);font-weight:600;margin:3px 0;}
+  .rt-block .kind{font-family:var(--mono);font-size:9px;color:var(--text-muted);}
+  .rt-block .subj{font-family:var(--mono);font-size:9px;color:var(--text-dim);margin:4px 0 6px;word-break:break-all;}
+  .rt-block .hsh{font-family:var(--mono);font-size:10px;color:var(--benign);word-break:break-all;}
+  .rt-block .hlbl{font-family:var(--mono);font-size:8.5px;color:var(--text-dim);letter-spacing:.08em;}
+  .rt-block .gbadge{display:inline-block;font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+    color:var(--text-dim);border:1px solid var(--border-strong);border-radius:3px;padding:1px 5px;margin-top:7px;}
+  .rt-link{display:flex;align-items:center;color:var(--border-strong);font-size:20px;padding:0 4px;}
+
+  /* about / license footer */
+  .rt-foot{padding:18px 24px 30px;border-top:1px solid var(--border);color:var(--text-dim);font-size:11px;}
+  .rt-foot__grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  .rt-foot h4{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:0 0 8px;font-weight:400;}
+  .rt-foot ul{margin:0;padding:0;list-style:none;}
+  .rt-foot li{margin:0 0 5px;line-height:1.45;}
+  .rt-foot .lic{margin-top:14px;font-family:var(--mono);font-size:10px;color:var(--text-dim);}
+
+  /* fade transition on window switch */
+  .rt-fade{transition:opacity .14s ease-out, transform .14s ease-out;}
+  .rt-fade.swapping{opacity:0;transform:translateY(2px);}
+
+  /* one-time load pulse on chain lozenge */
+  @keyframes sealpulse{0%{opacity:1}45%{opacity:.55}100%{opacity:1}}
+  .rt-lozenge.pulse .seal-dot{animation:sealpulse 1.2s ease-in-out 1;}
+  /* debtrank seed heartbeat */
+  @keyframes heartbeat{0%,100%{opacity:.85}50%{opacity:.45}}
+  .seed-pulse{animation:heartbeat 6s ease-in-out infinite;}
+
+  @media (max-width:1080px){
+    .rt-kpis{grid-template-columns:repeat(2,1fr);}
+    .col-5,.col-7{grid-column:span 12;}
+    .rt-foot__grid{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ MASTHEAD ============ -->
+  <header class="rt-mast">
+    <div class="rt-brand">
+      <span class="rt-wordmark">CBSRM<span class="dot"> ·</span></span>
+      <span class="rt-overline">Systemic Risk Terminal</span>
+      <span class="rt-tag" id="verTag"></span>
+    </div>
+    <div class="rt-mast__right">
+      <div class="rt-seg" id="winSeg" role="group" aria-label="Crisis window"></div>
+      <span class="rt-lozenge pulse" id="chainSeal" title="Audit hash-chain integrity">
+        <span class="seal-dot"></span><span id="chainSealTxt">CHAIN OK ✓</span>
+      </span>
+      <button class="rt-ghostbtn" type="button" title="Crisis-dossier export is available via the cbsrm CLI / API">Export dossier ↗</button>
+    </div>
+  </header>
+  <span id="winStatus" class="sr-only" aria-live="polite"></span>
+
+  <!-- ============ EDITORIAL LEDE ============ -->
+  <section class="rt-lede">
+    <div class="rt-lede__main rt-fade" id="lede">
+      <h1 class="rt-lede__title" id="ledeTitle"></h1>
+      <p class="rt-lede__abstract" id="ledeAbstract"></p>
+      <p class="rt-lede__notes" id="ledeNotes"></p>
+    </div>
+    <div class="rt-verdict rt-fade" id="ledeVerdict"></div>
+  </section>
+
+  <!-- ============ KPI STRIP ============ -->
+  <section class="rt-kpis" id="kpis"></section>
+
+  <!-- ============ PANEL GRID ============ -->
+  <main class="rt-grid">
+
+    <!-- Row A : system-stress gauge | cross-crisis sparklines -->
+    <section class="rt-panel col-5">
+      <div class="rt-panel__hd">
+        <span class="rt-panel__title">System Stress</span>
+        <span class="rt-cite">Holló–Kremer–LoDuca 2012</span>
+      </div>
+      <p class="rt-oneliner" id="gaugeOne"></p>
+      <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+        <div class="rt-fade" id="gaugeWrap"></div>
+        <div class="rt-zbars rt-fade" id="zbars" style="flex:1 1 180px;"></div>
+      </div>
+      <div id="methSystem"></div>
+    </section>
+
+    <section class="rt-panel col-7">
+      <div class="rt-panel__hd">
+        <span class="rt-panel__title">Cross-Crisis Comparison</span>
+        <span class="rt-cite">CBSRM crisis dossiers · 2008Q4 · 2020Q1 · 2023Q1</span>
+      </div>
+      <p class="rt-oneliner">Three canonical windows, three lenses. Watch DebtRank and the macro-regime score diverge in 2023Q1 — network fragility with benign macro prints.</p>
+      <div id="sparks"></div>
+    </section>
+
+    <!-- Row B : SRISK waterfall | DebtRank contagion -->
+    <section class="rt-panel col-7">
+      <div class="rt-panel__hd">
+        <span class="rt-panel__title">Firm Capital Shortfall — SRISK</span>
+        <span class="rt-cite">Brownlees–Engle 2017 · NYU&nbsp;Stern&nbsp;V-Lab</span>
+      </div>
+      <p class="rt-oneliner" id="sriskOne"></p>
+      <div id="waterfall"></div>
+      <div class="rt-params" id="sriskParams"></div>
+      <div id="methSrisk"></div>
+    </section>
+
+    <section class="rt-panel col-5">
+      <div class="rt-panel__hd">
+        <span class="rt-panel__title">Network Contagion — DebtRank</span>
+        <span class="rt-cite">Battiston&nbsp;et&nbsp;al. 2012</span>
+      </div>
+      <p class="rt-oneliner" id="drOne"></p>
+      <div class="rt-fade" id="debtrank"></div>
+      <div id="methDebtrank"></div>
+    </section>
+
+    <!-- Row C : macro radar | tail spillover -->
+    <section class="rt-panel col-5">
+      <div class="rt-panel__hd">
+        <span class="rt-panel__title">Macro Regime — 4-State Phase</span>
+        <span class="rt-cite">Estrella–Mishkin 1996 · phase classifier</span>
+      </div>
+      <p class="rt-oneliner" id="radarOne"></p>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+        <div class="rt-fade" id="radar"></div>
+        <div style="flex:1 1 150px;">
+          <div class="rt-chips rt-fade" id="rulesChips"></div>
+          <div class="rt-params" id="probitNote"></div>
+        </div>
+      </div>
+      <div id="methMacro"></div>
+    </section>
+
+    <section class="rt-panel col-7">
+      <div class="rt-panel__hd">
+        <span class="rt-panel__title">Tail Spillover — ΔCoVaR &amp; MES</span>
+        <span class="rt-cite">Adrian–Brunnermeier 2016 · Acharya&nbsp;et&nbsp;al. 2017</span>
+      </div>
+      <p class="rt-oneliner" id="tailOne"></p>
+      <div id="tail"></div>
+      <div class="rt-params" id="tailParams"></div>
+      <div id="methCovar"></div>
+    </section>
+  </main>
+
+  <!-- ============ DISCLAIMER ============ -->
+  <div class="rt-disc" id="disc"></div>
+
+  <!-- ============ AUDIT FOOTER ============ -->
+  <footer class="rt-audit">
+    <div class="rt-panel__hd" style="margin-bottom:10px;">
+      <span class="rt-panel__title">Model-Governance Audit Chain</span>
+      <span class="rt-cite">SR&nbsp;26-2 (supersedes SR&nbsp;11-7) · NIST&nbsp;FIPS&nbsp;180-4 SHA-256</span>
+    </div>
+    <div class="rt-audit__seal" id="auditSeal"></div>
+    <div class="rt-chain" id="chain"></div>
+    <div id="methAudit"></div>
+  </footer>
+
+  <!-- ============ ABOUT / LICENSE ============ -->
+  <section class="rt-foot">
+    <div class="rt-foot__grid">
+      <div>
+        <h4>Methodology &amp; Citations</h4>
+        <ul>
+          <li>Holló, Kremer &amp; Lo Duca (2012) — <i>CISS: A Composite Indicator of Systemic Stress.</i> ECB WP 1426.</li>
+          <li>Brownlees &amp; Engle (2017) — <i>SRISK: A Conditional Capital Shortfall Measure of Systemic Risk.</i> RFS 30(1).</li>
+          <li>Adrian &amp; Brunnermeier (2016) — <i>CoVaR.</i> AER 106(7).</li>
+          <li>Acharya, Pedersen, Philippon &amp; Richardson (2017) — <i>Measuring Systemic Risk.</i> RFS 30(1).</li>
+          <li>Battiston et&nbsp;al. (2012) — <i>DebtRank: Too Central to Fail?</i> Scientific Reports 2:541.</li>
+          <li>Estrella &amp; Mishkin (1996) — <i>The Yield Curve as a Predictor of U.S. Recessions.</i> NY Fed.</li>
+        </ul>
+      </div>
+      <div>
+        <h4>About this terminal</h4>
+        <ul>
+          <li>Every figure is computed from the canonical, public <span class="mono">cbsrm</span> classes (the same ones the CLI and FastAPI use) and is reproducible offline via <span class="mono">dashboard/build_terminal_data.py</span>.</li>
+          <li>Crisis windows use pinned, deterministic fixtures; G-SIB balance sheets and the ΔCoVaR/MES pair are <b>illustrative / synthetic</b> and clearly labelled.</li>
+          <li>Scope is systemic-risk <b>measurement</b> and model governance — there are no trade signals, positions, or P&amp;L anywhere on this surface.</li>
+        </ul>
+        <div class="lic">
+          © WaverVanir International LLC · CBSRM <span id="licVer"></span> · Licensed under <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">Apache-2.0</a><br>
+          <a href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener noreferrer">github.com/pravo123/cbsrm</a> · Research / decision-intelligence output — <b>not investment advice.</b>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ====================================================================
+   INLINED DATA BUNDLE — generated by dashboard/build_terminal_data.py
+   from cbsrm v0.9.0 public classes. Every value below is canonical
+   library output (deterministic / seeded). No fetch, no network.
+   ==================================================================== */
+const DATA = {
+  "schema_version":"1.0.0","cbsrm_version":"0.9.0","license":"Apache-2.0",
+  "disclaimer":"Research / financial-stability measurement output from the CBSRM open-source library. NOT investment advice, NOT a recommendation to buy or sell any security, and NOT a regulated investment communication. All figures are illustrative and computed from public methodology; validate against live data before any use.",
+  "windows":[
+    {"window_id":"2008Q4","title":"2008Q4 — Credit / Liquidity Crisis (Lehman aftermath)",
+     "period":{"start":"2008-09-15","end":"2008-12-31"},
+     "shock_summary":"Lehman bankruptcy (Sep 15) triggered global wholesale-funding freeze. TED spread > 450 bp, money-market funds broke the buck, equities fell ~30% Q-on-Q. Federal Reserve launched TARP, CPFF, AMLF, PDCF in rapid succession.",
+     "phase_label":"financial_stress","risk_posture":"stress_mitigation",
+     "research_notes":"Dossier illustrates the systemic-amplification cascade: cooler macro prints coincided with an acute funding shock that DebtRank picks up via concentrated interbank exposure. The phase classifier flips to financial_stress long before the unemployment z-score catches up.",
+     "network_stress":{"debt_rank":0.52,"iterations":2,"converged":true,"n_banks":4,"seed_node":"EPICENTRE_BANK"},
+     "phase_features":{"growth_z":-2.0,"inflation_z":-0.5,"unemployment_z":1.4,"credit_spread_z":2.6,"volatility_z":2.8,"liquidity_z":-1.5,"systemic_risk_z":2.2,"rates_z":-1.0},
+     "phase_classification":{"phase":"financial_stress","score":0.9333333333333332,"risk_posture":"stress_mitigation","rules_fired":["STRESS:credit_spread_z","STRESS:volatility_z","STRESS:systemic_risk_z"]}},
+    {"window_id":"2020Q1","title":"2020Q1 — COVID Volatility Shock",
+     "period":{"start":"2020-02-15","end":"2020-04-30"},
+     "shock_summary":"Pandemic lockdowns triggered the fastest equity drawdown in history (-34% in 33 days). Treasury basis dislocated, FX swap lines re-opened, Fed cut to ZLB and announced unlimited QE on Mar 23. NFP collapsed -701k; the April release printed -20.5M jobs lost.",
+     "phase_label":"financial_stress","risk_posture":"stress_mitigation",
+     "research_notes":"Distinct from 2008: macro prints initially appeared in-line, with the shock entirely in the volatility and liquidity channels. The classifier routes to financial_stress via the volatility-z override, not via credit-spread blow-out. DebtRank stays moderate — banks were better capitalised post-Dodd-Frank.",
+     "network_stress":{"debt_rank":0.10357142857142856,"iterations":2,"converged":true,"n_banks":4,"seed_node":"MARKET_MAKER_BANK"},
+     "phase_features":{"growth_z":-3.0,"inflation_z":-0.2,"unemployment_z":1.0,"credit_spread_z":1.8,"volatility_z":3.5,"liquidity_z":-2.5,"systemic_risk_z":1.7,"rates_z":-2.0},
+     "phase_classification":{"phase":"financial_stress","score":1.0,"risk_posture":"stress_mitigation","rules_fired":["STRESS:credit_spread_z","STRESS:volatility_z","STRESS:systemic_risk_z"]}},
+    {"window_id":"2023Q1","title":"2023Q1 — Regional Banking Stress (SVB / SBNY / FRC)",
+     "period":{"start":"2023-03-01","end":"2023-05-01"},
+     "shock_summary":"SVB run on Mar 9–10; FDIC receivership Mar 10. Signature Bank closed Mar 12. First Republic absorbed by JPM May 1. Stress was concentrated in mid-cap regionals with duration-mismatched AFS books and uninsured-deposit concentration. Macro prints remained near-consensus throughout.",
+     "phase_label":"indeterminate","risk_posture":"balanced",
+     "research_notes":"Most challenging window — macro prints look almost benign; the entire shock lives in the network/balance-sheet layer. The phase label should NOT auto-trigger financial_stress, but DebtRank with the right seed bank reveals concentrated regional fragility. Macro + network signals must be read together.",
+     "network_stress":{"debt_rank":0.3707462121212121,"iterations":2,"converged":true,"n_banks":4,"seed_node":"REGIONAL_BANK"},
+     "phase_features":{"growth_z":0.2,"inflation_z":1.1,"unemployment_z":-0.2,"credit_spread_z":1.0,"volatility_z":0.8,"liquidity_z":-0.6,"systemic_risk_z":1.1,"rates_z":1.2},
+     "phase_classification":{"phase":"indeterminate","score":0.0,"risk_posture":"balanced","rules_fired":["NO_RULE_FIRED"]}}
+  ],
+  "srisk":{"params":{"k":0.08,"horizon_days":126,"crisis_threshold":-0.4,"n_paths":2000,"seed":42},
+    "firms":[
+      {"firm":"JPM","name":"JPMorgan Chase","market_cap_bn":580.0,"book_debt_bn":3400.0,"rho_bar":0.78,"lrmes":0.325,"srisk_bn":-88.17,"is_shortfall":false,"crisis_frequency":0.001},
+      {"firm":"BAC","name":"Bank of America","market_cap_bn":305.0,"book_debt_bn":2700.0,"rho_bar":0.82,"lrmes":0.325,"srisk_bn":26.6,"is_shortfall":true,"crisis_frequency":0.001},
+      {"firm":"C","name":"Citigroup","market_cap_bn":135.0,"book_debt_bn":2300.0,"rho_bar":0.8,"lrmes":0.325,"srisk_bn":100.17,"is_shortfall":true,"crisis_frequency":0.001}
+    ],"total_positive_srisk_bn":126.77},
+  "covar_mes":{"params":{"rho":0.75,"n":2000,"seed":42,"q":0.05},
+    "delta_covar":-0.01243,"beta_q":0.76431,"mes":-0.01529,"var_q_market":-0.01615,"n_tail_obs":100,"n_total_obs":2000},
+  "audit":{"chain_ok":true,"broken_row_ids":[],"algorithm":"SHA-256","n_rows":3,
+    "rows":[
+      {"window_id":"2008Q4","row_id":1,"subject":"report:crisis-dossier:2008Q4:json","kind":"REPORT_EXPORTED","hash":"29e40ef81df709c9ded00bdbbafd768cb9b5ab2876d1f47118006fe380dca5ba","prev_hash":null},
+      {"window_id":"2020Q1","row_id":2,"subject":"report:crisis-dossier:2020Q1:json","kind":"REPORT_EXPORTED","hash":"f27d9c1a611062eb553c51410322bfe98f26c8e4a6c8a2f2612c365df9ff1337","prev_hash":"29e40ef81df709c9ded00bdbbafd768cb9b5ab2876d1f47118006fe380dca5ba"},
+      {"window_id":"2023Q1","row_id":3,"subject":"report:crisis-dossier:2023Q1:json","kind":"REPORT_EXPORTED","hash":"985992304ca85d1cf547062baf3f3c566ceb2eb13b5f524bc1cd9aee1d1238ac","prev_hash":"f27d9c1a611062eb553c51410322bfe98f26c8e4a6c8a2f2612c365df9ff1337"}
+    ]}
+};
+
+/* ====================================================================
+   LENS COPY — institution-grade, data-verified (workflow output).
+   Drives the "Methodology, interpretation & governance" expanders.
+   ==================================================================== */
+const LENS = {
+  system:{
+    formula:"CISS_t = (w ⊙ s_t)′ · C_t · (w ⊙ s_t),  C_t = EWMA corr (λ=0.93).   Offline view: the deterministic phase-classifier score over the supervisory stress channels.",
+    method:"In the full library, CISS-US follows Holló–Kremer–Lo Duca: 15 raw FRED/ECB inputs are CDF-rank normalised, grouped into 5 market-segment subindices, then aggregated by a portfolio-theoretic quadratic form with a time-varying EWMA correlation matrix. The systemic property comes from that correlation term — co-moving subindices amplify the composite, idiosyncratic ones do not. Offline (no live feed), this panel represents system stress through the deterministic phase classifier's financial_stress override, which scans volatility, credit-spread and systemic-risk z-channels. The needle shows the canonical phase_classification.score, not an invented aggregate.",
+    bands:[["Quiescent","score < 0.10 — no stress channel crosses z = 1.5","benign"],
+           ["Elevated / indeterminate","0.10–0.40 — single-segment fragility; read with DebtRank & SRISK","watch"],
+           ["Systemic stress","0.40–0.80 — multiple channels co-moving","elevated"],
+           ["Acute","≥ 0.80 — crisis-grade (2008Q4 0.93, 2020Q1 1.00)","severe"]],
+    cro:"Use it as a system-state dial, not a directive: a financial_stress flip is the trigger to convene the risk committee, refresh contingency-funding and counterparty-exposure maps, and raise supervisory reporting cadence — never to size, buy, or sell anything. Treat an indeterminate macro reading with elevated DebtRank (the 2023Q1 pattern) as a prompt to look past the macro prints into the network layer.",
+    caveat:"Offline representation. True CISS / STLFSI4 quadratic-form values require live FRED / ECB SDMX inputs (15 series → 5 subindices → EWMA correlation); here system stress is shown via the phase classifier's financial_stress override on the bundled macro z-scores."
+  },
+  srisk:{
+    formula:"SRISK = k·D − (1−k)·W·(1−LRMES);   LRMES = −E[ e^(r_firm) − 1 | r_mkt < −0.40 ];   System headline = Σ SRISK⁺ (positives only)",
+    method:"SRISK estimates a firm's conditional capital shortfall in a systemic event — the gap between prudential capital required against book assets (k) and the equity expected to survive a crisis. The crisis-conditional equity loss LRMES is produced by a pure-numpy bivariate GJR-GARCH(1,1) + scalar DCC(1,1) Monte Carlo that propagates volatility clustering, the negative-shock asymmetry term and crisis-rising correlation across 2,000 seeded paths; LRMES is the mean simple loss over only the paths that breach the −40% threshold. The panel reports ΣSRISK⁺, the V-Lab/NYU Stern headline convention.",
+    bands:[["Capital surplus","SRISK ≤ 0 (JPM −88.17) — crisis-conditional capital exceeds the requirement; a net cushion","benign"],
+           ["Moderate shortfall","SRISK > 0 but small vs equity (BAC +26.6) — a recapitalisation need would emerge","watch"],
+           ["Material shortfall","SRISK large vs market cap (C +100.17 vs 135 equity) — undercapitalised for the modeled crisis","elevated"],
+           ["Systemic concentration","ΣSRISK⁺ rising and concentrated (here +126.77, dominated by C)","severe"]],
+    cro:"A supervisor reads ΣSRISK⁺ as the dollar equity the system would need re-injected in the modeled crisis, then ranks firms by their share of it (here Citigroup dominates) to prioritise capital-planning dialogue, stress-buffer calibration and concentration limits — never as a trading view. Because the headline is sensitive to k, the −40%/126-day definition and the GARCH-DCC calibration, the governance action is to challenge those assumptions, re-run with house parameters and a higher path count, and document the settings under SR 26-2.",
+    caveat:"Balance sheets are clearly-labelled illustrative ~2026 G-SIB ballparks, not live filings. At 2,000 paths only ~2 breach −40%, so all three firms share the same LRMES 0.325 — SRISK dispersion here is driven by the k·D vs (1−k)·W leverage terms, not by LRMES. Production use needs a higher path count and firm-specific calibration."
+  },
+  covar:{
+    formula:"ΔCoVaR = β_q · (VaR_q,firm − median_firm),  β_q from Q_q(X_sys)=α+β_q·X_firm ;   MES_q = E[ X_firm | X_mkt < VaR_q(X_mkt) ]",
+    method:"Two complementary tail-dependence measures on a paired firm/system return sample. ΔCoVaR (Adrian–Brunnermeier) is estimated by linear quantile regression of system returns on firm returns at level q, fit on the pinball loss with an OLS warm-start (no statsmodels dependency); it is a marginal contribution — the widening of system VaR when the firm moves from its median to its own VaR. MES (Acharya et al.) is the empirical estimator — the average firm return on the days the market sits below its own q-quantile, a genuine firm-return quantity. A GARCH-DCC Monte-Carlo MES also ships in the library, but the bundle uses the historical estimator.",
+    bands:[["Negligible spillover","ΔCoVaR ≈ 0, β_q near 0 — firm tail decoupled from the system","benign"],
+           ["Moderate co-movement","ΔCoVaR mildly negative — typical mid-correlation institution","watch"],
+           ["Material tail dependence","β_q → 1 (bundle: 0.764, ΔCoVaR −1.24%, MES −1.53% vs market VaR −1.62%)","elevated"],
+           ["Dominant amplifier","β_q ≥ 1, MES & ΔCoVaR deeply below market VaR — a systemic node","severe"]],
+    cro:"Use ΔCoVaR / MES to rank-order institutions by systemic contribution, not to size trades. A firm screening into the material / dominant bands warrants heavier weight in concentration and counterparty-stress limits, inclusion in reverse-stress scenarios, and a model-validation note. Track the level through time; a widening ΔCoVaR alongside rising correlation is the governance trigger.",
+    caveat:"Synthetic seeded single-firm-vs-system pair (illustrative). Univariate quantile regression — no yield-curve / credit / vol state variables (the library supports them; the bundle omits them). MES is the empirical/historical estimator. Sign convention: more negative = larger systemic contribution. ΔCoVaR is a marginal contribution, not a return level — it is reported beside the chart, not plotted on the return axis."
+  },
+  debtrank:{
+    formula:"W[i,j] = min(L[i,j]/E[i], 1), W[i,i]=0;   h_j ← min(1, h_j + Σ_{i∈D} W[j,i]·h_i);   DR = Σ_i v_i·(h_final,i − h_init,i), v_i = 1/N",
+    method:"DebtRank runs a walk-once distress cascade over a directed interbank-exposure network. Each lender's vulnerability to a counterparty is the loss it books if that counterparty defaults, capped at its equity cushion. A seed node is shocked; at each step undistressed nodes absorb weighted distress from currently-distressed neighbours, then turn inactive so each node propagates exactly once (a three-state machine that prevents the cyclic double-counting of eigenvector centrality). The scalar is the economic-importance-weighted distress gained; the seed's own contribution is excluded by construction.",
+    bands:[["Contained","DR ≲ 0.15 — shock stays near the seed (2020Q1 = 0.10, well-capitalised network)","benign"],
+           ["Material amplification","DR ≈ 0.15–0.35 — a meaningful share of network value is dragged into distress","watch"],
+           ["Systemic","DR ≈ 0.35–0.50 — cascade reaches most counterparties (2023Q1 = 0.37, benign macro)","elevated"],
+           ["Near-total contagion","DR ≳ 0.50 — a single failure saturates the network (2008Q4 = 0.52)","severe"]],
+    cro:"Read DebtRank as a topology-and-cushion early warning, not a price signal: a high score with calm macro (the 2023Q1 regional case) is the flag to act on, because the fragility lives in the exposure map. Use it to identify too-central-to-fail counterparties and set name-level concentration / large-exposure limits and collateral haircuts; require the desk to re-run with stressed equity and actual bilateral exposures; and feed the result into recovery/resolution and ICAAP narratives.",
+    caveat:"Illustrative 4-bank toy network (not real bilateral exposures), each window seeded at a single epicentre node with uniform economic weights. DR is unitless in [0,1] and sensitive to the exposure matrix, equity cushions, seed and weights — re-parameterise with firm data before any supervisory use. The DebtRank scalar shown is canonical; the node/edge layout is a fixed illustrative topology."
+  },
+  macro:{
+    formula:"phase = priority_rules(z₁..z₈);   P(recession_{t+12} | spread) = Φ(−0.5450 − 0.5898·spread_pp);   stress_score = min(1, max_z / 1.5 / 2)",
+    method:"A deterministic, pure-function phase classifier labels a snapshot of eight z-scored macro/market features into one of eight phases under a fixed-priority rule book (financial_stress override first, …, indeterminate fallback). The financial_stress override fires when any single stress channel clears 1.5σ. A complementary Estrella–Mishkin probit maps the 10Y-3M Treasury spread to a 12-month recession probability, with a persistent-inversion flag. The bundled windows exercise the 8-phase classifier on pinned fixture z-scores; the probit and the live 4-state composite are the FRED-fed path, not invoked offline.",
+    bands:[["Benign / risk-on","expansion or disinflationary_recovery; no channel ≥ 1.5σ; probit < ~10%","benign"],
+           ["Watch / transition","slowdown or indeterminate; probit ~10–30%; a channel 1.0–1.5σ but no override","watch"],
+           ["Elevated","contraction / overheating / stagflationary_stress; probit ~30–50% with persistent inversion","elevated"],
+           ["Severe / financial stress","financial_stress override active and/or probit > 50% (2008Q4 0.93, 2020Q1 1.00)","severe"]],
+    cro:"Use as a regime-conditioning overlay for the model-risk and capital framework, not a directional view. On a financial_stress label, escalate to the stress-mitigation playbook: tighten stress testing, raise the weight on tail/contagion lenses, review liquidity-coverage and counterparty-concentration limits, and log the regime trigger. Treat an indeterminate label (2023Q1) as an explicit signal that the macro layer is uninformative and the network/balance-sheet lenses must carry the read — per SR 26-2 expectations on knowing where a model is silent.",
+    caveat:"The bundled phase z-scores are pinned fixture values for the three canonical windows — deterministic and offline, not a live pull. The report layer invokes only the 8-phase classifier; the Estrella–Mishkin probit (β₀ −0.5450, β₁ −0.5898) and the live 4-state RISK_ON/OFF composite are the FRED T10Y3M path, live-computable in the full library but not exercised here."
+  },
+  audit:{
+    formula:"hashₙ = SHA-256( hashₙ₋₁ ‖ ts ‖ kind ‖ subject ‖ payload_json ),   hash₀.prev = ∅",
+    method:"Each report export is described by a deterministic manifest (report id, window, format, output-byte SHA-256, payload SHA-256, version stamps) and appended as one row to an append-only ledger. Every row stores a SHA-256 over the previous hash, timestamp, kind, subject and payload, RS-byte separated; the genesis row carries prev_hash = null. AuditChain.verify() replays the ledger top-to-bottom, re-derives each hash and confirms each prev_hash matches the prior row — any altered, reordered, inserted or dropped row is reported in broken_row_ids.",
+    bands:[["Chain verified","chain_ok = true, broken_row_ids = [] — exports reproducible and unaltered","benign"],
+           ["Linkage break","a row's prev_hash ≠ prior hash — row inserted / reordered / dropped","watch"],
+           ["Content tamper","recomputed hash ≠ stored hash — payload modified after the fact","elevated"],
+           ["Genesis / chain failure","genesis has non-null prev, or verify() fails broadly — provenance lost","severe"]],
+    cro:"Use the chain as the model-governance evidence layer required under SR 26-2: it gives independent validation and audit a cryptographic record that each published systemic-risk number ties to a specific input vintage, methodology version and output-byte hash, and that nothing was edited between computation and serving. On chain_ok = true, accept the export into the governance record and cite the row hashes in the validation file; on any break, open a finding, localise the broken row, and require re-derivation from version-controlled inputs before the number re-enters the reporting cycle.",
+    caveat:"Row kind is the raw string REPORT_EXPORTED — a report-export event, not the full REQUESTED→INPUT_FETCHED→COMPUTED→SERVED lifecycle the chain also supports. Only measurement content is byte-deterministic run-to-run; each row's timestamp (and therefore its hash) is wall-clock-stamped per live export, so these digests are a genuine but point-in-time snapshot."
+  }
+};
+
+/* ============================ helpers ============================ */
+const $ = s => document.querySelector(s);
+const NS = "http://www.w3.org/2000/svg";
+const RM = (window.matchMedia && matchMedia("(prefers-reduced-motion:reduce)").matches) || false;
+const TONE = {benign:"var(--benign)",watch:"var(--watch)",elevated:"var(--elevated)",severe:"var(--severe)",neutral:"var(--text-muted)"};
+const TONE_CLS = {benign:"is-benign",watch:"is-watch",elevated:"is-elevated",severe:"is-severe",neutral:"is-neutral"};
+const FEATURES = [["growth_z","GROWTH"],["inflation_z","INFL"],["unemployment_z","UNEMP"],["rates_z","RATES"],
+                  ["credit_spread_z","CREDIT"],["volatility_z","VOL"],["liquidity_z","LIQ"],["systemic_risk_z","SYSTEMIC"]];
+
+function svg(w,h,vb,label){const s=document.createElementNS(NS,"svg");s.setAttribute("width",w);s.setAttribute("height",h);s.setAttribute("viewBox",vb||`0 0 ${w} ${h}`);if(label){s.setAttribute("role","img");s.setAttribute("aria-label",label);}return s;}
+function mk(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);return e;}
+function txt(x,y,s,cls,extra){const t=mk("text",Object.assign({x,y},extra||{}));if(cls)t.setAttribute("class",cls);t.textContent=s;return t;}
+function polar(cx,cy,r,deg){const a=deg*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];}
+function arc(cx,cy,r,d0,d1){const[x0,y0]=polar(cx,cy,r,d0);const[x1,y1]=polar(cx,cy,r,d1);const large=(d1-d0)>180?1:0;return `M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;}
+function fmt(n,d){return (n>=0?"+":"")+n.toFixed(d);}
+function toneFor(tone){return TONE[tone]||TONE.neutral;}
+
+function stressTone(score){return score<0.10?"benign":score<0.40?"watch":score<0.80?"elevated":"severe";}
+function stressWord(score){return score<0.10?"QUIESCENT":score<0.40?"ELEVATED":score<0.80?"SYSTEMIC":"ACUTE";}
+function drTone(v){return v<=0.15?"benign":v<=0.35?"watch":v<=0.50?"elevated":"severe";}
+function drLabel(v){return v<=0.15?"CONTAINED":v<=0.35?"MATERIAL":v<=0.50?"SYSTEMIC":"NEAR-TOTAL";}
+
+/* ============================ methodology expander ============================ */
+function methodEl(key){
+  const L=LENS[key];
+  const d=document.createElement("details"); d.className="rt-method";
+  const sm=document.createElement("summary"); sm.textContent="Methodology, interpretation & governance"; d.appendChild(sm);
+  const b=document.createElement("div"); b.className="rt-method__body";
+  const m=document.createElement("p"); m.textContent=L.method; b.appendChild(m);
+  const f=document.createElement("div"); f.className="rt-method__formula"; f.textContent=L.formula; b.appendChild(f);
+  const bands=document.createElement("div"); bands.className="rt-bands";
+  L.bands.forEach(([label,cond,tone])=>{
+    const row=document.createElement("div"); row.className="rt-band";
+    const bl=document.createElement("span"); bl.className="bl "+TONE_CLS[tone]; bl.textContent=label;
+    const c=document.createElement("span"); c.style.color="var(--text-muted)"; c.textContent=cond;
+    row.appendChild(bl); row.appendChild(c); bands.appendChild(row);
+  });
+  b.appendChild(bands);
+  const cro=document.createElement("div"); cro.className="rt-method__cro";
+  cro.innerHTML="<b>What a risk officer does with it.</b> "; cro.appendChild(document.createTextNode(L.cro)); b.appendChild(cro);
+  const cav=document.createElement("div"); cav.className="rt-caveat"; cav.textContent="Caveat — "+L.caveat; b.appendChild(cav);
+  d.appendChild(b); return d;
+}
+
+/* ============================ STATIC (window-invariant) renders ============================ */
+
+function renderStatic(){
+  $("#verTag").textContent = `v${DATA.cbsrm_version} · schema ${DATA.schema_version} · Apache-2.0`;
+  $("#licVer").textContent = `v${DATA.cbsrm_version}`;
+  $("#disc").innerHTML = "<b>Disclaimer.</b> "+DATA.disclaimer;
+  const seg=$("#winSeg");
+  DATA.windows.forEach((w,i)=>{
+    const b=document.createElement("button"); b.type="button"; b.textContent=w.window_id;
+    b.setAttribute("aria-pressed", i===0?"true":"false");
+    b.setAttribute("aria-label", w.window_id+" crisis window");
+    b.addEventListener("click",()=>switchWindow(i));
+    seg.appendChild(b);
+  });
+  $("#chainSealTxt").textContent = DATA.audit.chain_ok ? "CHAIN OK ✓" : "CHAIN BROKEN ✗";
+}
+
+// SRISK waterfall (window-invariant) — data-derived axis, sign-aware bridge
+function renderSrisk(){
+  $("#sriskOne").textContent = "Expected capital a firm would need to stay adequately capitalised in a prolonged market crisis — and the system-wide total of those gaps.";
+  const s=DATA.srisk, firms=s.firms;
+  const W=620,H=270, padL=46,padR=16,padT=14,padB=58, plotW=W-padL-padR, plotH=H-padT-padB;
+  // axis bounds derived from the data, snapped to a clean 25-step
+  const vals=firms.map(f=>f.srisk_bn).concat([s.total_positive_srisk_bn,0]);
+  const vmax=Math.ceil(Math.max(...vals)/25)*25, vmin=Math.floor(Math.min(...vals)/25)*25, span=vmax-vmin;
+  const y = v => padT + plotH*(vmax - v)/span;
+  const s_el=svg(W,H,null,`SRISK capital-shortfall waterfall: JPM ${fmt(firms[0].srisk_bn,2)}B surplus, BAC ${fmt(firms[1].srisk_bn,2)}B, C ${fmt(firms[2].srisk_bn,2)}B, total positive shortfall +${s.total_positive_srisk_bn.toFixed(2)} billion USD.`);
+  const y0=y(0);
+  s_el.appendChild(mk("line",{x1:padL,y1:y0,x2:W-padR,y2:y0,stroke:"var(--border-strong)","stroke-width":1}));
+  s_el.appendChild(txt(padL-6,y0+3,"0","val-lbl",{"text-anchor":"end",fill:"var(--text-dim)"}));
+  for(let g=Math.ceil(vmin/50)*50; g<=vmax; g+=50){
+    if(g===0) continue;
+    s_el.appendChild(mk("line",{x1:padL,y1:y(g),x2:W-padR,y2:y(g),stroke:"var(--border)","stroke-width":1,"stroke-dasharray":"2 4"}));
+    s_el.appendChild(txt(padL-6,y(g)+3,(g>0?"+":"")+g,"axis-lbl",{"text-anchor":"end"}));
+  }
+  const slots=4, bw=54, gap=(plotW-slots*bw)/(slots+1), xAt=i=>padL+gap+i*(bw+gap);
+  const drawBar=(i,from,to,tone,skip)=>{
+    const yT=y(Math.max(from,to)), yB=y(Math.min(from,to)), h=Math.max(2,yB-yT), x=xAt(i);
+    if(!skip){
+      s_el.appendChild(mk("rect",{x,y:yT,width:bw,height:h,fill:toneFor(tone),opacity:.82,rx:1}));
+      s_el.appendChild(mk("rect",{x,y:yT,width:bw,height:h,fill:"none",stroke:toneFor(tone),"stroke-width":1,rx:1}));
+    }
+    return {x,yT,yB};
+  };
+  // JPM surplus (below zero) — ticker at the zero line (matches BAC/C), value at the bar foot
+  const jpm=firms[0]; const jp=drawBar(0,0,jpm.srisk_bn,"benign");
+  s_el.appendChild(txt(jp.x+bw/2,y0+15,jpm.firm,"val-lbl",{"text-anchor":"middle"}));
+  s_el.appendChild(txt(jp.x+bw/2,jp.yB+15,fmt(jpm.srisk_bn,2),"val-lbl",{"text-anchor":"middle",fill:"var(--benign)"}));
+  s_el.appendChild(txt(jp.x+bw/2,jp.yB+28,"surplus","axis-lbl",{"text-anchor":"middle"}));
+  // BAC: 0 -> 26.6
+  const bac=firms[1]; const b1=drawBar(1,0,bac.srisk_bn,"elevated"); let cum=bac.srisk_bn;
+  s_el.appendChild(txt(b1.x+bw/2,y0+15,bac.firm,"val-lbl",{"text-anchor":"middle"}));
+  s_el.appendChild(txt(b1.x+bw/2,b1.yT-6,fmt(bac.srisk_bn,2),"val-lbl",{"text-anchor":"middle",fill:"var(--elevated)"}));
+  // C: 26.6 -> 126.77
+  const c=firms[2]; const c1=drawBar(2,cum,cum+c.srisk_bn,"severe"); cum+=c.srisk_bn;
+  s_el.appendChild(txt(c1.x+bw/2,y0+15,c.firm,"val-lbl",{"text-anchor":"middle"}));
+  s_el.appendChild(txt(c1.x+bw/2,c1.yT-6,fmt(c.srisk_bn,2),"val-lbl",{"text-anchor":"middle",fill:"var(--severe)"}));
+  s_el.appendChild(mk("line",{x1:b1.x+bw,y1:b1.yT,x2:c1.x,y2:c1.yB,stroke:"var(--border-strong)","stroke-width":1,"stroke-dasharray":"3 3"}));
+  // total bar (accent only — geometry computed without drawing the under-rect)
+  const t1=drawBar(3,0,s.total_positive_srisk_bn,"accent",true);
+  s_el.appendChild(mk("rect",{x:t1.x,y:t1.yT,width:bw,height:t1.yB-t1.yT,fill:"var(--accent)",opacity:.85,rx:1}));
+  s_el.appendChild(mk("rect",{x:t1.x,y:t1.yT,width:bw,height:t1.yB-t1.yT,fill:"none",stroke:"var(--accent)","stroke-width":1,rx:1}));
+  s_el.appendChild(mk("line",{x1:c1.x+bw,y1:c1.yT,x2:t1.x,y2:t1.yT,stroke:"var(--border-strong)","stroke-width":1,"stroke-dasharray":"3 3"}));
+  s_el.appendChild(txt(t1.x+bw/2,y0+15,"Σ SRISK⁺","val-lbl",{"text-anchor":"middle",fill:"var(--accent)"}));
+  s_el.appendChild(txt(t1.x+bw/2,t1.yT-6,"+"+s.total_positive_srisk_bn.toFixed(2),"val-lbl",{"text-anchor":"middle",fill:"var(--accent)"}));
+  s_el.appendChild(txt(t1.x+bw/2,t1.yB+28,"$bn","axis-lbl",{"text-anchor":"middle"}));
+  $("#waterfall").innerHTML=""; $("#waterfall").appendChild(s_el);
+  $("#sriskParams").textContent = `k = ${s.params.k*100}%  ·  horizon = ${s.params.horizon_days}d  ·  crisis = ${s.params.crisis_threshold*100}%  ·  ${s.params.n_paths} paths  ·  seed ${s.params.seed}  ·  LRMES 0.325 (all firms — see caveat)`;
+  $("#methSrisk").innerHTML=""; $("#methSrisk").appendChild(methodEl("srisk"));
+}
+
+// ΔCoVaR / MES tail (window-invariant). The return axis carries only genuine
+// return quantities (Market VaR, MES); ΔCoVaR + β_q are reported in the box.
+function renderTail(){
+  $("#tailOne").textContent = "How much a firm bleeds on the market's worst days (MES, on the axis) and how much its distress widens the system's tail (ΔCoVaR, a contribution).";
+  const cm=DATA.covar_mes;
+  const W=620,H=240, padL=20,padR=20,padT=18,padB=46, plotW=W-padL-padR, plotH=H-padT-padB;
+  const xmin=-0.05, xmax=0.05, sigma=0.01;
+  const xpx = r => padL + plotW*(r-xmin)/(xmax-xmin);
+  const dens = r => Math.exp(-0.5*(r/sigma)*(r/sigma));
+  const ybase = padT+plotH, peak = plotH*0.92;
+  const s_el=svg(W,H,null,`Synthetic system-return distribution: market VaR ${cm.var_q_market.toFixed(5)}, MES ${cm.mes.toFixed(5)}, ΔCoVaR ${cm.delta_covar.toFixed(5)}, beta_q ${cm.beta_q.toFixed(5)}.`);
+  s_el.appendChild(mk("line",{x1:padL,y1:ybase,x2:W-padR,y2:ybase,stroke:"var(--border)","stroke-width":1}));
+  // q=0.05 left tail shading up to the market VaR boundary
+  let tailPts=`${xpx(xmin).toFixed(1)},${ybase.toFixed(1)}`;
+  for(let r=xmin;r<=cm.var_q_market+1e-9;r+=0.0008){ tailPts+=` ${xpx(r).toFixed(1)},${(ybase-peak*dens(r)).toFixed(1)}`; }
+  tailPts+=` ${xpx(cm.var_q_market).toFixed(1)},${ybase.toFixed(1)}`;
+  s_el.appendChild(mk("polygon",{points:tailPts,fill:"var(--severe)",opacity:.18}));
+  // density curve
+  let cur="";
+  for(let r=xmin;r<=xmax+1e-9;r+=0.0006){ const x=xpx(r),y=ybase-peak*dens(r); cur+=(cur===""?"M":"L")+` ${x.toFixed(1)} ${y.toFixed(1)}`; }
+  s_el.appendChild(mk("path",{d:cur,fill:"none",stroke:"var(--text-muted)","stroke-width":1.5}));
+  // markers — both are genuine return quantities; label VaR to the left, MES to the right
+  const xVaR=xpx(cm.var_q_market), xMES=xpx(cm.mes);
+  s_el.appendChild(mk("line",{x1:xVaR,y1:ybase,x2:xVaR,y2:padT+4,stroke:"var(--severe)","stroke-width":1.5,"stroke-dasharray":"4 3"}));
+  s_el.appendChild(txt(xVaR-6,padT+10,"Market VaR "+cm.var_q_market.toFixed(5),"val-lbl",{"text-anchor":"end",fill:"var(--severe)"}));
+  s_el.appendChild(mk("line",{x1:xMES,y1:ybase,x2:xMES,y2:padT+24,stroke:"var(--elevated)","stroke-width":1.5,"stroke-dasharray":"4 3"}));
+  s_el.appendChild(txt(xMES+6,padT+30,"MES "+cm.mes.toFixed(5),"val-lbl",{"text-anchor":"start",fill:"var(--elevated)"}));
+  // x ticks
+  [-0.04,-0.02,0,0.02,0.04].forEach(t=>{ s_el.appendChild(txt(xpx(t),ybase+16,(t>0?"+":"")+(t*100).toFixed(0)+"%","axis-lbl",{"text-anchor":"middle"})); });
+  // annotation box — ΔCoVaR is a contribution, not a return level
+  s_el.appendChild(txt(W-padR, padT+10, "β_q  "+cm.beta_q.toFixed(5),"val-lbl",{"text-anchor":"end"}));
+  s_el.appendChild(txt(W-padR, padT+26, "ΔCoVaR  "+cm.delta_covar.toFixed(5),"val-lbl",{"text-anchor":"end",fill:"var(--elevated)"}));
+  s_el.appendChild(txt(W-padR, padT+39, "ΔCoVaR = system VaR widening from firm distress","axis-lbl",{"text-anchor":"end"}));
+  s_el.appendChild(txt(padL, ybase+34, "Daily return of the synthetic system (q = 0.05 left tail shaded)","axis-lbl",{}));
+  $("#tail").innerHTML=""; $("#tail").appendChild(s_el);
+  $("#tailParams").textContent = `q = ${cm.params.q}  ·  ρ = ${cm.params.rho}  ·  n = ${cm.params.n}  ·  seed ${cm.params.seed}  ·  tail obs ${cm.n_tail_obs} / ${cm.n_total_obs}  ·  synthetic pair`;
+  $("#methCovar").innerHTML=""; $("#methCovar").appendChild(methodEl("covar"));
+}
+
+// Audit hash-chain ribbon (window-invariant)
+function renderAudit(){
+  const a=DATA.audit;
+  const seal=$("#auditSeal");
+  seal.innerHTML="";
+  const lz=document.createElement("span"); lz.className="rt-lozenge";
+  lz.innerHTML=`<span class="seal-dot"></span>chain_ok ${a.chain_ok?"✓":"✗"} · ${a.algorithm} · n_rows ${a.n_rows} · ${a.broken_row_ids.length} broken`;
+  seal.appendChild(lz);
+  const note=document.createElement("span"); note.style.cssText="font-size:11px;color:var(--text-dim);";
+  note.textContent="Tamper-evident provenance for every published number — the SR 26-2 model-governance evidence layer.";
+  seal.appendChild(note);
+  const chain=$("#chain"); chain.innerHTML="";
+  a.rows.forEach((r,i)=>{
+    const b=document.createElement("div"); b.className="rt-block";
+    const isGen=r.prev_hash===null, isHead=i===a.rows.length-1;
+    b.innerHTML=`<div class="rid">row ${r.row_id} · ${r.kind}</div>
+      <div class="win">${r.window_id}</div>
+      <div class="subj">${r.subject}</div>
+      <div class="hlbl">SHA-256</div>
+      <div class="hsh">${r.hash.slice(0,16)}…${r.hash.slice(-12)}</div>
+      <span class="gbadge">${isGen?"GENESIS · prev null":isHead?"HEAD":"prev "+r.prev_hash.slice(0,8)+"…"}</span>`;
+    chain.appendChild(b);
+    if(i<a.rows.length-1){const link=document.createElement("div");link.className="rt-link";link.textContent="→";chain.appendChild(link);}
+  });
+  $("#methAudit").innerHTML=""; $("#methAudit").appendChild(methodEl("audit"));
+}
+
+// Cross-crisis sparklines (window-invariant layout; highlights active vertex)
+let activeIdx=0;
+function renderSparks(){
+  const wins=DATA.windows;
+  const metrics=[
+    {nm:"DebtRank",get:w=>w.network_stress.debt_rank,lo:0,hi:0.6,d:2,tone:v=>drTone(v)},
+    {nm:"Volatility z",get:w=>w.phase_features.volatility_z,lo:0,hi:4,d:1,tone:v=>v>=1.5?"severe":v>=1?"watch":"benign"},
+    {nm:"Regime score",get:w=>w.phase_classification.score,lo:0,hi:1,d:2,tone:v=>stressTone(v)}
+  ];
+  const rowH=46, W=600, padL=92, padR=140, plotW=W-padL-padR;
+  const s_el=svg(W, rowH*metrics.length+8, null, "Cross-crisis comparison of DebtRank, volatility z-score and macro-regime score across 2008Q4, 2020Q1 and 2023Q1.");
+  metrics.forEach((m,mi)=>{
+    const cy=mi*rowH+24;
+    s_el.appendChild(txt(0,cy+3,m.nm,"axis-lbl",{fill:"var(--text-muted)"}));
+    const xs=wins.map((w,i)=>padL+plotW*(i/(wins.length-1)));
+    const ys=wins.map(w=>{const v=m.get(w);return cy+14 - 28*((v-m.lo)/(m.hi-m.lo));});
+    let d=""; xs.forEach((x,i)=>d+=(i?"L":"M")+` ${x.toFixed(1)} ${ys[i].toFixed(1)}`);
+    s_el.appendChild(mk("path",{d,fill:"none",stroke:"var(--border-strong)","stroke-width":1.5}));
+    wins.forEach((w,i)=>{
+      const v=m.get(w), tone=m.tone(v), r= i===activeIdx?4.5:3;
+      s_el.appendChild(mk("circle",{cx:xs[i],cy:ys[i],r,fill:toneFor(tone)}));
+      if(i===activeIdx) s_el.appendChild(mk("circle",{cx:xs[i],cy:ys[i],r:7,fill:"none",stroke:toneFor(tone),"stroke-width":1,opacity:.7}));
+    });
+    // value triplet, right-aligned so it never runs past the canvas edge
+    wins.forEach((w,i)=>{
+      const v=m.get(w);
+      const t=txt(W-6-(2-i)*40, cy+3, v.toFixed(m.d),"val-lbl",{"text-anchor":"end"});
+      t.setAttribute("fill", i===activeIdx?"var(--text-strong)":"var(--text-dim)");
+      s_el.appendChild(t);
+    });
+  });
+  wins.forEach((w,i)=>{
+    const x=padL+plotW*(i/(wins.length-1));
+    const t=txt(x, rowH*metrics.length+4, w.window_id,"axis-lbl",{"text-anchor":"middle"});
+    if(i===activeIdx)t.setAttribute("fill","var(--text)");
+    s_el.appendChild(t);
+  });
+  $("#sparks").innerHTML=""; $("#sparks").appendChild(s_el);
+}
+
+/* ============================ PER-WINDOW renders ============================ */
+
+function renderLede(w){
+  $("#ledeTitle").innerHTML = `${w.title}<span class="per tn">${w.period.start} → ${w.period.end}</span>`;
+  $("#ledeAbstract").textContent = w.shock_summary;
+  $("#ledeNotes").textContent = w.research_notes;
+  const pc=w.phase_classification;
+  const phaseTone = pc.phase==="financial_stress"?"severe":pc.phase==="indeterminate"?"neutral":"watch";
+  const v=$("#ledeVerdict");
+  v.innerHTML="";
+  const b1=document.createElement("span"); b1.className="rt-badge "+TONE_CLS[phaseTone];
+  b1.innerHTML=`<small>PHASE</small>${pc.phase.replace(/_/g," ").toUpperCase()}`;
+  const b2=document.createElement("span"); b2.className="rt-badge"; b2.style.color="var(--text-muted)";
+  b2.innerHTML=`<small>RISK POSTURE</small>${w.risk_posture.replace(/_/g," ").toUpperCase()}`;
+  v.appendChild(b1); v.appendChild(b2);
+}
+
+function renderKpis(w){
+  const pc=w.phase_classification, dr=w.network_stress.debt_rank, s=DATA.srisk, cm=DATA.covar_mes;
+  const stTone = pc.phase==="financial_stress"?"severe":pc.phase==="indeterminate"?"neutral":stressTone(pc.score);
+  const kpis=[
+    {label:"System stress", val:pc.score.toFixed(2), unit:"", sub:pc.phase.replace(/_/g," ").toUpperCase(), tone:stTone},
+    {label:"SRISK Σ shortfall", val:"+"+s.total_positive_srisk_bn.toFixed(2), unit:"$B", sub:"systemic concentration", tone:"severe"},
+    {label:"ΔCoVaR (q=0.05)", val:cm.delta_covar.toFixed(5), unit:"", sub:"material tail dep.", tone:"elevated"},
+    {label:"DebtRank", val:dr.toFixed(2), unit:"", sub:drLabel(dr), tone:drTone(dr)},
+    {label:"Macro regime", val:w.phase_label.replace(/_/g," "), unit:"", sub:w.risk_posture.replace(/_/g," "), tone:stTone, small:true}
+  ];
+  const c=$("#kpis"); c.innerHTML="";
+  kpis.forEach(k=>{
+    const d=document.createElement("div"); d.className="rt-kpi";
+    d.innerHTML=`<div class="rt-kpi__label">${k.label}</div>
+      <div class="rt-kpi__val" style="${k.small?'font-size:14px;text-transform:uppercase;letter-spacing:.04em;':''}">${k.val}${k.unit?`<span class="u">${k.unit}</span>`:""}</div>
+      <div class="rt-kpi__sub ${TONE_CLS[k.tone]}">${k.sub.toUpperCase()}</div>`;
+    c.appendChild(d);
+  });
+}
+
+function renderGauge(w){
+  $("#gaugeOne").textContent = "Offline system-stress dial: the deterministic phase classifier's score over the supervisory stress channels — a CISS-family stand-in until live FRED/ECB inputs are wired.";
+  const score=w.phase_classification.score;
+  const W=230,H=200,cx=115,cy=120,R=86;
+  const stateLbl=stressWord(score), tone=stressTone(score);
+  const s_el=svg(W,H,null,`System stress ${score.toFixed(2)} of 1.00 — ${stateLbl}.`);
+  const D0=135, SWEEP=270;
+  s_el.appendChild(mk("path",{d:arc(cx,cy,R,D0,D0+SWEEP),fill:"none",stroke:"#1C2530","stroke-width":22,"stroke-linecap":"butt"}));
+  // 4-stop bands aligned with stressTone()/the methodology legend
+  const bands=[[0,0.10,"benign"],[0.10,0.40,"watch"],[0.40,0.80,"elevated"],[0.80,1,"severe"]];
+  bands.forEach(([a,b,t])=>{
+    const d0=D0+SWEEP*a+1, d1=D0+SWEEP*b-1;
+    s_el.appendChild(mk("path",{d:arc(cx,cy,R,d0,d1),fill:"none",stroke:toneFor(t),"stroke-width":22,"stroke-linecap":"butt",opacity:.9}));
+  });
+  const nd=D0+SWEEP*Math.max(0,Math.min(1,score));
+  const [nx,ny]=polar(cx,cy,R-4,nd);
+  s_el.appendChild(mk("line",{x1:cx,y1:cy,x2:nx,y2:ny,stroke:"var(--text-strong)","stroke-width":2.5,"stroke-linecap":"round"}));
+  s_el.appendChild(mk("circle",{cx,cy,r:6,fill:"var(--surface-2)",stroke:"var(--text-strong)","stroke-width":2}));
+  s_el.appendChild(txt(cx,cy+44,score.toFixed(2),null,{"text-anchor":"middle","font-family":"var(--mono)","font-size":"28","font-weight":"600",fill:"var(--text-strong)"}));
+  s_el.appendChild(txt(cx,cy+60,stateLbl,null,{"text-anchor":"middle","font-family":"var(--mono)","font-size":"11","letter-spacing":"1.5",fill:toneFor(tone)}));
+  s_el.appendChild(txt(...polar(cx,cy,R+16,D0),"0.0","axis-lbl",{"text-anchor":"middle"}));
+  s_el.appendChild(txt(...polar(cx,cy,R+16,D0+SWEEP),"1.0","axis-lbl",{"text-anchor":"middle"}));
+  $("#gaugeWrap").innerHTML=""; $("#gaugeWrap").appendChild(s_el);
+  const chans=[["volatility_z","VOL"],["credit_spread_z","CREDIT"],["systemic_risk_z","SYSTEMIC"],["liquidity_z","LIQUIDITY"]];
+  const zb=$("#zbars"); zb.innerHTML="";
+  chans.forEach(([k,nm])=>{
+    const z=w.phase_features[k]; const mag=Math.min(1,Math.abs(z)/3.5);
+    const t = Math.abs(z)>=1.5?"severe":Math.abs(z)>=1?"watch":"benign";
+    const row=document.createElement("div"); row.className="rt-zrow";
+    row.innerHTML=`<span class="nm">${nm}</span>
+      <span class="track"><span class="fill" style="width:${(mag*100).toFixed(0)}%;background:${toneFor(t)};opacity:.8"></span></span>
+      <span class="zv">${fmt(z,1)}</span>`;
+    zb.appendChild(row);
+  });
+  if(!$("#methSystem").hasChildNodes()){ $("#methSystem").appendChild(methodEl("system")); }
+}
+
+function renderDebtrank(w){
+  $("#drOne").textContent = "Fraction of total network value dragged into distress when a seed institution is shocked, propagated once through interbank exposures.";
+  const ns=w.network_stress, dr=ns.debt_rank, tone=drTone(dr);
+  const W=230,H=210,cx=115,cy=95,R=66;
+  const s_el=svg(W,H,null,`DebtRank ${dr.toFixed(2)} — ${drLabel(dr)} contagion, seed ${ns.seed_node.replace(/_/g," ")}, ${ns.n_banks}-bank illustrative network, converged in ${ns.iterations} iterations.`);
+  s_el.appendChild(mk("circle",{cx,cy,r:R+12,fill:"none",stroke:"#1C2530","stroke-width":4}));
+  const sweepEnd=-90+360*dr;
+  s_el.appendChild(mk("path",{d:arc(cx,cy,R+12,-90,sweepEnd<=-90?-89.9:sweepEnd),fill:"none",stroke:toneFor(tone),"stroke-width":4,opacity:.9}));
+  const outer=[[ -90,"CP-β"],[30,"CP-γ"],[150,"CP-δ"]];
+  const pos=outer.map(([deg])=>polar(cx,cy,R,deg));
+  pos.forEach((p,i)=>{
+    const hot=i===0;
+    s_el.appendChild(mk("line",{x1:cx,y1:cy,x2:p[0],y2:p[1],stroke:hot?toneFor(tone):"var(--border)","stroke-width":hot?(1+dr*4):1.2,opacity:hot?.9:.6}));
+  });
+  outer.forEach(([deg,nm],i)=>{
+    const [x,y]=pos[i];
+    const sz=6+dr*5;
+    s_el.appendChild(mk("circle",{cx:x,cy:y,r:sz,fill:"var(--surface-2)",stroke:toneFor(tone),"stroke-width":1.2,opacity:.9}));
+    s_el.appendChild(txt(x,y-sz-4,nm,"axis-lbl",{"text-anchor":"middle"}));
+  });
+  const pulseCls = RM ? "" : "seed-pulse";
+  s_el.appendChild(mk("circle",{cx,cy,r:18,fill:"none",stroke:toneFor(tone),"stroke-width":1,opacity:.4,"stroke-dasharray":"3 3",class:pulseCls}));
+  s_el.appendChild(mk("circle",{cx,cy,r:12,fill:toneFor(tone),opacity:.22}));
+  s_el.appendChild(mk("circle",{cx,cy,r:12,fill:"none",stroke:toneFor(tone),"stroke-width":1.5}));
+  s_el.appendChild(txt(cx,cy+30,dr.toFixed(2),null,{"text-anchor":"middle","font-family":"var(--mono)","font-size":"22","font-weight":"600",fill:"var(--text-strong)"}));
+  s_el.appendChild(txt(cx,cy+44,drLabel(dr),null,{"text-anchor":"middle","font-family":"var(--mono)","font-size":"10","letter-spacing":"1.5",fill:toneFor(tone)}));
+  s_el.appendChild(txt(cx,H-26,ns.seed_node.replace(/_/g," "),"axis-lbl",{"text-anchor":"middle",fill:"var(--text-muted)"}));
+  s_el.appendChild(txt(cx,H-12,`iterations ${ns.iterations} · converged ${ns.converged?"✓":"✗"} · n_banks ${ns.n_banks}`,"axis-lbl",{"text-anchor":"middle"}));
+  $("#debtrank").innerHTML=""; $("#debtrank").appendChild(s_el);
+  if(!$("#methDebtrank").hasChildNodes()){ $("#methDebtrank").appendChild(methodEl("debtrank")); }
+}
+
+function renderRadar(w){
+  $("#radarOne").textContent = "Eight standardized macro/market z-scores classified into one of eight phases, with a yield-curve recession probit.";
+  const W=240,H=210,cx=120,cy=100,R=74;
+  const pc=w.phase_classification;
+  const s_el=svg(W,H,null,`Macro regime octagon for ${w.window_id}: phase ${pc.phase.replace(/_/g," ")}, score ${pc.score.toFixed(2)}.`);
+  const n=FEATURES.length;
+  const ang=i=>-90+360*i/n;
+  const rOf=z=>R*Math.max(0,Math.min(1,(z+3)/6));
+  [[3,"var(--border)"],[0,"var(--border-strong)"],[-1.5,"var(--border)"],[1.5,"var(--border)"]].forEach(([z,col])=>{
+    let pts="";
+    for(let i=0;i<n;i++){const [x,y]=polar(cx,cy,rOf(z),ang(i));pts+=`${x.toFixed(1)},${y.toFixed(1)} `;}
+    s_el.appendChild(mk("polygon",{points:pts.trim(),fill:"none",stroke:col,"stroke-width":z===0?1.2:1,opacity:z===0?.9:.5}));
+  });
+  for(let i=0;i<n;i++){
+    const [x,y]=polar(cx,cy,R,ang(i));
+    s_el.appendChild(mk("line",{x1:cx,y1:cy,x2:x,y2:y,stroke:"var(--border)","stroke-width":1}));
+    const [lx,ly]=polar(cx,cy,R+13,ang(i));
+    const isDrv = (pc.rules_fired||[]).some(r=>r.includes(FEATURES[i][0]));
+    const t=txt(lx,ly+3,FEATURES[i][1],"axis-lbl",{"text-anchor":"middle"});
+    if(isDrv)t.setAttribute("fill","var(--severe)");
+    s_el.appendChild(t);
+  }
+  const tone = pc.phase==="financial_stress"?"severe":pc.phase==="indeterminate"?"neutral":"watch";
+  let zpts="";
+  for(let i=0;i<n;i++){const z=w.phase_features[FEATURES[i][0]];const [x,y]=polar(cx,cy,rOf(z),ang(i));zpts+=`${x.toFixed(1)},${y.toFixed(1)} `;}
+  s_el.appendChild(mk("polygon",{points:zpts.trim(),fill:toneFor(tone),"fill-opacity":.16,stroke:toneFor(tone),"stroke-width":1.5}));
+  for(let i=0;i<n;i++){const z=w.phase_features[FEATURES[i][0]];const [x,y]=polar(cx,cy,rOf(z),ang(i));s_el.appendChild(mk("circle",{cx:x,cy:y,r:2,fill:toneFor(tone)}));}
+  s_el.appendChild(txt(cx,cy-rOf(0)+0,"z=0","axis-lbl",{"text-anchor":"middle",fill:"var(--text-dim)"}));
+  $("#radar").innerHTML=""; $("#radar").appendChild(s_el);
+  const rc=$("#rulesChips"); rc.innerHTML="";
+  (pc.rules_fired||[]).forEach(r=>{
+    const c=document.createElement("span");
+    c.className="rt-chip "+(r==="NO_RULE_FIRED"?"none":"fired");
+    c.textContent=r.replace("STRESS:","STRESS · ");
+    rc.appendChild(c);
+  });
+  $("#probitNote").innerHTML = `Estrella–Mishkin probit: P(recession₁₂)&nbsp;=&nbsp;Φ(−0.5450 − 0.5898·spread)<br><span style="color:var(--text-dim)">live FRED T10Y3M input — not exercised offline</span>`;
+  if(!$("#methMacro").hasChildNodes()){ $("#methMacro").appendChild(methodEl("macro")); }
+}
+
+/* ============================ window switching ============================ */
+const FADE=["#lede","#ledeVerdict","#gaugeWrap","#zbars","#debtrank","#radar"];
+function paintWindow(i){
+  const w=DATA.windows[i];
+  renderLede(w); renderKpis(w); renderGauge(w); renderDebtrank(w); renderRadar(w); renderSparks();
+}
+function announce(i){const sn=$("#winStatus"); if(sn) sn.textContent=DATA.windows[i].title+" loaded";}
+function switchWindow(i){
+  if(i===activeIdx) return;
+  document.querySelectorAll("#winSeg button").forEach((b,bi)=>b.setAttribute("aria-pressed",bi===i?"true":"false"));
+  activeIdx=i;
+  if(RM){ paintWindow(i); announce(i); return; }
+  FADE.forEach(s=>{const e=$(s); if(e)e.classList.add("swapping");});
+  setTimeout(()=>{
+    paintWindow(i);
+    FADE.forEach(s=>{const e=$(s); if(e)e.classList.remove("swapping");});
+    announce(i);
+  },140);
+}
+
+/* ============================ boot ============================ */
+renderStatic();
+renderSrisk();
+renderTail();
+renderAudit();
+paintWindow(0);
+if(!RM){ setTimeout(()=>{const s=$("#chainSeal"); if(s)s.classList.remove("pulse");},1400); }
+else { const s=$("#chainSeal"); if(s)s.classList.remove("pulse"); }
+</script>
+</body>
+</html>

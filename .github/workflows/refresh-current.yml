@@ -1,0 +1,49 @@
+name: Refresh current conditions
+
+# Regenerates site/current.json from LIVE data (ECB SDMX + FRED) on a daily
+# schedule and commits it. A fresh runner has no cache, so every run fetches
+# live. Netlify (connected to this repo) auto-publishes the commit.
+
+on:
+  schedule:
+    - cron: "17 12 * * *"   # 12:17 UTC daily — after EU/US data settles
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-current
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cbsrm
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Build current-conditions snapshot
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+        run: python tools/build_current_snapshot.py
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- site/current.json; then
+            echo "current.json unchanged — nothing to commit."
+          else
+            git config user.name  "cbsrm-bot"
+            git config user.email "bot@users.noreply.github.com"
+            git add site/current.json
+            git commit -m "chore(current): refresh systemic-risk snapshot [skip ci]"
+            git push
+          fi

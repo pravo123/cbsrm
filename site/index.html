@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='13' fill='%230A0C10'/><g fill='%2342BEEC'><rect x='18' y='34' width='6.5' height='20'/><rect x='28' y='27' width='6.5' height='27'/><rect x='38' y='21' width='6.5' height='33'/></g><path d='M15 44 L45 20' stroke='%23D2A23F' stroke-width='3.2' fill='none' stroke-linecap='round'/><path d='M36 19 L46 18 L45 28' stroke='%23D2A23F' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<title>CBSRM — Cross-Border Systemic Risk Monitor · WaverVanir International</title>
+<meta name="description" content="CBSRM is a methodology-first systemic-risk platform for institutions: CISS-family stress, SRISK, ΔCoVaR/MES, DebtRank, and the 4-state macro regime — under one Protocol, one SHA-256 audit chain, and one reproducibility guarantee. Built around SR 26-2 model-governance principles. Apache-2.0. Risk measurement, not investment advice.">
+<meta property="og:title" content="CBSRM — Systemic risk you can reproduce, audit, and defend">
+<meta property="og:description" content="Five systemic-risk lenses, one governed pipeline, a SHA-256 audit chain, and a content-addressed PipelineRecord your model-risk reviewers can verify. For risk desks, central banks, and supervisory-technology teams.">
+<meta property="og:type" content="website">
+<style>
+  /* ============================================================
+     CBSRM — institutional site  ·  "Obsidian Ledger" (matches the Risk Terminal)
+     Self-contained. Zero external dependencies. Risk MEASUREMENT only.
+     ============================================================ */
+  :root{
+    --bg:#0A0C10; --surface:#0F141B; --surface-2:#11161F; --surface-3:#141A24;
+    --border:#1C2330; --border-strong:#283242;
+    --accent:#3A78C9; --accent-2:#5C97E0;
+    --gold:#C99A3A; --gold-2:#E6CF92; --gold-3:#9E7129; --cyan:#5BC2E5;
+    --text:#E4E9F2; --text-strong:#F2F5FA; --text-muted:#8C99AE; --text-dim:#828FA4;
+    --benign:#4F9E84; --watch:#C9A24B; --elevated:#D98A3A; --severe:#C2545A;
+    --hash-bg:#0F1B17; --hash-bd:#1E3A30; --hash-fg:#5FB89A;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,Menlo,monospace;
+    --maxw:1180px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:var(--sans); font-size:15px; line-height:1.6;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  }
+  .mono{font-family:var(--mono);}
+  .tn{font-variant-numeric:tabular-nums;}
+  a{color:var(--accent-2);text-decoration:none;}
+  a:hover{color:var(--text-strong);}
+  h1,h2,h3{color:var(--text-strong);line-height:1.2;letter-spacing:-0.01em;margin:0;}
+  p{margin:0 0 1em;}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px;}
+  .overline{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent-2);margin:0 0 14px;}
+  .muted{color:var(--text-muted);}
+  .dim{color:var(--text-dim);}
+
+  /* ---- buttons ---- */
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13px;
+    padding:11px 20px;border-radius:7px;border:1px solid var(--border-strong);cursor:pointer;transition:.15s;}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-2);color:#fff;}
+  .btn-ghost{background:transparent;color:var(--text);}
+  .btn-ghost:hover{border-color:#3A4A63;color:var(--text-strong);}
+
+  /* ---- nav ---- */
+  .nav{position:sticky;top:0;z-index:50;background:rgba(10,12,16,.82);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);}
+  .nav__in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 24px;max-width:var(--maxw);margin:0 auto;}
+  .brand{display:flex;align-items:baseline;gap:11px;}
+  .brand .wm{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text-strong);letter-spacing:.02em;}
+  .brand .wm .dot{color:var(--accent);}
+  .brand{align-items:center;}
+  .brand .co{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);}
+  .brand .co b{color:var(--gold);font-weight:600;}
+  .mark{display:block;flex:0 0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));}
+  .wm-gold{font-family:var(--sans);font-weight:700;font-size:23px;line-height:1;letter-spacing:-0.01em;
+    background:linear-gradient(180deg,var(--gold-2),var(--gold) 55%,var(--gold-3));
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tagline{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.30em;
+    text-transform:uppercase;color:var(--cyan);margin-top:5px;}
+  .goldline{height:2px;background:linear-gradient(90deg,transparent,var(--gold-3),var(--gold),var(--gold-2),var(--gold),var(--gold-3),transparent);opacity:.85;}
+  .nav__links{display:flex;align-items:center;gap:22px;}
+  .nav__links a{font-size:13px;color:var(--text-muted);}
+  .nav__links a:hover{color:var(--text-strong);}
+  .nav__cta{display:flex;align-items:center;gap:12px;}
+  @media(max-width:860px){.nav__links{display:none}}
+  @media(max-width:560px){.nav .seal{display:none}.nav__in{padding:12px 18px}}
+
+  .seal{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;
+    color:var(--hash-fg);background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:6px;padding:5px 10px;}
+  .seal .dot{width:7px;height:7px;border-radius:50%;background:var(--hash-fg);box-shadow:0 0 8px var(--hash-fg);}
+
+  /* ---- hero ---- */
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border);}
+  .hero__bg{position:absolute;inset:0;z-index:0;
+    background:
+      radial-gradient(1100px 520px at 72% -8%, rgba(58,120,201,.16), transparent 60%),
+      radial-gradient(800px 480px at 8% 110%, rgba(79,158,132,.08), transparent 55%);}
+  .hero__grid{position:absolute;inset:0;z-index:0;opacity:.5;
+    background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+    background-size:48px 48px;mask-image:radial-gradient(900px 500px at 60% 0%,#000,transparent 75%);}
+  .hero__in{position:relative;z-index:1;padding:84px 0 72px;}
+  .hero h1{font-size:clamp(30px,5vw,52px);max-width:18ch;margin:0 0 20px;}
+  .hero h1 .hl{color:var(--accent-2);}
+  .hero__sub{font-size:clamp(16px,2.3vw,19px);color:var(--text-muted);max-width:60ch;margin:0 0 28px;}
+  .hero__cta{display:flex;flex-wrap:wrap;gap:13px;margin-bottom:30px;}
+  .trustline{display:flex;flex-wrap:wrap;gap:10px 22px;font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .trustline b{color:var(--text);font-weight:600;}
+  .trustline .sepd{color:var(--accent);}
+
+  /* ---- sections ---- */
+  section{padding:74px 0;border-bottom:1px solid var(--border);}
+  .sec-h{max-width:62ch;margin:0 0 44px;}
+  .sec-h h2{font-size:clamp(24px,3.4vw,34px);margin:0 0 14px;}
+  .sec-h p{font-size:16.5px;color:var(--text-muted);margin:0;}
+
+  /* problem strip */
+  .prob{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .prob>div{background:var(--surface);padding:26px 24px;}
+  .prob h3{font-size:16px;margin:0 0 9px;}
+  .prob .bad h3{color:var(--severe);}
+  .prob .good h3{color:var(--hash-fg);}
+  .prob p{font-size:14.5px;color:var(--text-muted);margin:0;}
+  @media(max-width:760px){.prob{grid-template-columns:1fr}}
+
+  /* lens grid */
+  .lenses{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+  .lens{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px 22px 20px;transition:.15s;}
+  .lens:hover{border-color:var(--border-strong);background:var(--surface-2);}
+  .lens__n{font-family:var(--mono);font-size:11px;color:var(--accent-2);margin-bottom:11px;letter-spacing:.06em;}
+  .lens h3{font-size:17px;margin:0 0 8px;}
+  .lens p{font-size:14px;color:var(--text-muted);margin:0 0 12px;}
+  .lens .cite{font-family:var(--mono);font-size:11px;color:var(--text-dim);border-top:1px solid var(--border);padding-top:10px;}
+
+  /* governance feature */
+  .gov{display:grid;grid-template-columns:1fr 1.05fr;gap:40px;align-items:center;}
+  @media(max-width:880px){.gov{grid-template-columns:1fr;gap:30px}}
+  .gov__pts{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:16px;}
+  .gov__pts li{display:flex;gap:13px;}
+  .gov__pts .mk{flex:0 0 auto;width:22px;height:22px;border-radius:6px;display:grid;place-items:center;
+    background:var(--hash-bg);border:1px solid var(--hash-bd);color:var(--hash-fg);font-size:12px;margin-top:2px;}
+  .gov__pts b{color:var(--text-strong);}
+  .gov__pts span{color:var(--text-muted);font-size:14.5px;}
+  /* terminal card */
+  .term{background:#070A0E;border:1px solid var(--border-strong);border-radius:12px;overflow:hidden;box-shadow:0 24px 60px -30px rgba(0,0,0,.8);}
+  .term__bar{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--border);background:var(--surface);}
+  .term__bar .d{width:11px;height:11px;border-radius:50%;background:var(--border-strong);}
+  .term__bar .t{margin-left:8px;font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+  .term__body{padding:18px 18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.7;overflow-x:auto;}
+  .term__body .c{color:var(--text-dim);}
+  .term__body .p{color:var(--hash-fg);}
+  .term__body .k{color:var(--accent-2);}
+  .term__body .s{color:#C9A24B;}
+  .term__body .ok{color:var(--hash-fg);font-weight:600;}
+  .term__body pre{margin:0;white-space:pre;}
+
+  /* audience */
+  .aud{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;}
+  .aud__c{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 18px;}
+  .aud__c h3{font-size:15px;margin:0 0 6px;}
+  .aud__c p{font-size:13.5px;color:var(--text-muted);margin:0;}
+
+  /* stats band */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  .stat{background:var(--surface);padding:24px 18px;text-align:center;}
+  .stat .v{font-family:var(--mono);font-size:30px;font-weight:600;color:var(--text-strong);}
+  .stat .l{font-size:12px;color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase;margin-top:6px;}
+  @media(max-width:720px){.stats{grid-template-columns:1fr 1fr}}
+
+  /* pricing */
+  .tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  @media(max-width:860px){.tiers{grid-template-columns:1fr}}
+  .tier{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 26px;display:flex;flex-direction:column;}
+  .tier.feat{border-color:var(--accent);background:linear-gradient(180deg,rgba(58,120,201,.08),var(--surface));}
+  .tier .badge{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-2);margin-bottom:8px;}
+  .tier h3{font-size:21px;margin:0 0 4px;}
+  .tier .price{font-family:var(--mono);font-size:14px;color:var(--text);margin:8px 0 4px;}
+  .tier .price b{font-size:26px;color:var(--text-strong);}
+  .tier .for{font-size:13px;color:var(--text-dim);margin:0 0 18px;}
+  .tier ul{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:10px;flex:1;}
+  .tier li{font-size:13.5px;color:var(--text-muted);display:flex;gap:9px;}
+  .tier li::before{content:"—";color:var(--accent);}
+  .tier .btn{justify-content:center;}
+
+  /* CTA */
+  .cta{position:relative;overflow:hidden;text-align:center;border:none;}
+  .cta__bg{position:absolute;inset:0;background:radial-gradient(700px 360px at 50% -20%,rgba(58,120,201,.22),transparent 65%);}
+  .cta__in{position:relative;z-index:1;}
+  .cta h2{font-size:clamp(26px,4vw,40px);max-width:20ch;margin:0 auto 16px;}
+  .cta p{font-size:17px;color:var(--text-muted);max-width:54ch;margin:0 auto 28px;}
+  .cta__btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+
+  /* current conditions */
+  .cc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+  .ccard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 18px 16px;position:relative;overflow:hidden;}
+  .ccard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--text-dim);}
+  .ccard.benign::before{background:var(--hash-fg)} .ccard.watch::before{background:var(--watch)}
+  .ccard.elevated::before{background:var(--elevated)} .ccard.severe::before{background:var(--severe)}
+  .ccard__lens{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);}
+  .ccard__label{font-size:13.5px;color:var(--text);margin:6px 0 12px;min-height:2.6em;}
+  .ccard__val{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--text-strong);font-variant-numeric:tabular-nums;line-height:1;}
+  .ccard__val.state{font-size:16px;line-height:1.3;}
+  .ccard__meta{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);margin-top:11px;display:flex;justify-content:space-between;gap:8px;}
+  .cc-foot{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin-top:18px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;}
+  .cc-foot .seal{padding:3px 9px;}
+  .cc-status{font-size:14px;color:var(--text-muted);font-family:var(--mono);}
+
+  /* footer */
+  footer{padding:48px 0 40px;border:none;}
+  .foot{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap;align-items:flex-start;}
+  .foot__links{display:flex;gap:34px;flex-wrap:wrap;}
+  .foot__col h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin:0 0 12px;font-weight:600;}
+  .foot__col a{display:block;font-size:13.5px;color:var(--text-muted);margin-bottom:8px;}
+  .foot__legal{margin-top:34px;padding-top:22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-dim);max-width:90ch;}
+  .foot__legal .mono{font-size:11px;}
+</style>
+</head>
+<body>
+
+<!-- WaverVanir brand mark — inline SVG rendition of the shield/ascending-bars/gold-arrow logo.
+     Swap for the official artwork by replacing this <symbol> or pointing <use> at site/assets/. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="wv-mark" viewBox="0 0 64 72">
+    <defs>
+      <linearGradient id="wvB" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#5BCBEE"/><stop offset="1" stop-color="#1450C4"/>
+      </linearGradient>
+      <linearGradient id="wvG" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#ECD9A0"/><stop offset=".55" stop-color="#C99A3A"/><stop offset="1" stop-color="#9E7129"/>
+      </linearGradient>
+      <clipPath id="wvShield"><path d="M12 18 Q12 14 16 14 L48 14 Q52 14 52 18 L52 44 Q52 57 32 66 Q12 57 12 44 Z"/></clipPath>
+    </defs>
+    <g clip-path="url(#wvShield)" fill="url(#wvB)">
+      <rect x="16.5" y="42" width="7" height="26" rx="1.4"/>
+      <rect x="27" y="34" width="7" height="34" rx="1.4"/>
+      <rect x="37.5" y="28" width="7" height="40" rx="1.4"/>
+    </g>
+    <path d="M12 18 Q12 14 16 14 L48 14 Q52 14 52 18 L52 44 Q52 57 32 66 Q12 57 12 44 Z"
+          fill="none" stroke="url(#wvG)" stroke-width="2.4"/>
+    <path d="M15 48 L45 24" fill="none" stroke="url(#wvG)" stroke-width="2.7" stroke-linecap="round"/>
+    <path d="M36.5 23 L46 22 L45 31.5" fill="none" stroke="url(#wvG)" stroke-width="2.7"
+          stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<div class="goldline"></div>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="nav__in">
+    <a class="brand" href="#" aria-label="CBSRM by WaverVanir International">
+      <svg class="mark" width="30" height="34" viewBox="0 0 64 72" aria-hidden="true"><use href="#wv-mark"/></svg>
+      <span style="display:flex;flex-direction:column;gap:3px;">
+        <span class="wm">CBSRM<span class="dot">.</span></span>
+        <span class="co"><b>WaverVanir</b> International</span>
+      </span>
+    </a>
+    <div class="nav__links">
+      <a href="#current">Live data</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#governance">Governance</a>
+      <a href="#demo">Live terminal</a>
+      <a href="#who">Who it's for</a>
+      <a href="#pricing">Engagement</a>
+    </div>
+    <div class="nav__cta">
+      <span class="seal"><span class="dot"></span>AUDIT-TRACEABLE</span>
+      <a class="btn btn-primary" href="#contact">Request a briefing</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="hero__bg"></div>
+  <div class="hero__grid"></div>
+  <div class="wrap hero__in">
+    <p class="overline">Cross-Border Systemic Risk Monitor</p>
+    <h1>Systemic risk you can <span class="hl">reproduce, audit, and defend.</span></h1>
+    <p class="hero__sub">
+      CBSRM reproduces the canonical systemic-risk and financial-stability measures used by central banks
+      and supervisors — in modern, typed, fully-tested Python — under one Protocol, one SHA-256 audit chain,
+      and one reproducibility guarantee. Built around <b class="muted">SR 26-2</b> model-risk-management principles.
+    </p>
+    <div class="hero__cta">
+      <a class="btn btn-primary" href="#contact">Request an institutional briefing</a>
+      <a class="btn btn-ghost" href="#demo">Open the live terminal →</a>
+    </div>
+    <div class="trustline">
+      <span><b>Apache-2.0</b> open methodology</span><span class="sepd">·</span>
+      <span><b>1,071</b> passing tests</span><span class="sepd">·</span>
+      <span><b>Deterministic</b> &amp; reproducible</span><span class="sepd">·</span>
+      <span><b>5</b> jurisdictions · <b>5</b> languages</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ CURRENT CONDITIONS (live) ============ -->
+<section id="current">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">Current conditions · live</p>
+      <h2>Today's systemic-risk readings.</h2>
+      <p>The same canonical indices CBSRM reproduces — computed from the latest public data, each value dated to its
+         provider's last publication, content-hash stamped, and refreshed automatically every day. Not a backtest; the
+         current read.</p>
+    </div>
+    <div id="cc-status" class="cc-status">Loading current readings…</div>
+    <div id="cc-grid" class="cc-grid" hidden></div>
+    <div id="cc-foot" class="cc-foot" hidden></div>
+  </div>
+</section>
+
+<!-- ============ PROBLEM ============ -->
+<section id="why">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">Why CBSRM exists</p>
+      <h2>Most systemic-risk numbers can't survive a model review.</h2>
+      <p>Academic code lives in R, Stata, and MATLAB; commercial systems are black boxes; reference numbers
+         come from vendors that don't agree. None of that clears a model-risk function. CBSRM is methodology-first.</p>
+    </div>
+    <div class="prob">
+      <div class="bad">
+        <h3>The status quo</h3>
+        <p>Fragmented implementations, undocumented assumptions, vendor numbers you can't reproduce, and no
+           lineage from input to published figure. A reviewer asks "why is this number what it is?" — and no one can say.</p>
+      </div>
+      <div class="good">
+        <h3>CBSRM</h3>
+        <p>Every number is reproducible from source. Every methodology stage carries its own version. Every
+           lifecycle event is written to a SHA-256 audit chain. One Protocol covers stress indicators and
+           risk-pricing measures alike — adding a method is one file plus one registration line.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ METHODOLOGY / LENSES ============ -->
+<section id="methodology">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">The methodology</p>
+      <h2>Five systemic-risk lenses, one data spine.</h2>
+      <p>One auditable pipeline resolves into the four questions a financial-stability desk actually asks —
+         how stressed is the system, which firms carry the tail, how does shock propagate, and what regime are we in.</p>
+    </div>
+    <div class="lenses">
+      <div class="lens">
+        <div class="lens__n">01 · SYSTEM STRESS</div>
+        <h3>Composite stress indices</h3>
+        <p>CISS-family stress (US / Euro-Area / UK), STLFSI4, and the OFR Financial Stress Index — quadratic-form
+           aggregation that amplifies in correlated stress.</p>
+        <div class="cite">Holló · Kremer · Lo Duca (2012)</div>
+      </div>
+      <div class="lens">
+        <div class="lens__n">02 · FIRM TAIL-CONTRIBUTION</div>
+        <h3>SRISK &amp; LRMES</h3>
+        <p>Expected capital shortfall of a firm conditional on a systemic market decline — who would need
+           recapitalising in a crisis, and by how much.</p>
+        <div class="cite">Brownlees · Engle (2017)</div>
+      </div>
+      <div class="lens">
+        <div class="lens__n">03 · TAIL SPILLOVER</div>
+        <h3>ΔCoVaR &amp; MES</h3>
+        <p>The system's value-at-risk conditional on an institution in distress, and each firm's marginal
+           expected shortfall — tail dependence, not average correlation.</p>
+        <div class="cite">Adrian · Brunnermeier (2016) · Acharya et al. (2017)</div>
+      </div>
+      <div class="lens">
+        <div class="lens__n">04 · NETWORK CONTAGION</div>
+        <h3>DebtRank</h3>
+        <p>A pure-numpy DebtRank engine over the interbank exposure network — distress that propagates once
+           through the graph, ranking systemic importance by impact.</p>
+        <div class="cite">Battiston et al. (2012)</div>
+      </div>
+      <div class="lens">
+        <div class="lens__n">05 · MACRO REGIME</div>
+        <h3>4-state macro composite</h3>
+        <p>Yield-curve recession probit, the Sahm rule, FFR/USD regimes, and a four-state composite that
+           classifies the prevailing macro-financial regime.</p>
+        <div class="cite">Estrella · Mishkin (1996) · Sahm (2019)</div>
+      </div>
+      <div class="lens">
+        <div class="lens__n">+ · CONNECTEDNESS</div>
+        <h3>Diebold-Yilmaz spillover</h3>
+        <p>Generalized FEVD spillover index measuring cross-asset connectedness — how shocks in one sector
+           transmit to the rest of the system.</p>
+        <div class="cite">Diebold · Yilmaz (2012)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ GOVERNANCE / DIFFERENTIATOR ============ -->
+<section id="governance">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">The differentiator</p>
+      <h2>A governed pipeline your model-risk reviewers can verify.</h2>
+      <p>CBSRM's L3 Composer assembles every stage into one content-addressed <span class="mono">PipelineRecord</span> —
+         the difference between a quant toolbox and a model-governance system.</p>
+    </div>
+    <div class="gov">
+      <div>
+        <ul class="gov__pts">
+          <li><span class="mk">▦</span><span><b>One governed pipeline.</b> A single record spans every stage with a uniform date convention, a uniform identifier &amp; version contract, and explicit input → output lineage.</span></li>
+          <li><span class="mk">#</span><span><b>Content-addressed lineage.</b> Each stage carries a SHA-256 content hash; a methodology change produces a different hash a diff catches immediately. "Did the model change?" becomes a string comparison.</span></li>
+          <li><span class="mk">✓</span><span><b>Tamper-evident.</b> <span class="mono">verify_pipeline_record()</span> re-derives every hash from the record's own data — proof the published figure was not altered after composition.</span></li>
+          <li><span class="mk">⛓</span><span><b>SHA-256 audit chain.</b> Every lifecycle event — requested, fetched, computed, served — is written to a hash-linked ledger you can replay and verify end to end.</span></li>
+          <li><span class="mk">§</span><span><b>SR 26-2 aligned.</b> Purpose &amp; use, conceptual soundness, ongoing monitoring, and outcomes analysis map directly onto the architecture — the validation conversation, pre-answered.</span></li>
+        </ul>
+      </div>
+      <div class="term" id="demo-snippet" aria-label="Example: fetch and verify a pipeline record">
+        <div class="term__bar"><span class="d"></span><span class="d"></span><span class="d"></span><span class="t">cbsrm.wavervanir.com · governed pipeline</span></div>
+        <div class="term__body"><pre><span class="c"># Compose one auditable research record for the 2008 crisis window</span>
+<span class="k">GET</span> /api/pipeline/<span class="s">2008Q4</span>
+
+{
+  <span class="k">"pipeline_id"</span>: <span class="s">"crisis-research-flow"</span>,
+  <span class="k">"window_id"</span>:  <span class="s">"2008Q4"</span>,
+  <span class="k">"stages"</span>: [ <span class="c">/* 7 stages, each version-pinned */</span>
+    { <span class="k">"stage_id"</span>: <span class="s">"score_event"</span>,
+      <span class="k">"identifier"</span>: <span class="s">"crisis-research-flow:2008Q4:score_event:1.0.0"</span>,
+      <span class="k">"output_sha256"</span>: <span class="p">"9f12959…"</span> },
+    <span class="c">… debt_rank · phase_classifier · crisis_dossier · report_renderer</span>
+  ],
+  <span class="k">"hashes"</span>: { <span class="k">"output_sha256"</span>: <span class="p">"5ee94755…"</span> }   <span class="c">← the join key</span>
+}
+
+<span class="c"># Prove nothing was tampered with after composition</span>
+<span class="k">POST</span> /api/pipeline/verify
+<span class="ok">→ { "ok": true, "mismatches": [] }</span></pre></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ LIVE DEMO ============ -->
+<section id="demo">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">See it now</p>
+      <h2>A self-contained, audit-traceable risk terminal.</h2>
+      <p>Five systemic-risk lenses plus the model-governance audit chain — every number computed from the public
+         CBSRM classes, rendered offline, with zero external dependencies. No login, no data leaves the page.</p>
+    </div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;">
+      <a class="btn btn-primary" href="terminal.html">Open the live Risk Terminal →</a>
+      <a class="btn btn-ghost" href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener">View the source on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section>
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><div class="v tn">1,071</div><div class="l">Passing tests</div></div>
+      <div class="stat"><div class="v tn">5</div><div class="l">Jurisdictions</div></div>
+      <div class="stat"><div class="v tn">12</div><div class="l">Whitepaper sections</div></div>
+      <div class="stat"><div class="v">Apache-2.0</div><div class="l">Open methodology</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHO IT'S FOR ============ -->
+<section id="who">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">Who it's for</p>
+      <h2>Built for the desks that have to defend the number.</h2>
+      <p>The same code runs on a researcher's laptop and behind a production service — from a single FastAPI
+         deployment to an air-gapped institutional install.</p>
+    </div>
+    <div class="aud">
+      <div class="aud__c"><h3>Risk &amp; prop desks</h3><p>Hedge funds and proprietary trading firms pricing systemic and tail risk with numbers they can reproduce and explain.</p></div>
+      <div class="aud__c"><h3>Central banks</h3><p>Financial-stability and research teams reproducing CISS, SRISK, and CoVaR with point-in-time discipline.</p></div>
+      <div class="aud__c"><h3>Supervisory tech</h3><p>SupTech and RegTech vendors embedding auditable, citable systemic-risk measurement into their stack.</p></div>
+      <div class="aud__c"><h3>Family offices</h3><p>Allocators who want an independent, transparent read on system stress and contagion exposure.</p></div>
+      <div class="aud__c"><h3>Academic research</h3><p>Researchers needing a reproducible, citable reference implementation for SSRN-grade figures.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRICING / ENGAGEMENT ============ -->
+<section id="pricing">
+  <div class="wrap">
+    <div class="sec-h">
+      <p class="overline">Engagement</p>
+      <h2>Open methodology. Institutional delivery.</h2>
+      <p>The CBSRM methodology is Apache-2.0 and free to read, run, and cite. What institutions engage us for is
+         delivery: hosted infrastructure, jurisdiction extensions, validation packs, and support.
+         <!-- EDIT: confirm/adjust pricing below before publishing. --></p>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <div class="badge">Open</div>
+        <h3>Research</h3>
+        <div class="price"><b>Free</b> · Apache-2.0</div>
+        <div class="for">For researchers &amp; evaluation</div>
+        <ul>
+          <li>Full public methodology &amp; source</li>
+          <li>CLI, Python API, and the Risk Terminal</li>
+          <li>Reproducible crisis dossiers (2008Q4 / 2020Q1 / 2023Q1)</li>
+          <li>12-section methodology whitepaper</li>
+        </ul>
+        <a class="btn btn-ghost" href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener">Get the library</a>
+      </div>
+      <div class="tier feat">
+        <div class="badge">Most institutions</div>
+        <h3>Desk</h3>
+        <div class="price">from <b>$—</b> <span class="dim">/ yr</span></div>
+        <div class="for">For risk desks &amp; research teams</div>
+        <ul>
+          <li>Hosted, monitored read-only API &amp; dashboards</li>
+          <li>Live jurisdiction data feeds &amp; refresh</li>
+          <li>Governed PipelineRecord + audit-chain access</li>
+          <li>Onboarding &amp; priority support</li>
+        </ul>
+        <a class="btn btn-primary" href="#contact">Request a quote</a>
+      </div>
+      <div class="tier">
+        <div class="badge">Regulated</div>
+        <h3>Institution</h3>
+        <div class="price"><b>Custom</b></div>
+        <div class="for">For banks, central banks &amp; suptech</div>
+        <ul>
+          <li>On-prem / VPC / air-gapped deployment</li>
+          <li>Custom jurisdictions &amp; instruments</li>
+          <li>SR 26-2 model-validation pack &amp; documentation</li>
+          <li>SLA, security review, and integration support</li>
+        </ul>
+        <a class="btn btn-ghost" href="#contact">Talk to us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA / CONTACT ============ -->
+<section id="contact" class="cta">
+  <div class="cta__bg"></div>
+  <div class="wrap cta__in">
+    <p class="overline" style="text-align:center;">Request a briefing</p>
+    <h2>See CBSRM run on your jurisdiction.</h2>
+    <p>A 30-minute walkthrough of the five lenses, the audit chain, and the governed pipeline — with a live,
+       reproducible record for the window of your choice.</p>
+    <div class="cta__btns">
+      <!-- EDIT: set this to your real inbound address before publishing. -->
+      <a class="btn btn-primary" href="mailto:hello@wavervanir.com?subject=CBSRM%20institutional%20briefing">Email for a briefing</a>
+      <a class="btn btn-ghost" href="https://www.linkedin.com/company/wavervanir-international/" target="_blank" rel="noopener">WaverVanir on LinkedIn</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <div class="brand" style="margin-bottom:14px;">
+          <svg class="mark" width="46" height="52" viewBox="0 0 64 72" aria-hidden="true"><use href="#wv-mark"/></svg>
+          <span style="display:flex;flex-direction:column;">
+            <span class="wm-gold">WaverVanir</span>
+            <span class="tagline">Process over Prediction</span>
+          </span>
+        </div>
+        <p class="dim" style="max-width:38ch;font-size:13px;margin:0;"><b style="color:var(--text)">CBSRM</b> —
+          methodology-first systemic-risk measurement. Reproducible, audit-traceable, governable.</p>
+      </div>
+      <div class="foot__links">
+        <div class="foot__col">
+          <h4>Product</h4>
+          <a href="#methodology">Methodology</a>
+          <a href="#governance">Governance</a>
+          <a href="terminal.html">Live terminal</a>
+          <a href="#pricing">Engagement</a>
+        </div>
+        <div class="foot__col">
+          <h4>Resources</h4>
+          <a href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener">GitHub repository</a>
+          <a href="https://github.com/pravo123/cbsrm/blob/main/whitepaper/cbsrm_methodology_v1.md" target="_blank" rel="noopener">Methodology whitepaper</a>
+          <a href="#contact">Request a briefing</a>
+        </div>
+        <div class="foot__col">
+          <h4>Company</h4>
+          <a href="https://www.linkedin.com/company/wavervanir-international/" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="mailto:hello@wavervanir.com">Contact</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot__legal">
+      <p class="mono">© <span id="yr">2026</span> WaverVanir International · CBSRM methodology licensed Apache-2.0.</p>
+      <p style="margin:0;">CBSRM is a systemic-risk and financial-stability <b>measurement</b> and model-governance tool.
+        It is <b>not</b> investment advice, a solicitation, or an offer to buy or sell any security, and it does
+        not provide individualized recommendations. "SR 26-2 aligned" describes design intent against published
+        model-risk-management principles; it is not a representation of regulatory approval, endorsement, or certification.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+(function(){
+  var TONE={'ECB-CISS-US':[0.1,0.27,0.4],'ECB-CISS-EA':[0.1,0.27,0.4],'ECB-CISS-UK':[0.1,0.27,0.4],
+    'STLFSI4':[1,2,3],'YIELD-CURVE':[0.15,0.33,0.5],'SAHM':[0.3,0.5,0.5],'CREDIT-SPREAD':[400,700,1000]};
+  var STATE_TONE={'RISK_ON':'benign','TRANSITION_UP':'benign','EXPANSION':'benign','NORMAL':'benign',
+    'CREDIT_BENIGN':'benign','TRANSITION_DOWN':'watch','CONTRACTION':'severe','RISK_OFF':'severe'};
+  function tone(r){
+    if(typeof r.value==='number'){
+      var t=TONE[r.id];if(!t)return '';
+      if(r.id==='STLFSI4'&&r.value<0)return 'benign';
+      return r.value<t[0]?'benign':r.value<t[1]?'watch':r.value<t[2]?'elevated':'severe';
+    }
+    if(r.state)return STATE_TONE[r.state]||'';
+    return '';
+  }
+  function fmtVal(r){
+    if(typeof r.value==='number'){
+      if(r.fmt==='ratio')return r.value.toFixed(4);
+      if(r.fmt==='signed')return (r.value>=0?'+':'')+r.value.toFixed(2);
+      if(r.fmt==='probability')return (r.value*100).toFixed(1)+'%';
+      if(r.fmt==='bps')return Math.round(r.value)+' bps';
+      if(r.fmt==='pp2')return r.value.toFixed(2)+' pp';
+      return r.value.toFixed(2);
+    }
+    return (r.state||'—').replace(/_/g,' ');
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  fetch('current.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+    var ok=(d.readings||[]).filter(function(r){return r.status==='ok';});
+    var grid=document.getElementById('cc-grid'),foot=document.getElementById('cc-foot'),status=document.getElementById('cc-status');
+    if(!ok.length){status.textContent='Live readings are being provisioned.';return;}
+    status.hidden=true;grid.hidden=false;foot.hidden=false;
+    grid.innerHTML=ok.map(function(r){
+      var isNum=typeof r.value==='number';
+      return '<div class="ccard '+tone(r)+'">'
+        +'<div class="ccard__lens">'+esc(r.lens)+'</div>'
+        +'<div class="ccard__label">'+esc(r.label)+'</div>'
+        +'<div class="ccard__val'+(isNum?'':' state')+'">'+esc(fmtVal(r))+'</div>'
+        +'<div class="ccard__meta"><span>'+esc(r.as_of||'')+'</span><span>'+esc(r.source)+'</span></div>'
+        +'</div>';
+    }).join('');
+    var n=d.summary||{},hash=(d.output_sha256||'').slice(0,12);
+    foot.innerHTML='<span class="seal"><span class="dot"></span>SNAPSHOT '+esc(hash)+'…</span>'
+      +'<span>'+esc(n.live||ok.length)+' live readings</span>'
+      +'<span>generated '+esc(d.generated_at_utc||'')+'</span>'
+      +'<span>auto-refreshed daily · risk measurement, not advice</span>';
+  }).catch(function(){document.getElementById('cc-status').textContent='Current readings unavailable right now.';});
+})();
+</script>
+</body>
+</html>

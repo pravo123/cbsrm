@@ -1,0 +1,28 @@
+# Netlify config for the CBSRM static site (pravo123/cbsrm, publish dir `site/`).
+#
+# There is no build step — the pages are hand-authored static HTML. We turn OFF
+# Netlify's asset post-processing: the pages ship hand-optimized inline
+# <script>/<style>, including the embedded multilingual i18n dictionaries
+# (ja/es/fr/de), and Netlify's bundler/minifier must not rewrite them (it can
+# fail the publish on a large non-ASCII inline script). Pretty URLs stay ON so
+# /explorer still resolves to /explorer.html.
+
+[build]
+  publish = "site"
+
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = false
+  minify = false
+
+[build.processing.js]
+  bundle = false
+  minify = false
+
+[build.processing.html]
+  pretty_urls = true
+
+[build.processing.images]
+  compress = false

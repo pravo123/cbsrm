@@ -46,6 +46,8 @@ jobs:
             git config user.name  "cbsrm-bot"
             git config user.email "bot@users.noreply.github.com"
             git add site/current.json site/history.json
-            git commit -m "chore(data): refresh systemic-risk snapshots [skip ci]"
+            # No [skip ci]: Netlify honors it and would skip publishing the refresh.
+            # GITHUB_TOKEN commits never re-trigger Actions, so there is no loop.
+            git commit -m "chore(data): refresh systemic-risk snapshots"
             git push
           fi

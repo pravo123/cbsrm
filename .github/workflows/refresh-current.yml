@@ -16,6 +16,12 @@ concurrency:
   group: refresh-current
   cancel-in-progress: false
 
+env:
+  # Minimum live lenses required to publish. Below this we assume upstream
+  # breakage (e.g. FRED key gone -> only the 3 keyless ECB lenses) and refuse
+  # to overwrite the last-good snapshot. 8 lenses total; 6 leaves 2 of slack.
+  MIN_LIVE_LENSES: "6"
+
 jobs:
   refresh:
     runs-on: ubuntu-latest
@@ -38,10 +44,15 @@ jobs:
           python tools/build_current_snapshot.py
           python tools/build_history_snapshot.py
 
+      - name: Gate — require minimum live lenses
+        run: python tools/check_snapshot.py   # exits 1 (skips commit) if degraded
+
       - name: Commit if changed
+        id: commit
         run: |
           if git diff --quiet -- site/current.json site/history.json; then
             echo "snapshots unchanged — nothing to commit."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
           else
             git config user.name  "cbsrm-bot"
             git config user.email "bot@users.noreply.github.com"
@@ -50,4 +61,20 @@ jobs:
             # GITHUB_TOKEN commits never re-trigger Actions, so there is no loop.
             git commit -m "chore(data): refresh systemic-risk snapshots"
             git push
+            echo "committed=true" >> "$GITHUB_OUTPUT"
+            echo "gen=$(python -c "import json;print(json.load(open('site/current.json'))['generated_at_utc'])")" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Verify Netlify published the refresh
+        if: steps.commit.outputs.committed == 'true'
+        run: |
+          want='${{ steps.commit.outputs.gen }}'
+          echo "want generated_at_utc=$want"
+          for i in $(seq 1 10); do
+            got=$(curl -sS "https://cbsrm.wavervanir.com/current.json?cb=$i$RANDOM" \
+                  | python -c "import sys,json;print(json.load(sys.stdin).get('generated_at_utc',''))" 2>/dev/null || echo "")
+            if [ "$got" = "$want" ]; then echo "Netlify is serving the fresh snapshot ($got)"; exit 0; fi
+            echo "waiting for Netlify deploy… live=$got ($i/10)"; sleep 25
+          done
+          echo "::error::Split-brain: main has $want but cbsrm.wavervanir.com never served it after ~250s. Check the Netlify deploy (repo-connected? build not skipped?)."
+          exit 1

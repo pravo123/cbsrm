@@ -6,9 +6,48 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='13' fill='%230A0C10'/><g fill='%2342BEEC'><rect x='18' y='34' width='6.5' height='20'/><rect x='28' y='27' width='6.5' height='27'/><rect x='38' y='21' width='6.5' height='33'/></g><path d='M15 44 L45 20' stroke='%23D2A23F' stroke-width='3.2' fill='none' stroke-linecap='round'/><path d='M36 19 L46 18 L45 28' stroke='%23D2A23F' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 <title>CBSRM — Cross-Border Systemic Risk Monitor · WaverVanir International</title>
 <meta name="description" content="CBSRM is a methodology-first systemic-risk platform for institutions: CISS-family stress, SRISK, ΔCoVaR/MES, DebtRank, and the 4-state macro regime — under one Protocol, one SHA-256 audit chain, and one reproducibility guarantee. Built around SR 26-2 model-governance principles. Apache-2.0. Risk measurement, not investment advice.">
+<link rel="canonical" href="https://cbsrm.wavervanir.com/">
 <meta property="og:title" content="CBSRM — Systemic risk you can reproduce, audit, and defend">
 <meta property="og:description" content="Five systemic-risk lenses, one governed pipeline, a SHA-256 audit chain, and a content-addressed PipelineRecord your model-risk reviewers can verify. For risk desks, central banks, and supervisory-technology teams.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://cbsrm.wavervanir.com/">
+<meta property="og:site_name" content="CBSRM · WaverVanir International">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CBSRM — Systemic risk you can reproduce, audit, and defend">
+<meta name="twitter:description" content="Reproducible, audit-traceable systemic-risk measurement for risk desks, central banks, and supervisory-technology teams. Built around SR 26-2 model-governance principles.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://cbsrm.wavervanir.com/#org",
+      "name": "WaverVanir International",
+      "url": "https://cbsrm.wavervanir.com/",
+      "slogan": "Process over Prediction",
+      "description": "Methodology-first systemic-risk measurement and model governance.",
+      "sameAs": ["https://www.linkedin.com/company/wavervanir-international-llc", "https://github.com/pravo123/cbsrm"]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://cbsrm.wavervanir.com/#website",
+      "url": "https://cbsrm.wavervanir.com/",
+      "name": "CBSRM — Cross-Border Systemic Risk Monitor",
+      "publisher": {"@id": "https://cbsrm.wavervanir.com/#org"},
+      "inLanguage": ["en", "ja", "es", "fr", "de"]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "CBSRM",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Web",
+      "url": "https://cbsrm.wavervanir.com/",
+      "license": "https://www.apache.org/licenses/LICENSE-2.0",
+      "offers": {"@type": "Offer", "price": "48000", "priceCurrency": "USD"}
+    }
+  ]
+}
+</script>
 <style>
   /* ============================================================
      CBSRM — institutional site  ·  "Obsidian Ledger" (matches the Risk Terminal)
@@ -80,6 +119,15 @@
   .seal{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;
     color:var(--hash-fg);background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:6px;padding:5px 10px;}
   .seal .dot{width:7px;height:7px;border-radius:50%;background:var(--hash-fg);box-shadow:0 0 8px var(--hash-fg);}
+
+  /* ---- language switcher ---- */
+  .lang{position:relative;display:inline-flex;align-items:center;}
+  .lang select{appearance:none;-webkit-appearance:none;font-family:var(--mono);font-size:11.5px;
+    background:var(--surface-2);color:var(--text);border:1px solid var(--border-strong);
+    border-radius:6px;padding:6px 24px 6px 10px;cursor:pointer;}
+  .lang select:hover{border-color:#3A4A63;color:var(--text-strong);}
+  .lang select:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .lang::after{content:"▾";position:absolute;right:9px;pointer-events:none;color:var(--text-dim);font-size:10px;}
 
   /* ---- hero ---- */
   .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border);}
@@ -247,16 +295,19 @@
       </span>
     </a>
     <div class="nav__links">
-      <a href="#current">Live data</a>
-      <a href="#methodology">Methodology</a>
-      <a href="#governance">Governance</a>
-      <a href="#demo">Live terminal</a>
-      <a href="#who">Who it's for</a>
-      <a href="#pricing">Engagement</a>
+      <a href="#current" data-i18n="nav.live">Live data</a>
+      <a href="#methodology" data-i18n="nav.meth">Methodology</a>
+      <a href="#governance" data-i18n="nav.gov">Governance</a>
+      <a href="#demo" data-i18n="nav.term">Live terminal</a>
+      <a href="#who" data-i18n="nav.who">Who it's for</a>
+      <a href="#pricing" data-i18n="nav.eng">Engagement</a>
     </div>
     <div class="nav__cta">
-      <span class="seal"><span class="dot"></span>AUDIT-TRACEABLE</span>
-      <a class="btn btn-primary" href="#contact">Request a briefing</a>
+      <span class="lang"><select id="lang-sel" aria-label="Language">
+        <option value="en">EN</option><option value="ja">日本語</option><option value="es">ES</option><option value="fr">FR</option><option value="de">DE</option>
+      </select></span>
+      <span class="seal"><span class="dot"></span><span data-i18n="nav.seal">AUDIT-TRACEABLE</span></span>
+      <a class="btn btn-primary" href="#contact" data-i18n="nav.brief">Request a briefing</a>
     </div>
   </div>
 </nav>
@@ -266,22 +317,22 @@
   <div class="hero__bg"></div>
   <div class="hero__grid"></div>
   <div class="wrap hero__in">
-    <p class="overline">Cross-Border Systemic Risk Monitor</p>
-    <h1>Systemic risk you can <span class="hl">reproduce, audit, and defend.</span></h1>
-    <p class="hero__sub">
+    <p class="overline" data-i18n="hero.overline">Cross-Border Systemic Risk Monitor</p>
+    <h1 data-i18n="hero.h1">Systemic risk you can <span class="hl">reproduce, audit, and defend.</span></h1>
+    <p class="hero__sub" data-i18n="hero.sub">
       CBSRM reproduces the canonical systemic-risk and financial-stability measures used by central banks
       and supervisors — in modern, typed, fully-tested Python — under one Protocol, one SHA-256 audit chain,
       and one reproducibility guarantee. Built around <b class="muted">SR 26-2</b> model-risk-management principles.
     </p>
     <div class="hero__cta">
-      <a class="btn btn-primary" href="#contact">Request an institutional briefing</a>
-      <a class="btn btn-ghost" href="https://app.cbsrm.wavervanir.com/app/" target="_blank" rel="noopener">Open the live terminal →</a>
+      <a class="btn btn-primary" href="#contact" data-i18n="hero.brief">Request an institutional briefing</a>
+      <a class="btn btn-ghost" href="https://app.cbsrm.wavervanir.com/app/" target="_blank" rel="noopener" data-i18n="hero.term">Open the live terminal →</a>
     </div>
     <div class="trustline">
-      <span><b>Apache-2.0</b> open methodology</span><span class="sepd">·</span>
-      <span><b>1,071</b> passing tests</span><span class="sepd">·</span>
-      <span><b>Deterministic</b> &amp; reproducible</span><span class="sepd">·</span>
-      <span><b>5</b> jurisdictions · <b>5</b> languages</span>
+      <span data-i18n="hero.t1"><b>Apache-2.0</b> open methodology</span><span class="sepd">·</span>
+      <span data-i18n="hero.t2"><b>1,071</b> passing tests</span><span class="sepd">·</span>
+      <span data-i18n="hero.t3"><b>Deterministic</b> &amp; reproducible</span><span class="sepd">·</span>
+      <span data-i18n="hero.t4"><b>5</b> jurisdictions · <b>5</b> languages</span>
     </div>
   </div>
 </header>
@@ -290,16 +341,16 @@
 <section id="current">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">Current conditions · live</p>
-      <h2>Today's systemic-risk readings.</h2>
-      <p>The same canonical indices CBSRM reproduces — computed from the latest public data, each value dated to its
+      <p class="overline" data-i18n="cur.overline">Current conditions · live</p>
+      <h2 data-i18n="cur.h2">Today's systemic-risk readings.</h2>
+      <p data-i18n="cur.p">The same canonical indices CBSRM reproduces — computed from the latest public data, each value dated to its
          provider's last publication, content-hash stamped, and refreshed automatically every day. Not a backtest; the
          current read.</p>
     </div>
-    <div id="cc-status" class="cc-status">Loading current readings…</div>
+    <div id="cc-status" class="cc-status" data-i18n="cur.loading">Loading current readings…</div>
     <div id="cc-grid" class="cc-grid" hidden></div>
     <div id="cc-foot" class="cc-foot" hidden></div>
-    <div style="margin-top:24px;"><a class="btn btn-primary" href="explorer.html">Explore any quarter, 1999 → today →</a></div>
+    <div style="margin-top:24px;"><a class="btn btn-primary" href="explorer.html" data-i18n="cur.explore">Explore any quarter, 1999 → today →</a></div>
   </div>
 </section>
 
@@ -307,20 +358,20 @@
 <section id="why">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">Why CBSRM exists</p>
-      <h2>Most systemic-risk numbers can't survive a model review.</h2>
-      <p>Academic code lives in R, Stata, and MATLAB; commercial systems are black boxes; reference numbers
+      <p class="overline" data-i18n="why.overline">Why CBSRM exists</p>
+      <h2 data-i18n="why.h2">Most systemic-risk numbers can't survive a model review.</h2>
+      <p data-i18n="why.p">Academic code lives in R, Stata, and MATLAB; commercial systems are black boxes; reference numbers
          come from vendors that don't agree. None of that clears a model-risk function. CBSRM is methodology-first.</p>
     </div>
     <div class="prob">
       <div class="bad">
-        <h3>The status quo</h3>
-        <p>Fragmented implementations, undocumented assumptions, vendor numbers you can't reproduce, and no
+        <h3 data-i18n="why.bad.h3">The status quo</h3>
+        <p data-i18n="why.bad.p">Fragmented implementations, undocumented assumptions, vendor numbers you can't reproduce, and no
            lineage from input to published figure. A reviewer asks "why is this number what it is?" — and no one can say.</p>
       </div>
       <div class="good">
         <h3>CBSRM</h3>
-        <p>Every number is reproducible from source. Every methodology stage carries its own version. Every
+        <p data-i18n="why.good.p">Every number is reproducible from source. Every methodology stage carries its own version. Every
            lifecycle event is written to a SHA-256 audit chain. One Protocol covers stress indicators and
            risk-pricing measures alike — adding a method is one file plus one registration line.</p>
       </div>
@@ -332,53 +383,53 @@
 <section id="methodology">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">The methodology</p>
-      <h2>Six canonical methods. Thirteen live lenses. One auditable spine.</h2>
-      <p>One pipeline resolves the questions a financial-stability desk actually asks — how stressed is the system,
+      <p class="overline" data-i18n="meth.overline">The methodology</p>
+      <h2 data-i18n="meth.h2">Six canonical methods. Thirteen live lenses. One auditable spine.</h2>
+      <p data-i18n="meth.p">One pipeline resolves the questions a financial-stability desk actually asks — how stressed is the system,
          which firms carry the tail, how does shock propagate, and what regime are we in. The same methods now run
          live in the terminal, alongside a global cross-asset quant cockpit and a turnkey SR 26-2
          model-validation binder.</p>
     </div>
     <div class="lenses">
       <div class="lens">
-        <div class="lens__n">01 · SYSTEM STRESS</div>
-        <h3>Composite stress indices</h3>
-        <p>CISS-family stress (US / Euro-Area / UK), STLFSI4, and the OFR Financial Stress Index — quadratic-form
+        <div class="lens__n" data-i18n="meth.l1.n">01 · SYSTEM STRESS</div>
+        <h3 data-i18n="meth.l1.h3">Composite stress indices</h3>
+        <p data-i18n="meth.l1.p">CISS-family stress (US / Euro-Area / UK), STLFSI4, and the OFR Financial Stress Index — quadratic-form
            aggregation that amplifies in correlated stress.</p>
         <div class="cite">Holló · Kremer · Lo Duca (2012)</div>
       </div>
       <div class="lens">
-        <div class="lens__n">02 · FIRM TAIL-CONTRIBUTION</div>
+        <div class="lens__n" data-i18n="meth.l2.n">02 · FIRM TAIL-CONTRIBUTION</div>
         <h3>SRISK &amp; LRMES</h3>
-        <p>Expected capital shortfall of a firm conditional on a systemic market decline — who would need
+        <p data-i18n="meth.l2.p">Expected capital shortfall of a firm conditional on a systemic market decline — who would need
            recapitalising in a crisis, and by how much.</p>
         <div class="cite">Brownlees · Engle (2017)</div>
       </div>
       <div class="lens">
-        <div class="lens__n">03 · TAIL SPILLOVER</div>
+        <div class="lens__n" data-i18n="meth.l3.n">03 · TAIL SPILLOVER</div>
         <h3>ΔCoVaR &amp; MES</h3>
-        <p>The system's value-at-risk conditional on an institution in distress, and each firm's marginal
+        <p data-i18n="meth.l3.p">The system's value-at-risk conditional on an institution in distress, and each firm's marginal
            expected shortfall — tail dependence, not average correlation.</p>
         <div class="cite">Adrian · Brunnermeier (2016) · Acharya et al. (2017)</div>
       </div>
       <div class="lens">
-        <div class="lens__n">04 · NETWORK CONTAGION</div>
+        <div class="lens__n" data-i18n="meth.l4.n">04 · NETWORK CONTAGION</div>
         <h3>DebtRank</h3>
-        <p>A pure-numpy DebtRank engine over the interbank exposure network — distress that propagates once
+        <p data-i18n="meth.l4.p">A pure-numpy DebtRank engine over the interbank exposure network — distress that propagates once
            through the graph, ranking systemic importance by impact.</p>
         <div class="cite">Battiston et al. (2012)</div>
       </div>
       <div class="lens">
-        <div class="lens__n">05 · MACRO REGIME</div>
-        <h3>4-state macro composite</h3>
-        <p>Yield-curve recession probit, the Sahm rule, FFR/USD regimes, and a four-state composite that
+        <div class="lens__n" data-i18n="meth.l5.n">05 · MACRO REGIME</div>
+        <h3 data-i18n="meth.l5.h3">4-state macro composite</h3>
+        <p data-i18n="meth.l5.p">Yield-curve recession probit, the Sahm rule, FFR/USD regimes, and a four-state composite that
            classifies the prevailing macro-financial regime.</p>
         <div class="cite">Estrella · Mishkin (1996) · Sahm (2019)</div>
       </div>
       <div class="lens">
-        <div class="lens__n">+ · CONNECTEDNESS</div>
-        <h3>Diebold-Yilmaz spillover</h3>
-        <p>Generalized FEVD spillover index measuring cross-asset connectedness — how shocks in one sector
+        <div class="lens__n" data-i18n="meth.l6.n">+ · CONNECTEDNESS</div>
+        <h3 data-i18n="meth.l6.h3">Diebold-Yilmaz spillover</h3>
+        <p data-i18n="meth.l6.p">Generalized FEVD spillover index measuring cross-asset connectedness — how shocks in one sector
            transmit to the rest of the system.</p>
         <div class="cite">Diebold · Yilmaz (2012)</div>
       </div>
@@ -390,19 +441,19 @@
 <section id="governance">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">The differentiator</p>
-      <h2>A governed pipeline your model-risk reviewers can verify.</h2>
-      <p>CBSRM's L3 Composer assembles every stage into one content-addressed <span class="mono">PipelineRecord</span> —
+      <p class="overline" data-i18n="gov.overline">The differentiator</p>
+      <h2 data-i18n="gov.h2">A governed pipeline your model-risk reviewers can verify.</h2>
+      <p data-i18n="gov.p">CBSRM's L3 Composer assembles every stage into one content-addressed <span class="mono">PipelineRecord</span> —
          the difference between a quant toolbox and a model-governance system.</p>
     </div>
     <div class="gov">
       <div>
         <ul class="gov__pts">
-          <li><span class="mk">▦</span><span><b>One governed pipeline.</b> A single record spans every stage with a uniform date convention, a uniform identifier &amp; version contract, and explicit input → output lineage.</span></li>
-          <li><span class="mk">#</span><span><b>Content-addressed lineage.</b> Each stage carries a SHA-256 content hash; a methodology change produces a different hash a diff catches immediately. "Did the model change?" becomes a string comparison.</span></li>
-          <li><span class="mk">✓</span><span><b>Tamper-evident.</b> <span class="mono">verify_pipeline_record()</span> re-derives every hash from the record's own data — proof the published figure was not altered after composition.</span></li>
-          <li><span class="mk">⛓</span><span><b>SHA-256 audit chain.</b> Every lifecycle event — requested, fetched, computed, served — is written to a hash-linked ledger you can replay and verify end to end.</span></li>
-          <li><span class="mk">§</span><span><b>SR 26-2 aligned.</b> Purpose &amp; use, conceptual soundness, ongoing monitoring, and outcomes analysis map directly onto the architecture — the validation conversation, pre-answered.</span></li>
+          <li><span class="mk">▦</span><span data-i18n="gov.p1"><b>One governed pipeline.</b> A single record spans every stage with a uniform date convention, a uniform identifier &amp; version contract, and explicit input → output lineage.</span></li>
+          <li><span class="mk">#</span><span data-i18n="gov.p2"><b>Content-addressed lineage.</b> Each stage carries a SHA-256 content hash; a methodology change produces a different hash a diff catches immediately. "Did the model change?" becomes a string comparison.</span></li>
+          <li><span class="mk">✓</span><span data-i18n="gov.p3"><b>Tamper-evident.</b> <span class="mono">verify_pipeline_record()</span> re-derives every hash from the record's own data — proof the published figure was not altered after composition.</span></li>
+          <li><span class="mk">⛓</span><span data-i18n="gov.p4"><b>SHA-256 audit chain.</b> Every lifecycle event — requested, fetched, computed, served — is written to a hash-linked ledger you can replay and verify end to end.</span></li>
+          <li><span class="mk">§</span><span data-i18n="gov.p5"><b>SR 26-2 aligned.</b> Purpose &amp; use, conceptual soundness, ongoing monitoring, and outcomes analysis map directly onto the architecture — the validation conversation, pre-answered.</span></li>
         </ul>
       </div>
       <div class="term" id="demo-snippet" aria-label="Example: fetch and verify a pipeline record">
@@ -434,37 +485,37 @@
 <section id="demo">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">See it now</p>
-      <h2>The live terminal — sign in and watch systemic risk in real time.</h2>
-      <p>Six desks under one governed roof — live systemic conditions, a global cross-asset quant cockpit, governed
+      <p class="overline" data-i18n="demo.overline">See it now</p>
+      <h2 data-i18n="demo.h2">The live terminal — sign in and watch systemic risk in real time.</h2>
+      <p data-i18n="demo.p">Six desks under one governed roof — live systemic conditions, a global cross-asset quant cockpit, governed
          crisis dossiers, live capital-shortfall, and a turnkey model-validation binder. Every reading is reproducible,
          content-addressed, and audit-logged. Start free for 7 days — no card required.</p>
     </div>
     <div class="lenses" style="margin-bottom:26px;">
-      <div class="lens"><div class="lens__n">01 · CONDITIONS</div><h3>Live conditions · 13 lenses</h3>
-        <p>ECB CISS (US/EA/UK), Fed financial stress, yield-curve recession probability, VIX, a real Diebold-Yilmaz
+      <div class="lens"><div class="lens__n" data-i18n="demo.c1.n">01 · CONDITIONS</div><h3 data-i18n="demo.c1.h3">Live conditions · 13 lenses</h3>
+        <p data-i18n="demo.c1.p">ECB CISS (US/EA/UK), Fed financial stress, yield-curve recession probability, VIX, a real Diebold-Yilmaz
            cross-border spillover index, HY credit, fund-redemption fragility, ESG transition — each with history &amp; analytics.</p></div>
-      <div class="lens"><div class="lens__n">02 · QUANT COCKPIT</div><h3>Cross-asset risk · any symbol</h3>
-        <p>World indices, FX, commodities, mega-caps, crypto. Sharpe / Sortino / annualised &amp; EWMA vol / beta /
+      <div class="lens"><div class="lens__n" data-i18n="demo.c2.n">02 · QUANT COCKPIT</div><h3 data-i18n="demo.c2.h3">Cross-asset risk · any symbol</h3>
+        <p data-i18n="demo.c2.p">World indices, FX, commodities, mega-caps, crypto. Sharpe / Sortino / annualised &amp; EWMA vol / beta /
            VaR &amp; CVaR / drawdown, plus a candlestick chart with projected levels and a volatility cone.</p></div>
-      <div class="lens"><div class="lens__n">03 · CRISIS PIPELINE</div><h3>Governed crisis dossiers</h3>
-        <p>Reproducible GFC / COVID / SVB dossiers — a system-stress gauge, DebtRank network contagion, regime
+      <div class="lens"><div class="lens__n" data-i18n="demo.c3.n">03 · CRISIS PIPELINE</div><h3 data-i18n="demo.c3.h3">Governed crisis dossiers</h3>
+        <p data-i18n="demo.c3.p">Reproducible GFC / COVID / SVB dossiers — a system-stress gauge, DebtRank network contagion, regime
            classification, and a cross-crisis comparison — each a content-addressed PipelineRecord you can verify.</p></div>
-      <div class="lens"><div class="lens__n">04 · CAPITAL SHORTFALL</div><h3>SRISK &amp; ΔCoVaR · live</h3>
-        <p>Live SRISK Σ capital-shortfall + per-firm + ΔCoVaR across the major banks, computed with the NYU V-Lab
+      <div class="lens"><div class="lens__n" data-i18n="demo.c4.n">04 · CAPITAL SHORTFALL</div><h3 data-i18n="demo.c4.h3">SRISK &amp; ΔCoVaR · live</h3>
+        <p data-i18n="demo.c4.p">Live SRISK Σ capital-shortfall + per-firm + ΔCoVaR across the major banks, computed with the NYU V-Lab
            (Brownlees-Engle) and Adrian-Brunnermeier engines from public balance sheets, market cap, and prices.</p></div>
-      <div class="lens"><div class="lens__n">05 · MODEL VALIDATION</div><h3>SR 26-2 MRM binder</h3>
-        <p>Model inventory &amp; materiality tiering, conceptual soundness with citations, a materiality-rated assumption
+      <div class="lens"><div class="lens__n" data-i18n="demo.c5.n">05 · MODEL VALIDATION</div><h3 data-i18n="demo.c5.h3">SR 26-2 MRM binder</h3>
+        <p data-i18n="demo.c5.p">Model inventory &amp; materiality tiering, conceptual soundness with citations, a materiality-rated assumption
            register, an SRISK parameter-sensitivity sweep, Monte-Carlo convergence, and an attestation block — so your
            model-risk function can sign off.</p></div>
-      <div class="lens"><div class="lens__n">06 · GOVERNED</div><h3>Reproducible &amp; auditable</h3>
-        <p>Every reading is content-addressed (SHA-256); every sign-in and access is written to a tamper-evident
+      <div class="lens"><div class="lens__n" data-i18n="demo.c6.n">06 · GOVERNED</div><h3 data-i18n="demo.c6.h3">Reproducible &amp; auditable</h3>
+        <p data-i18n="demo.c6.p">Every reading is content-addressed (SHA-256); every sign-in and access is written to a tamper-evident
            hash-chained ledger. Rebuild any governed record and verify it reproduces bit-for-bit. The audit trail is the product.</p></div>
     </div>
     <div style="display:flex;gap:14px;flex-wrap:wrap;">
-      <a class="btn btn-primary" href="https://app.cbsrm.wavervanir.com/app/" target="_blank" rel="noopener">Sign in to the live terminal →</a>
-      <a class="btn btn-ghost" href="explorer.html">Open the offline explorer →</a>
-      <a class="btn btn-ghost" href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener">View the source on GitHub</a>
+      <a class="btn btn-primary" href="https://app.cbsrm.wavervanir.com/app/" target="_blank" rel="noopener" data-i18n="demo.signin">Sign in to the live terminal →</a>
+      <a class="btn btn-ghost" href="explorer.html" data-i18n="demo.explorer">Open the offline explorer →</a>
+      <a class="btn btn-ghost" href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener" data-i18n="demo.github">View the source on GitHub</a>
     </div>
   </div>
 </section>
@@ -473,10 +524,10 @@
 <section>
   <div class="wrap">
     <div class="stats">
-      <div class="stat"><div class="v tn">1,071</div><div class="l">Passing tests</div></div>
-      <div class="stat"><div class="v tn">5</div><div class="l">Jurisdictions</div></div>
-      <div class="stat"><div class="v tn">12</div><div class="l">Whitepaper sections</div></div>
-      <div class="stat"><div class="v">Apache-2.0</div><div class="l">Open methodology</div></div>
+      <div class="stat"><div class="v tn">1,071</div><div class="l" data-i18n="stats.tests">Passing tests</div></div>
+      <div class="stat"><div class="v tn">5</div><div class="l" data-i18n="stats.jur">Jurisdictions</div></div>
+      <div class="stat"><div class="v tn">12</div><div class="l" data-i18n="stats.wp">Whitepaper sections</div></div>
+      <div class="stat"><div class="v">Apache-2.0</div><div class="l" data-i18n="stats.open">Open methodology</div></div>
     </div>
   </div>
 </section>
@@ -485,17 +536,17 @@
 <section id="who">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">Who it's for</p>
-      <h2>Built for the desks that have to defend the number.</h2>
-      <p>The same code runs on a researcher's laptop and behind a production service — from a single FastAPI
+      <p class="overline" data-i18n="who.overline">Who it's for</p>
+      <h2 data-i18n="who.h2">Built for the desks that have to defend the number.</h2>
+      <p data-i18n="who.p">The same code runs on a researcher's laptop and behind a production service — from a single FastAPI
          deployment to an air-gapped institutional install.</p>
     </div>
     <div class="aud">
-      <div class="aud__c"><h3>Risk &amp; prop desks</h3><p>Hedge funds and proprietary trading firms pricing systemic and tail risk with numbers they can reproduce and explain.</p></div>
-      <div class="aud__c"><h3>Central banks</h3><p>Financial-stability and research teams reproducing CISS, SRISK, and CoVaR with point-in-time discipline.</p></div>
-      <div class="aud__c"><h3>Supervisory tech</h3><p>SupTech and RegTech vendors embedding auditable, citable systemic-risk measurement into their stack.</p></div>
-      <div class="aud__c"><h3>Family offices</h3><p>Allocators who want an independent, transparent read on system stress and contagion exposure.</p></div>
-      <div class="aud__c"><h3>Academic research</h3><p>Researchers needing a reproducible, citable reference implementation for SSRN-grade figures.</p></div>
+      <div class="aud__c"><h3 data-i18n="who.c1.h3">Risk &amp; prop desks</h3><p data-i18n="who.c1.p">Hedge funds and proprietary trading firms pricing systemic and tail risk with numbers they can reproduce and explain.</p></div>
+      <div class="aud__c"><h3 data-i18n="who.c2.h3">Central banks</h3><p data-i18n="who.c2.p">Financial-stability and research teams reproducing CISS, SRISK, and CoVaR with point-in-time discipline.</p></div>
+      <div class="aud__c"><h3 data-i18n="who.c3.h3">Supervisory tech</h3><p data-i18n="who.c3.p">SupTech and RegTech vendors embedding auditable, citable systemic-risk measurement into their stack.</p></div>
+      <div class="aud__c"><h3 data-i18n="who.c4.h3">Family offices</h3><p data-i18n="who.c4.p">Allocators who want an independent, transparent read on system stress and contagion exposure.</p></div>
+      <div class="aud__c"><h3 data-i18n="who.c5.h3">Academic research</h3><p data-i18n="who.c5.p">Researchers needing a reproducible, citable reference implementation for SSRN-grade figures.</p></div>
     </div>
   </div>
 </section>
@@ -504,51 +555,51 @@
 <section id="pricing">
   <div class="wrap">
     <div class="sec-h">
-      <p class="overline">Engagement</p>
-      <h2>Open methodology. Institutional delivery.</h2>
-      <p>The CBSRM methodology is Apache-2.0 and free to read, run, and cite. What institutions engage us for is
+      <p class="overline" data-i18n="pr.overline">Engagement</p>
+      <h2 data-i18n="pr.h2">Open methodology. Institutional delivery.</h2>
+      <p data-i18n="pr.p">The CBSRM methodology is Apache-2.0 and free to read, run, and cite. What institutions engage us for is
          delivery: hosted infrastructure, jurisdiction extensions, validation packs, and support.
          <!-- EDIT: confirm/adjust pricing below before publishing. --></p>
     </div>
     <div class="tiers">
       <div class="tier">
-        <div class="badge">Open</div>
+        <div class="badge" data-i18n="pr.t1.badge">Open</div>
         <h3>Research</h3>
-        <div class="price"><b>Free</b> · Apache-2.0</div>
-        <div class="for">For researchers &amp; evaluation</div>
+        <div class="price" data-i18n="pr.t1.price"><b>Free</b> · Apache-2.0</div>
+        <div class="for" data-i18n="pr.t1.for">For researchers &amp; evaluation</div>
         <ul>
-          <li>Full public methodology &amp; source</li>
-          <li>CLI, Python API, and the Risk Terminal</li>
-          <li>Reproducible crisis dossiers (2008Q4 / 2020Q1 / 2023Q1)</li>
-          <li>12-section methodology whitepaper</li>
+          <li data-i18n="pr.t1.i1">Full public methodology &amp; source</li>
+          <li data-i18n="pr.t1.i2">CLI, Python API, and the Risk Terminal</li>
+          <li data-i18n="pr.t1.i3">Reproducible crisis dossiers (2008Q4 / 2020Q1 / 2023Q1)</li>
+          <li data-i18n="pr.t1.i4">12-section methodology whitepaper</li>
         </ul>
-        <a class="btn btn-ghost" href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener">Get the library</a>
+        <a class="btn btn-ghost" href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener" data-i18n="pr.t1.btn">Get the library</a>
       </div>
       <div class="tier feat">
-        <div class="badge">Most institutions</div>
+        <div class="badge" data-i18n="pr.t2.badge">Most institutions</div>
         <h3>Desk</h3>
-        <div class="price">from <b>$48,000</b> <span class="dim">/ yr · or $4,000/mo</span></div>
-        <div class="for">For risk desks &amp; research teams</div>
+        <div class="price" data-i18n="pr.t2.price">from <b>$48,000</b> <span class="dim">/ yr · or $4,000/mo</span></div>
+        <div class="for" data-i18n="pr.t2.for">For risk desks &amp; research teams</div>
         <ul>
-          <li>Hosted, monitored read-only API &amp; dashboards</li>
-          <li>Live jurisdiction data feeds &amp; refresh</li>
-          <li>Governed PipelineRecord + audit-chain access</li>
-          <li>Onboarding &amp; priority support</li>
+          <li data-i18n="pr.t2.i1">Hosted, monitored read-only API &amp; dashboards</li>
+          <li data-i18n="pr.t2.i2">Live jurisdiction data feeds &amp; refresh</li>
+          <li data-i18n="pr.t2.i3">Governed PipelineRecord + audit-chain access</li>
+          <li data-i18n="pr.t2.i4">Onboarding &amp; priority support</li>
         </ul>
-        <a class="btn btn-primary" id="desk-cta" href="#contact">Get started →</a>
+        <a class="btn btn-primary" id="desk-cta" href="#contact" data-i18n="pr.t2.btn">Get started →</a>
       </div>
       <div class="tier">
-        <div class="badge">Regulated</div>
+        <div class="badge" data-i18n="pr.t3.badge">Regulated</div>
         <h3>Institution</h3>
-        <div class="price"><b>Custom</b></div>
-        <div class="for">For banks, central banks &amp; suptech</div>
+        <div class="price" data-i18n="pr.t3.price"><b>Custom</b></div>
+        <div class="for" data-i18n="pr.t3.for">For banks, central banks &amp; suptech</div>
         <ul>
-          <li>On-prem / VPC / air-gapped deployment</li>
-          <li>Custom jurisdictions &amp; instruments</li>
-          <li>SR 26-2 model-validation pack &amp; documentation</li>
-          <li>SLA, security review, and integration support</li>
+          <li data-i18n="pr.t3.i1">On-prem / VPC / air-gapped deployment</li>
+          <li data-i18n="pr.t3.i2">Custom jurisdictions &amp; instruments</li>
+          <li data-i18n="pr.t3.i3">SR 26-2 model-validation pack &amp; documentation</li>
+          <li data-i18n="pr.t3.i4">SLA, security review, and integration support</li>
         </ul>
-        <a class="btn btn-ghost" href="#contact">Talk to us</a>
+        <a class="btn btn-ghost" href="#contact" data-i18n="pr.t3.btn">Talk to us</a>
       </div>
     </div>
   </div>
@@ -558,14 +609,14 @@
 <section id="contact" class="cta">
   <div class="cta__bg"></div>
   <div class="wrap cta__in">
-    <p class="overline" style="text-align:center;">Request a briefing</p>
-    <h2>See CBSRM run on your jurisdiction.</h2>
-    <p>A 30-minute walkthrough of the five lenses, the audit chain, and the governed pipeline — with a live,
+    <p class="overline" style="text-align:center;" data-i18n="ct.overline">Request a briefing</p>
+    <h2 data-i18n="ct.h2">See CBSRM run on your jurisdiction.</h2>
+    <p data-i18n="ct.p">A 30-minute walkthrough of the five lenses, the audit chain, and the governed pipeline — with a live,
        reproducible record for the window of your choice.</p>
     <div class="cta__btns">
       <!-- EDIT: set this to your real inbound address before publishing. -->
-      <a class="btn btn-primary" href="mailto:prabhawa@wavervanir.com?subject=CBSRM%20institutional%20briefing">Email for a briefing</a>
-      <a class="btn btn-ghost" href="https://www.linkedin.com/company/wavervanir-international-llc" target="_blank" rel="noopener">WaverVanir on LinkedIn</a>
+      <a class="btn btn-primary" href="mailto:prabhawa@wavervanir.com?subject=CBSRM%20institutional%20briefing" data-i18n="ct.email">Email for a briefing</a>
+      <a class="btn btn-ghost" href="https://www.linkedin.com/company/wavervanir-international-llc" target="_blank" rel="noopener" data-i18n="ct.link">WaverVanir on LinkedIn</a>
     </div>
   </div>
 </section>
@@ -582,33 +633,33 @@
             <span class="tagline">Process over Prediction</span>
           </span>
         </div>
-        <p class="dim" style="max-width:38ch;font-size:13px;margin:0;"><b style="color:var(--text)">CBSRM</b> —
+        <p class="dim" style="max-width:38ch;font-size:13px;margin:0;" data-i18n="ft.blurb"><b style="color:var(--text)">CBSRM</b> —
           methodology-first systemic-risk measurement. Reproducible, audit-traceable, governable.</p>
       </div>
       <div class="foot__links">
         <div class="foot__col">
-          <h4>Product</h4>
-          <a href="#methodology">Methodology</a>
-          <a href="#governance">Governance</a>
-          <a href="https://app.cbsrm.wavervanir.com/app/" target="_blank" rel="noopener">Live terminal</a>
-          <a href="#pricing">Engagement</a>
+          <h4 data-i18n="ft.product">Product</h4>
+          <a href="#methodology" data-i18n="ft.l.meth">Methodology</a>
+          <a href="#governance" data-i18n="ft.l.gov">Governance</a>
+          <a href="https://app.cbsrm.wavervanir.com/app/" target="_blank" rel="noopener" data-i18n="ft.l.term">Live terminal</a>
+          <a href="#pricing" data-i18n="ft.l.eng">Engagement</a>
         </div>
         <div class="foot__col">
-          <h4>Resources</h4>
-          <a href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener">GitHub repository</a>
-          <a href="https://github.com/pravo123/cbsrm/blob/main/whitepaper/cbsrm_methodology_v1.md" target="_blank" rel="noopener">Methodology whitepaper</a>
-          <a href="#contact">Request a briefing</a>
+          <h4 data-i18n="ft.res">Resources</h4>
+          <a href="https://github.com/pravo123/cbsrm" target="_blank" rel="noopener" data-i18n="ft.l.gh">GitHub repository</a>
+          <a href="https://github.com/pravo123/cbsrm/blob/main/whitepaper/cbsrm_methodology_v1.md" target="_blank" rel="noopener" data-i18n="ft.l.wp">Methodology whitepaper</a>
+          <a href="#contact" data-i18n="ft.l.brief">Request a briefing</a>
         </div>
         <div class="foot__col">
-          <h4>Company</h4>
+          <h4 data-i18n="ft.co">Company</h4>
           <a href="https://www.linkedin.com/company/wavervanir-international-llc" target="_blank" rel="noopener">LinkedIn</a>
-          <a href="mailto:prabhawa@wavervanir.com">Contact</a>
+          <a href="mailto:prabhawa@wavervanir.com" data-i18n="ft.l.contact">Contact</a>
         </div>
       </div>
     </div>
     <div class="foot__legal">
-      <p class="mono">© <span id="yr">2026</span> WaverVanir International · CBSRM methodology licensed Apache-2.0.</p>
-      <p style="margin:0;">CBSRM is a systemic-risk and financial-stability <b>measurement</b> and model-governance tool.
+      <p class="mono">© <span id="yr">2026</span> WaverVanir International · <span data-i18n="ft.copy">CBSRM methodology licensed Apache-2.0.</span></p>
+      <p style="margin:0;" data-i18n="ft.legal">CBSRM is a systemic-risk and financial-stability <b>measurement</b> and model-governance tool.
         It is <b>not</b> investment advice, a solicitation, or an offer to buy or sell any security, and it does
         not provide individualized recommendations. "SR 26-2 aligned" describes design intent against published
         model-risk-management principles; it is not a representation of regulatory approval, endorsement, or certification.</p>
@@ -618,29 +669,104 @@
 
 <script>
 document.getElementById('yr').textContent=new Date().getFullYear();
+
+// ─── i18n · 5 languages (en · ja · es · fr · de — mirrors cbsrm.i18n SUPPORTED_LOCALES) ──
+// The inline HTML is the canonical English copy; it is captured into I18N.en at load.
+// Switching languages replaces the innerHTML of every [data-i18n] node and re-renders
+// the dynamic sections. Data-driven labels (lens ids / regime states from current.json)
+// resolve through data.* keys so live cards translate without touching the generators.
+var I18N={
+  en:{
+    "js.prov":"Live readings are being provisioned.",
+    "js.unavail":"Current readings unavailable right now.",
+    "js.live":"{n} live readings",
+    "js.gen":"generated {t}",
+    "js.daily":"auto-refreshed daily · risk measurement, not advice",
+    "js.snapshot":"SNAPSHOT",
+    "js.subscribe":"Subscribe → $48k/yr",
+    "data.lens.ECB-CISS-US":"ECB CISS — United States",
+    "data.lens.ECB-CISS-EA":"ECB CISS — Euro Area",
+    "data.lens.ECB-CISS-UK":"ECB CISS — United Kingdom",
+    "data.lens.STLFSI4":"St. Louis Fed Financial Stress",
+    "data.lens.YIELD-CURVE":"Recession probability · 12m",
+    "data.lens.MACRO-REGIME":"Macro regime · 4-state",
+    "data.lens.SAHM":"Sahm Rule recession signal",
+    "data.lens.CREDIT-SPREAD":"HY credit-spread · OAS",
+    "data.cat.stress":"System stress",
+    "data.cat.macro":"Macro regime",
+    "data.cat.credit":"Tail / credit",
+    "data.state.RISK_ON":"RISK ON",
+    "data.state.TRANSITION_UP":"TRANSITION UP",
+    "data.state.TRANSITION_DOWN":"TRANSITION DOWN",
+    "data.state.RISK_OFF":"RISK OFF",
+    "data.state.NORMAL":"NORMAL",
+    "data.state.RECESSION_SIGNAL":"RECESSION SIGNAL",
+    "data.state.EXPANSION":"EXPANSION",
+    "data.state.CONTRACTION":"CONTRACTION",
+    "data.state.CREDIT_BENIGN":"CREDIT BENIGN",
+    "data.state.CREDIT_WIDENING":"CREDIT WIDENING",
+    "data.state.CREDIT_STRESS":"CREDIT STRESS"
+  },
+  ja:{"_desc":"CBSRMは、機関向けの方法論第一のシステミック・リスク・プラットフォームです。CISS系ストレス、SRISK、ΔCoVaR/MES、DebtRank、4状態マクロ・レジームを、単一のProtocol、単一のSHA-256監査チェーン、単一の再現性保証の下で提供。SR 26-2のモデル・ガバナンス原則を基盤に設計。Apache-2.0。リスク計測であり、投資助言ではありません。","_title":"CBSRM — クロスボーダー・システミック・リスク・モニター · WaverVanir International","ct.email":"メールで申し込む","ct.h2":"貴機関の法域でCBSRMが稼働する様子をご覧ください。","ct.link":"LinkedInのWaverVanir","ct.overline":"ブリーフィングのご依頼","ct.p":"5つのレンズ、監査チェーン、統制されたパイプラインを30分でご案内します — ご指定の期間について、ライブで再現可能なレコードを添えて。","cur.explore":"任意の四半期を探索、1999 → 現在 →","cur.h2":"本日のシステミック・リスク計測値。","cur.loading":"現在の計測値を読み込み中…","cur.overline":"足元の状況 · ライブ","cur.p":"CBSRMが再現する標準的な指標そのものを、最新の公開データから算出しています。各数値には提供元の最終公表日を付し、コンテンツハッシュを刻印し、毎日自動的に更新します。バックテストではなく、現在の計測値です。","data.cat.credit":"テール / クレジット","data.cat.macro":"マクロ・レジーム","data.cat.stress":"システム・ストレス","data.lens.CREDIT-SPREAD":"HYクレジットスプレッド · OAS","data.lens.ECB-CISS-EA":"ECB CISS — ユーロ圏","data.lens.ECB-CISS-UK":"ECB CISS — 英国","data.lens.ECB-CISS-US":"ECB CISS — 米国","data.lens.MACRO-REGIME":"マクロ・レジーム · 4状態","data.lens.SAHM":"Sahmルール景気後退シグナル","data.lens.STLFSI4":"セントルイス連銀金融ストレス","data.lens.YIELD-CURVE":"景気後退確率 · 12か月","data.state.CONTRACTION":"景気収縮","data.state.CREDIT_BENIGN":"クレジット平穏","data.state.CREDIT_STRESS":"クレジットストレス","data.state.CREDIT_WIDENING":"スプレッド拡大","data.state.EXPANSION":"景気拡大","data.state.NORMAL":"正常","data.state.RECESSION_SIGNAL":"景気後退シグナル","data.state.RISK_OFF":"リスクオフ","data.state.RISK_ON":"リスクオン","data.state.TRANSITION_DOWN":"下方移行","data.state.TRANSITION_UP":"上方移行","demo.c1.h3":"ライブ現況 · 13レンズ","demo.c1.n":"01 · 現況","demo.c1.p":"ECB CISS(US/EA/UK)、Fed金融ストレス、イールドカーブによる景気後退確率、VIX、実データによるDiebold-Yilmazクロスボーダー・スピルオーバー指数、HYクレジット、ファンド解約脆弱性、ESG移行 — 各レンズに履歴と分析機能を備えます。","demo.c2.h3":"クロスアセット・リスク · 任意の銘柄","demo.c2.n":"02 · クオンツ・コックピット","demo.c2.p":"世界の株価指数、FX、コモディティ、メガキャップ、暗号資産。Sharpe / Sortino / 年率およびEWMAボラティリティ / ベータ / VaR &amp; CVaR / ドローダウンに加え、予想レベル付きローソク足チャートとボラティリティ・コーンを搭載します。","demo.c3.h3":"統制された危機ドシエ","demo.c3.n":"03 · 危機パイプライン","demo.c3.p":"再現可能なGFC / COVID / SVBドシエ — システム・ストレス・ゲージ、DebtRankネットワーク伝播、レジーム分類、危機間比較 — いずれも検証可能な、コンテンツアドレス化されたPipelineRecordです。","demo.c4.h3":"SRISK &amp; ΔCoVaR · ライブ","demo.c4.n":"04 · 資本不足額","demo.c4.p":"主要銀行を対象に、SRISKの資本不足額合計(Σ)と企業別値、ΔCoVaRをライブで算出。NYU V-Lab(Brownlees-Engle)およびAdrian-Brunnermeierのエンジンにより、公開されたバランスシート・時価総額・株価から計算します。","demo.c5.h3":"SR 26-2 MRMバインダー","demo.c5.n":"05 · モデル検証","demo.c5.p":"モデル・インベントリと重要度ティアリング、出典付きの概念的健全性、重要度評価付きの前提条件台帳、SRISKパラメータ感応度スイープ、モンテカルロ収束性、そしてアテステーション・ブロック — モデル・リスク管理部門がサインオフできる形で提供します。","demo.c6.h3":"再現可能・監査可能","demo.c6.n":"06 · 統制","demo.c6.p":"すべての計測値はコンテンツアドレス化(SHA-256)されています。すべてのサインインとアクセスは、改ざん検知可能なハッシュ連鎖台帳に記録されます。任意の統制レコードを再構築し、ビット単位で一致することを検証できます。監査証跡そのものが、この製品です。","demo.explorer":"オフライン・エクスプローラーを開く →","demo.github":"GitHubでソースを見る","demo.h2":"ライブ端末 — サインインして、システミック・リスクをリアルタイムで観測。","demo.overline":"今すぐ確認","demo.p":"統制された一つの屋根の下に6つのデスク — ライブのシステミック状況、グローバルなクロスアセット・クオンツ・コックピット、統制された危機ドシエ、ライブの資本不足額、そしてターンキーのモデル検証バインダー。すべての計測値は再現可能で、コンテンツアドレス化され、監査ログに記録されます。まずは7日間無料で — カード登録は不要です。","demo.signin":"ライブ端末にサインイン →","ft.blurb":"<b style=\"color:var(--text)\">CBSRM</b> — 方法論を第一に据えたシステミック・リスク計測。再現可能、監査追跡可能、統制可能。","ft.co":"会社情報","ft.copy":"CBSRMの方法論はApache-2.0ライセンスで提供されています。","ft.l.brief":"ブリーフィングのご依頼","ft.l.contact":"お問い合わせ","ft.l.eng":"導入プラン","ft.l.gh":"GitHubリポジトリ","ft.l.gov":"ガバナンス","ft.l.meth":"方法論","ft.l.term":"ライブ端末","ft.l.wp":"方法論ホワイトペーパー","ft.legal":"CBSRMは、システミック・リスクおよび金融安定に関する<b>計測</b>とモデル・ガバナンスのためのツールです。投資助言、勧誘、または有価証券の売買の申込み<b>ではなく</b>、個別の推奨を提供するものでもありません。「SR 26-2整合」という表記は、公表されているモデル・リスク管理原則に照らした設計上の意図を示すものであり、規制当局による承認・推奨・認証を表明するものではありません。","ft.product":"製品","ft.res":"リソース","gov.h2":"モデル・リスクの検証担当者が確かめられる、統制されたパイプライン。","gov.overline":"差別化要因","gov.p":"CBSRMのL3 Composerは、すべてのステージをコンテンツアドレス化された単一の<span class=\"mono\">PipelineRecord</span>に組み上げます — クオンツのツールボックスとモデル・ガバナンス・システムを分かつのは、この一点です。","gov.p1":"<b>単一の統制されたパイプライン。</b>1つのレコードが全ステージを貫き、統一された日付規約、統一された識別子・バージョンの契約、そして入力 → 出力の明示的なリネージを備えます。","gov.p2":"<b>コンテンツアドレス方式のリネージ。</b>各ステージはSHA-256のコンテンツハッシュを保持します。方法論を変更すればハッシュが変わり、diffで即座に検知できます。「モデルは変わったのか?」という問いは、文字列比較に帰着します。","gov.p3":"<b>改ざん検知可能。</b><span class=\"mono\">verify_pipeline_record()</span>がレコード自身のデータからすべてのハッシュを再導出します — 公表値が構成後に改変されていないことの証明です。","gov.p4":"<b>SHA-256監査チェーン。</b>リクエスト、取得、計算、提供 — すべてのライフサイクル・イベントがハッシュ連結された台帳に記録され、端から端まで再生・検証できます。","gov.p5":"<b>SR 26-2整合。</b>目的と用途、概念的健全性、継続的モニタリング、結果分析がアーキテクチャに直接対応します — モデル検証の問答に、あらかじめ答えを用意しています。","hero.brief":"機関向けブリーフィングを申し込む","hero.h1":"<span class=\"hl\">再現でき、監査でき、堂々と説明できる</span>システミック・リスク。","hero.overline":"クロスボーダー・システミック・リスク・モニター","hero.sub":"CBSRMは、中央銀行や監督当局が用いる標準的なシステミック・リスク指標・金融安定指標を、モダンで型付きの、完全にテストされたPythonで再現します。すべてを単一のProtocol、単一のSHA-256監査チェーン、単一の再現性保証の下に統合し、<b class=\"muted\">SR 26-2</b>のモデル・リスク管理原則を基盤として設計されています。","hero.t1":"<b>Apache-2.0</b> オープンな方法論","hero.t2":"<b>1,071</b>件のテスト合格","hero.t3":"<b>決定論的</b>かつ再現可能","hero.t4":"<b>5</b>法域 · <b>5</b>言語","hero.term":"ライブ端末を開く →","js.daily":"毎日自動更新 · リスク計測であり、投資助言ではありません","js.gen":"生成: {t}","js.live":"ライブ計測値 {n}件","js.prov":"ライブ計測値は準備中です。","js.snapshot":"スナップショット","js.subscribe":"購読する → $48k/yr","js.unavail":"現在の計測値は一時的に取得できません。","meth.h2":"6つの標準手法。13のライブ・レンズ。監査可能な単一の基幹。","meth.l1.h3":"合成ストレス指数","meth.l1.n":"01 · システム・ストレス","meth.l1.p":"CISS系ストレス指数(US / Euro-Area / UK)、STLFSI4、OFR金融ストレス指数 — 相関を伴うストレス局面で増幅する二次形式の集計です。","meth.l2.n":"02 · 企業別テール寄与","meth.l2.p":"システミックな市場下落を条件とした企業の期待資本不足額 — 危機時に誰が、どれだけの資本増強を必要とするかを示します。","meth.l3.n":"03 · テール波及","meth.l3.p":"ディストレス状態にある金融機関を条件としたシステム全体のVaRと、各企業の限界期待ショートフォール — 平均的な相関ではなく、テール依存性を捉えます。","meth.l4.n":"04 · ネットワーク伝播","meth.l4.p":"銀行間エクスポージャー・ネットワーク上で動作する純numpy実装のDebtRankエンジン — グラフ上を一度だけ伝播するディストレスを計算し、その影響度によってシステミックな重要度を順位付けします。","meth.l5.h3":"4状態マクロ合成指標","meth.l5.n":"05 · マクロ・レジーム","meth.l5.p":"イールドカーブによる景気後退プロビット、Sahmルール、FFR/USDレジーム、そして足元のマクロ金融レジームを分類する4状態の合成指標です。","meth.l6.h3":"Diebold-Yilmazスピルオーバー","meth.l6.n":"+ · コネクテッドネス","meth.l6.p":"一般化FEVDに基づくスピルオーバー指数でクロスアセットのコネクテッドネスを計測 — 一つのセクターのショックがシステム全体へどう伝わるかを示します。","meth.overline":"方法論","meth.p":"単一のパイプラインが、金融安定担当デスクが実際に問う問い — システムのストレスはどの程度か、テールを担うのはどの企業か、ショックはどう伝播するか、現在はどのレジームか — に答えます。同じ手法がいま端末上でライブ稼働しており、グローバルなクロスアセット・クオンツ・コックピットと、ターンキーのSR 26-2モデル検証バインダーを併せて提供します。","nav.brief":"ブリーフィング依頼","nav.eng":"導入プラン","nav.gov":"ガバナンス","nav.live":"ライブデータ","nav.meth":"方法論","nav.seal":"監査追跡可能","nav.term":"ライブ端末","nav.who":"対象ユーザー","pr.h2":"方法論はオープンに。提供は機関水準で。","pr.overline":"導入プラン","pr.p":"CBSRMの方法論はApache-2.0であり、閲覧・実行・引用は無償です。機関のお客様にご契約いただくのは、その提供体制です。ホスト型インフラ、法域拡張、検証パック、そしてサポートを提供します。","pr.t1.badge":"オープン","pr.t1.btn":"ライブラリを入手","pr.t1.for":"研究者・評価用途向け","pr.t1.i1":"方法論とソースを全面公開","pr.t1.i2":"CLI、Python API、リスク端末","pr.t1.i3":"再現可能な危機ドシエ(2008Q4 / 2020Q1 / 2023Q1)","pr.t1.i4":"全12章の方法論ホワイトペーパー","pr.t1.price":"<b>無料</b> · Apache-2.0","pr.t2.badge":"多くの機関向け","pr.t2.btn":"今すぐ開始 →","pr.t2.for":"リスクデスク・調査チーム向け","pr.t2.i1":"ホスト型・監視付きの読み取り専用APIとダッシュボード","pr.t2.i2":"法域別ライブデータフィードと自動更新","pr.t2.i3":"統制されたPipelineRecord + 監査チェーンへのアクセス","pr.t2.i4":"オンボーディングと優先サポート","pr.t2.price":"<b>$48,000</b> <span class=\"dim\">/ 年から · または $4,000/月</span>","pr.t3.badge":"規制機関向け","pr.t3.btn":"ご相談ください","pr.t3.for":"銀行・中央銀行・SupTech向け","pr.t3.i1":"オンプレミス / VPC / エアギャップ環境への導入","pr.t3.i2":"法域・金融商品のカスタム対応","pr.t3.i3":"SR 26-2モデル検証パックとドキュメント","pr.t3.i4":"SLA、セキュリティ・レビュー、統合支援","pr.t3.price":"<b>個別見積り</b>","stats.jur":"法域","stats.open":"オープンな方法論","stats.tests":"合格テスト数","stats.wp":"ホワイトペーパー章数","who.c1.h3":"リスク &amp; プロップデスク","who.c1.p":"再現・説明できる数値でシステミック・リスクとテール・リスクをプライシングする、ヘッジファンドや自己勘定取引会社。","who.c2.h3":"中央銀行","who.c2.p":"ポイント・イン・タイムの規律のもとでCISS、SRISK、CoVaRを再現する金融安定・調査部門。","who.c3.h3":"監督テクノロジー","who.c3.p":"監査可能で引用可能なシステミック・リスク計測を自社スタックに組み込むSupTech・RegTechベンダー。","who.c4.h3":"ファミリーオフィス","who.c4.p":"システム・ストレスと伝播エクスポージャーについて、独立かつ透明な読み値を求めるアロケーター。","who.c5.h3":"学術研究","who.c5.p":"SSRN水準の図表のために、再現可能で引用可能なリファレンス実装を必要とする研究者。","who.h2":"数値の説明責任を負うデスクのために。","who.overline":"対象ユーザー","who.p":"同じコードが、研究者のラップトップでも本番サービスの裏側でも動きます — 単一のFastAPIデプロイから、エアギャップ環境での機関向けインストールまで。","why.bad.h3":"現状","why.bad.p":"断片化した実装、文書化されていない前提、再現できないベンダーの数値、そして入力から公表値に至るリネージの欠如。検証担当者に「なぜこの数値になるのか」と問われても、誰も答えられません。","why.good.p":"すべての数値はソースから再現可能です。方法論の各ステージは固有のバージョンを持ちます。すべてのライフサイクル・イベントはSHA-256監査チェーンに記録されます。ストレス指標もリスク・プライシング指標も単一のProtocolで扱い、手法の追加はファイル1つと登録1行で完了します。","why.h2":"システミック・リスクの数値の多くは、モデル検証に耐えられません。","why.overline":"CBSRMが存在する理由","why.p":"学術コードはR・Stata・MATLABに散在し、商用システムはブラックボックスであり、参照値はベンダーごとに一致しません。いずれもモデル・リスク管理部門の審査を通りません。CBSRMは方法論を第一に据えています。"},
+  es:{"_desc":"CBSRM es una plataforma institucional de riesgo sistémico que antepone la metodología: estrés de la familia CISS, SRISK, ΔCoVaR/MES, DebtRank y el régimen macro de 4 estados — bajo un único Protocolo, una única cadena de auditoría SHA-256 y una única garantía de reproducibilidad. Construida en torno a los principios de gobernanza de modelos de la SR 26-2. Apache-2.0. Medición de riesgo, no asesoría de inversión.","_title":"CBSRM — Monitor Transfronterizo de Riesgo Sistémico · WaverVanir International","ct.email":"Solicitar por email","ct.h2":"Vea CBSRM en funcionamiento sobre su jurisdicción.","ct.link":"WaverVanir en LinkedIn","ct.overline":"Solicite una presentación","ct.p":"Un recorrido de 30 minutos por las cinco lentes, la cadena de auditoría y el pipeline gobernado — con un registro en vivo y reproducible para la ventana que usted elija.","cur.explore":"Explore cualquier trimestre, 1999 → hoy →","cur.h2":"Las lecturas de riesgo sistémico de hoy.","cur.loading":"Cargando lecturas actuales…","cur.overline":"Condiciones actuales · en vivo","cur.p":"Los mismos índices canónicos que CBSRM reproduce — calculados a partir de los datos públicos más recientes, cada valor fechado según la última publicación de su proveedor, sellado con hash de contenido y actualizado automáticamente cada día. No es un backtest; es la lectura actual.","data.cat.credit":"Cola / crédito","data.cat.macro":"Régimen macro","data.cat.stress":"Estrés del sistema","data.lens.CREDIT-SPREAD":"Diferencial de crédito HY · OAS","data.lens.ECB-CISS-EA":"ECB CISS — Zona del euro","data.lens.ECB-CISS-UK":"ECB CISS — Reino Unido","data.lens.ECB-CISS-US":"ECB CISS — Estados Unidos","data.lens.MACRO-REGIME":"Régimen macro · 4 estados","data.lens.SAHM":"Señal de recesión · regla de Sahm","data.lens.STLFSI4":"Estrés financiero Fed St. Louis","data.lens.YIELD-CURVE":"Probabilidad de recesión · 12m","data.state.CONTRACTION":"CONTRACCIÓN","data.state.CREDIT_BENIGN":"CRÉDITO BENIGNO","data.state.CREDIT_STRESS":"ESTRÉS DE CRÉDITO","data.state.CREDIT_WIDENING":"CRÉDITO SE AMPLÍA","data.state.EXPANSION":"EXPANSIÓN","data.state.NORMAL":"NORMAL","data.state.RECESSION_SIGNAL":"SEÑAL DE RECESIÓN","data.state.RISK_OFF":"RISK OFF","data.state.RISK_ON":"RISK ON","data.state.TRANSITION_DOWN":"TRANSICIÓN BAJISTA","data.state.TRANSITION_UP":"TRANSICIÓN ALCISTA","demo.c1.h3":"Condiciones en vivo · 13 lentes","demo.c1.n":"01 · CONDICIONES","demo.c1.p":"ECB CISS (US/EA/UK), estrés financiero de la Fed, probabilidad de recesión por curva de rendimientos, VIX, un índice real de derrames transfronterizos Diebold-Yilmaz, crédito HY, fragilidad por reembolsos de fondos, transición ESG — cada uno con histórico y analítica.","demo.c2.h3":"Riesgo multiactivo · cualquier símbolo","demo.c2.n":"02 · COCKPIT CUANTITATIVO","demo.c2.p":"Índices mundiales, FX, materias primas, megacapitalizaciones, cripto. Sharpe / Sortino / volatilidad anualizada y EWMA / beta / VaR y CVaR / drawdown, más un gráfico de velas con niveles proyectados y un cono de volatilidad.","demo.c3.h3":"Dossiers de crisis gobernados","demo.c3.n":"03 · PIPELINE DE CRISIS","demo.c3.p":"Dossiers reproducibles de GFC / COVID / SVB — un indicador de estrés del sistema, contagio en red DebtRank, clasificación de regímenes y una comparación entre crisis — cada uno un PipelineRecord direccionado por contenido que usted puede verificar.","demo.c4.h3":"SRISK y ΔCoVaR · en vivo","demo.c4.n":"04 · DÉFICIT DE CAPITAL","demo.c4.p":"Déficit de capital SRISK Σ en vivo + por firma + ΔCoVaR para los principales bancos, calculado con los motores NYU V-Lab (Brownlees-Engle) y Adrian-Brunnermeier a partir de balances públicos, capitalización bursátil y precios.","demo.c5.h3":"Expediente MRM SR 26-2","demo.c5.n":"05 · VALIDACIÓN DE MODELOS","demo.c5.p":"Inventario de modelos y clasificación por materialidad, solidez conceptual con citas, un registro de supuestos calificados por materialidad, un barrido de sensibilidad de parámetros de SRISK, convergencia de Monte Carlo y un bloque de atestación — para que su función de riesgo de modelos pueda dar el visto bueno.","demo.c6.h3":"Reproducible y auditable","demo.c6.n":"06 · GOBERNADO","demo.c6.p":"Cada lectura está direccionada por contenido (SHA-256); cada inicio de sesión y cada acceso se escriben en un registro encadenado por hash a prueba de manipulaciones. Reconstruya cualquier registro gobernado y verifique que se reproduce bit a bit. La pista de auditoría es el producto.","demo.explorer":"Abrir el explorador offline →","demo.github":"Ver el código en GitHub","demo.h2":"La terminal en vivo — inicie sesión y observe el riesgo sistémico en tiempo real.","demo.overline":"Véalo ahora","demo.p":"Seis mesas bajo un mismo techo gobernado — condiciones sistémicas en vivo, un cockpit cuantitativo global multiactivo, dossiers de crisis gobernados, déficit de capital en vivo y un expediente de validación de modelos llave en mano. Cada lectura es reproducible, direccionada por contenido y registrada para auditoría. Comience gratis por 7 días — sin tarjeta.","demo.signin":"Entrar a la terminal en vivo →","ft.blurb":"<b style=\"color:var(--text)\">CBSRM</b> — medición de riesgo sistémico que antepone la metodología. Reproducible, trazable para auditoría, gobernable.","ft.co":"Empresa","ft.copy":"Metodología CBSRM bajo licencia Apache-2.0.","ft.l.brief":"Solicitar presentación","ft.l.contact":"Contacto","ft.l.eng":"Contratación","ft.l.gh":"Repositorio en GitHub","ft.l.gov":"Gobernanza","ft.l.meth":"Metodología","ft.l.term":"Terminal en vivo","ft.l.wp":"Whitepaper metodológico","ft.legal":"CBSRM es una herramienta de <b>medición</b> del riesgo sistémico y de la estabilidad financiera, y de gobernanza de modelos. <b>No</b> constituye asesoría de inversión, ni una solicitud, ni una oferta de compra o venta de valor alguno, y no proporciona recomendaciones individualizadas. «Alineado con SR 26-2» describe una intención de diseño conforme a principios publicados de gestión del riesgo de modelos; no constituye una declaración de aprobación, respaldo ni certificación regulatoria.","ft.product":"Producto","ft.res":"Recursos","gov.h2":"Un pipeline gobernado que sus revisores de riesgo de modelos pueden verificar.","gov.overline":"El diferenciador","gov.p":"El Composer L3 de CBSRM ensambla cada etapa en un único <span class=\"mono\">PipelineRecord</span> direccionado por contenido — la diferencia entre una caja de herramientas cuantitativa y un sistema de gobernanza de modelos.","gov.p1":"<b>Un único pipeline gobernado.</b> Un solo registro abarca todas las etapas con una convención de fechas uniforme, un contrato uniforme de identificadores y versiones, y una trazabilidad explícita de insumo → resultado.","gov.p2":"<b>Trazabilidad direccionada por contenido.</b> Cada etapa lleva un hash de contenido SHA-256; un cambio metodológico produce un hash distinto que un diff detecta de inmediato. «¿Cambió el modelo?» se convierte en una comparación de cadenas de texto.","gov.p3":"<b>A prueba de manipulaciones.</b> <span class=\"mono\">verify_pipeline_record()</span> rederiva cada hash a partir de los propios datos del registro — prueba de que la cifra publicada no fue alterada tras su composición.","gov.p4":"<b>Cadena de auditoría SHA-256.</b> Cada evento del ciclo de vida — solicitado, obtenido, calculado, servido — se escribe en un registro encadenado por hash que usted puede reproducir y verificar de extremo a extremo.","gov.p5":"<b>Alineado con SR 26-2.</b> Propósito y uso, solidez conceptual, monitoreo continuo y análisis de resultados se corresponden directamente con la arquitectura — la conversación de validación, respondida de antemano.","hero.brief":"Solicite una presentación institucional","hero.h1":"Riesgo sistémico que usted puede <span class=\"hl\">reproducir, auditar y defender.</span>","hero.overline":"Monitor Transfronterizo de Riesgo Sistémico","hero.sub":"CBSRM reproduce las medidas canónicas de riesgo sistémico y estabilidad financiera que utilizan los bancos centrales y los supervisores — en Python moderno, tipado y plenamente probado — bajo un único Protocolo, una única cadena de auditoría SHA-256 y una única garantía de reproducibilidad. Construido en torno a los principios de gestión del riesgo de modelos de la <b class=\"muted\">SR 26-2</b>.","hero.t1":"Metodología abierta <b>Apache-2.0</b>","hero.t2":"<b>1,071</b> pruebas superadas","hero.t3":"<b>Determinista</b> y reproducible","hero.t4":"<b>5</b> jurisdicciones · <b>5</b> idiomas","hero.term":"Abrir la terminal en vivo →","js.daily":"actualización automática diaria · medición de riesgo, no asesoría de inversión","js.gen":"generado {t}","js.live":"{n} lecturas en vivo","js.prov":"Las lecturas en vivo se están aprovisionando.","js.snapshot":"INSTANTÁNEA","js.subscribe":"Suscribirse → $48k/año","js.unavail":"Lecturas actuales no disponibles por el momento.","meth.h2":"Seis métodos canónicos. Trece lentes en vivo. Una columna vertebral auditable.","meth.l1.h3":"Índices compuestos de estrés","meth.l1.n":"01 · ESTRÉS DEL SISTEMA","meth.l1.p":"Estrés de la familia CISS (US / Euro-Area / UK), STLFSI4 y el índice de estrés financiero de la OFR — agregación en forma cuadrática que se amplifica bajo estrés correlacionado.","meth.l2.n":"02 · CONTRIBUCIÓN DE COLA POR FIRMA","meth.l2.p":"Déficit de capital esperado de una firma condicionado a una caída sistémica del mercado — quién necesitaría recapitalizarse en una crisis, y en qué cuantía.","meth.l3.n":"03 · DERRAME DE COLA","meth.l3.p":"El valor en riesgo del sistema condicionado a una institución en dificultades, y el déficit esperado marginal de cada firma — dependencia de colas, no correlación promedio.","meth.l4.n":"04 · CONTAGIO EN RED","meth.l4.p":"Un motor DebtRank en numpy puro sobre la red de exposiciones interbancarias — dificultades que se propagan una sola vez por el grafo, ordenando la importancia sistémica según el impacto.","meth.l5.h3":"Compuesto macro de 4 estados","meth.l5.n":"05 · RÉGIMEN MACRO","meth.l5.p":"Probit de recesión sobre la curva de rendimientos, la regla de Sahm, regímenes FFR/USD y un compuesto de cuatro estados que clasifica el régimen macrofinanciero vigente.","meth.l6.h3":"Derrames de Diebold-Yilmaz","meth.l6.n":"+ · CONECTIVIDAD","meth.l6.p":"Índice de derrames basado en la FEVD generalizada que mide la conectividad entre activos — cómo los choques de un sector se transmiten al resto del sistema.","meth.overline":"La metodología","meth.p":"Un único pipeline resuelve las preguntas que una mesa de estabilidad financiera realmente se plantea: cuán estresado está el sistema, qué firmas concentran la cola, cómo se propaga el choque y en qué régimen estamos. Los mismos métodos corren ahora en vivo en la terminal, junto a un cockpit cuantitativo global multiactivo y un expediente de validación de modelos SR 26-2 llave en mano.","nav.brief":"Solicitar presentación","nav.eng":"Contratación","nav.gov":"Gobernanza","nav.live":"Datos en vivo","nav.meth":"Metodología","nav.seal":"AUDITORÍA TRAZABLE","nav.term":"Terminal en vivo","nav.who":"Para quién es","pr.h2":"Metodología abierta. Entrega institucional.","pr.overline":"Contratación","pr.p":"La metodología de CBSRM es Apache-2.0 y puede leerse, ejecutarse y citarse libremente. Aquello por lo que las instituciones nos contratan es la entrega: infraestructura alojada, extensiones de jurisdicción, paquetes de validación y soporte.","pr.t1.badge":"Abierto","pr.t1.btn":"Obtener la biblioteca","pr.t1.for":"Para investigadores y evaluación","pr.t1.i1":"Metodología pública completa y código fuente","pr.t1.i2":"CLI, API de Python y la Terminal de Riesgo","pr.t1.i3":"Dossiers de crisis reproducibles (2008Q4 / 2020Q1 / 2023Q1)","pr.t1.i4":"Whitepaper metodológico de 12 secciones","pr.t1.price":"<b>Gratis</b> · Apache-2.0","pr.t2.badge":"La mayoría de instituciones","pr.t2.btn":"Comenzar →","pr.t2.for":"Para mesas de riesgo y equipos de investigación","pr.t2.i1":"API de solo lectura y paneles, alojados y monitoreados","pr.t2.i2":"Feeds de datos jurisdiccionales en vivo y actualización","pr.t2.i3":"PipelineRecord gobernado + acceso a la cadena de auditoría","pr.t2.i4":"Incorporación y soporte prioritario","pr.t2.price":"desde <b>$48,000</b> <span class=\"dim\">/ año · o $4,000/mes</span>","pr.t3.badge":"Regulados","pr.t3.btn":"Hable con nosotros","pr.t3.for":"Para bancos, bancos centrales y suptech","pr.t3.i1":"Despliegue on-prem / VPC / aislado de la red","pr.t3.i2":"Jurisdicciones e instrumentos a medida","pr.t3.i3":"Paquete de validación de modelos SR 26-2 y documentación","pr.t3.i4":"SLA, revisión de seguridad y soporte de integración","pr.t3.price":"<b>A medida</b>","stats.jur":"Jurisdicciones","stats.open":"Metodología abierta","stats.tests":"Pruebas superadas","stats.wp":"Secciones del whitepaper","who.c1.h3":"Mesas de riesgo y trading propietario","who.c1.p":"Fondos de cobertura y firmas de trading propietario que valoran el riesgo sistémico y de cola con cifras que pueden reproducir y explicar.","who.c2.h3":"Bancos centrales","who.c2.p":"Equipos de estabilidad financiera e investigación que reproducen CISS, SRISK y CoVaR con disciplina point-in-time.","who.c3.h3":"Tecnología de supervisión","who.c3.p":"Proveedores de SupTech y RegTech que integran en su stack una medición de riesgo sistémico auditable y citable.","who.c4.h3":"Family offices","who.c4.p":"Asignadores de capital que quieren una lectura independiente y transparente del estrés del sistema y de la exposición al contagio.","who.c5.h3":"Investigación académica","who.c5.p":"Investigadores que necesitan una implementación de referencia reproducible y citable para cifras de calidad SSRN.","who.h2":"Construido para las mesas que tienen que defender la cifra.","who.overline":"Para quién es","who.p":"El mismo código corre en el portátil de un investigador y detrás de un servicio en producción — desde un único despliegue FastAPI hasta una instalación institucional aislada de la red.","why.bad.h3":"El statu quo","why.bad.p":"Implementaciones fragmentadas, supuestos sin documentar, cifras de proveedores que no se pueden reproducir y ninguna trazabilidad del insumo a la cifra publicada. Un revisor pregunta «¿por qué esta cifra es la que es?» — y nadie sabe responder.","why.good.p":"Cada cifra es reproducible desde la fuente. Cada etapa metodológica lleva su propia versión. Cada evento del ciclo de vida se escribe en una cadena de auditoría SHA-256. Un único Protocolo cubre por igual los indicadores de estrés y las medidas de valoración del riesgo — añadir un método es un archivo más una línea de registro.","why.h2":"La mayoría de las cifras de riesgo sistémico no sobreviven a una revisión de modelos.","why.overline":"Por qué existe CBSRM","why.p":"El código académico vive en R, Stata y MATLAB; los sistemas comerciales son cajas negras; las cifras de referencia provienen de proveedores que no coinciden entre sí. Nada de eso supera el escrutinio de una función de riesgo de modelos. CBSRM antepone la metodología."},
+  fr:{"_desc":"CBSRM est une plateforme institutionnelle de risque systémique centrée sur la méthodologie : stress de la famille CISS, SRISK, ΔCoVaR/MES, DebtRank et le régime macro à 4 états — sous un même Protocole, une même chaîne d'audit SHA-256 et une même garantie de reproductibilité. Conçue autour des principes de gouvernance des modèles SR 26-2. Apache-2.0. Mesure du risque, pas un conseil en investissement.","_title":"CBSRM — Moniteur du risque systémique transfrontière · WaverVanir International","ct.email":"Demander par e-mail","ct.h2":"Voyez CBSRM tourner sur votre juridiction.","ct.link":"WaverVanir sur LinkedIn","ct.overline":"Demander un briefing","ct.p":"Une présentation de 30 minutes des cinq prismes, de la chaîne d'audit et du pipeline gouverné — avec un enregistrement en direct et reproductible sur la fenêtre de votre choix.","cur.explore":"Explorez n'importe quel trimestre, 1999 → aujourd'hui →","cur.h2":"Les relevés du risque systémique du jour.","cur.loading":"Chargement des relevés actuels…","cur.overline":"Conditions actuelles · en direct","cur.p":"Les mêmes indices canoniques que CBSRM reproduit — calculés à partir des dernières données publiques, chaque valeur datée de la dernière publication de son fournisseur, scellée par empreinte de contenu et actualisée automatiquement chaque jour. Pas un backtest : la lecture du moment.","data.cat.credit":"Extrêmes / crédit","data.cat.macro":"Régime macro","data.cat.stress":"Stress du système","data.lens.CREDIT-SPREAD":"Spread de crédit HY · OAS","data.lens.ECB-CISS-EA":"CISS ECB — Zone euro","data.lens.ECB-CISS-UK":"CISS ECB — Royaume-Uni","data.lens.ECB-CISS-US":"CISS ECB — États-Unis","data.lens.MACRO-REGIME":"Régime macro · 4 états","data.lens.SAHM":"Règle de Sahm · signal de récession","data.lens.STLFSI4":"Stress financier Fed de St. Louis","data.lens.YIELD-CURVE":"Probabilité de récession · 12m","data.state.CONTRACTION":"CONTRACTION","data.state.CREDIT_BENIGN":"CRÉDIT CALME","data.state.CREDIT_STRESS":"STRESS CRÉDIT","data.state.CREDIT_WIDENING":"ÉCARTEMENT CRÉDIT","data.state.EXPANSION":"EXPANSION","data.state.NORMAL":"NORMAL","data.state.RECESSION_SIGNAL":"SIGNAL RÉCESSION","data.state.RISK_OFF":"RISK OFF","data.state.RISK_ON":"RISK ON","data.state.TRANSITION_DOWN":"TRANSITION BAISSE","data.state.TRANSITION_UP":"TRANSITION HAUSSE","demo.c1.h3":"Conditions en direct · 13 prismes","demo.c1.n":"01 · CONDITIONS","demo.c1.p":"CISS ECB (US/EA/UK), stress financier de la Fed, probabilité de récession par la courbe des taux, VIX, un véritable indice de débordement transfrontière Diebold-Yilmaz, crédit HY, fragilité des rachats de fonds, transition ESG — chacun avec historique &amp; analyses.","demo.c2.h3":"Risque multi-actifs · tout symbole","demo.c2.n":"02 · COCKPIT QUANT","demo.c2.p":"Indices mondiaux, FX, matières premières, méga-capitalisations, crypto. Sharpe / Sortino / vol annualisée &amp; EWMA / bêta / VaR &amp; CVaR / drawdown, plus un graphique en chandeliers avec niveaux projetés et un cône de volatilité.","demo.c3.h3":"Dossiers de crise gouvernés","demo.c3.n":"03 · PIPELINE DE CRISE","demo.c3.p":"Des dossiers GFC / COVID / SVB reproductibles — jauge de stress du système, contagion en réseau DebtRank, classification de régime et comparaison inter-crises — chacun un PipelineRecord adressé par contenu que vous pouvez vérifier.","demo.c4.h3":"SRISK &amp; ΔCoVaR · en direct","demo.c4.n":"04 · DÉFICIT DE CAPITAL","demo.c4.p":"Insuffisance de fonds propres SRISK Σ en direct + par établissement + ΔCoVaR sur les grandes banques, calculées par les moteurs NYU V-Lab (Brownlees-Engle) et Adrian-Brunnermeier à partir des bilans publics, de la capitalisation boursière et des cours.","demo.c5.h3":"Classeur MRM SR 26-2","demo.c5.n":"05 · VALIDATION DE MODÈLE","demo.c5.p":"Inventaire des modèles &amp; hiérarchisation par matérialité, solidité conceptuelle avec citations, un registre des hypothèses coté par matérialité, un balayage de sensibilité des paramètres SRISK, convergence Monte-Carlo et un bloc d'attestation — pour que votre fonction de risque de modèle puisse donner son aval.","demo.c6.h3":"Reproductible &amp; auditable","demo.c6.n":"06 · GOUVERNÉ","demo.c6.p":"Chaque relevé est adressé par contenu (SHA-256) ; chaque connexion et chaque accès sont inscrits dans un registre chaîné par empreintes, à falsification détectable. Reconstruisez n'importe quel enregistrement gouverné et vérifiez qu'il se reproduit bit pour bit. La piste d'audit est le produit.","demo.explorer":"Ouvrir l'explorateur hors ligne →","demo.github":"Voir le code source sur GitHub","demo.h2":"Le terminal en direct — connectez-vous et observez le risque systémique en temps réel.","demo.overline":"Voyez par vous-même","demo.p":"Six desks sous un même toit gouverné — conditions systémiques en direct, cockpit quantitatif mondial multi-actifs, dossiers de crise gouvernés, insuffisance de fonds propres en direct, et un classeur de validation de modèle clé en main. Chaque relevé est reproductible, adressé par contenu et journalisé pour l'audit. Commencez gratuitement pendant 7 jours — sans carte bancaire.","demo.signin":"Connexion au terminal en direct →","ft.blurb":"<b style=\"color:var(--text)\">CBSRM</b> — la mesure du risque systémique, méthodologie d'abord. Reproductible, traçable en audit, gouvernable.","ft.co":"Société","ft.copy":"Méthodologie CBSRM sous licence Apache-2.0.","ft.l.brief":"Demander un briefing","ft.l.contact":"Contact","ft.l.eng":"Offre","ft.l.gh":"Dépôt GitHub","ft.l.gov":"Gouvernance","ft.l.meth":"Méthodologie","ft.l.term":"Terminal en direct","ft.l.wp":"Livre blanc méthodologique","ft.legal":"CBSRM est un outil de <b>mesure</b> du risque systémique et de la stabilité financière et de gouvernance des modèles. Il ne constitue <b>pas</b> un conseil en investissement, ni une sollicitation, ni une offre d'achat ou de vente d'un quelconque titre financier, et il ne fournit aucune recommandation individualisée. La mention « aligné sur SR 26-2 » décrit une intention de conception au regard de principes publiés de gestion du risque de modèle ; elle ne constitue en aucun cas une approbation, un agrément ou une certification réglementaire.","ft.product":"Produit","ft.res":"Ressources","gov.h2":"Un pipeline gouverné que vos équipes de validation des modèles peuvent vérifier.","gov.overline":"Ce qui fait la différence","gov.p":"Le Composer L3 de CBSRM assemble chaque étape en un <span class=\"mono\">PipelineRecord</span> unique, adressé par contenu — la différence entre une boîte à outils quantitative et un système de gouvernance des modèles.","gov.p1":"<b>Un pipeline gouverné unique.</b> Un enregistrement unique couvre chaque étape avec une convention de dates uniforme, un contrat identifiant &amp; version uniforme, et un lignage explicite entrée → sortie.","gov.p2":"<b>Lignage adressé par contenu.</b> Chaque étape porte une empreinte de contenu SHA-256 ; un changement de méthodologie produit une empreinte différente qu'un diff détecte immédiatement. « Le modèle a-t-il changé ? » devient une comparaison de chaînes de caractères.","gov.p3":"<b>Falsification détectable.</b> <span class=\"mono\">verify_pipeline_record()</span> re-dérive chaque empreinte à partir des données propres de l'enregistrement — la preuve que le chiffre publié n'a pas été altéré après composition.","gov.p4":"<b>Chaîne d'audit SHA-256.</b> Chaque événement du cycle de vie — demandé, collecté, calculé, servi — est inscrit dans un registre chaîné par empreintes que vous pouvez rejouer et vérifier de bout en bout.","gov.p5":"<b>Aligné sur SR 26-2.</b> Finalité &amp; usage, solidité conceptuelle, suivi continu et analyse des résultats se projettent directement sur l'architecture — le dialogue de validation, avec ses réponses déjà prêtes.","hero.brief":"Demander un briefing institutionnel","hero.h1":"Le risque systémique que vous pouvez <span class=\"hl\">reproduire, auditer et défendre.</span>","hero.overline":"Moniteur du risque systémique transfrontière","hero.sub":"CBSRM reproduit les mesures canoniques de risque systémique et de stabilité financière utilisées par les banques centrales et les superviseurs — en Python moderne, typé et intégralement testé — sous un même Protocole, une même chaîne d'audit SHA-256 et une même garantie de reproductibilité. Conçu autour des principes de gestion du risque de modèle <b class=\"muted\">SR 26-2</b>.","hero.t1":"Méthodologie ouverte <b>Apache-2.0</b>","hero.t2":"<b>1 071</b> tests validés","hero.t3":"<b>Déterministe</b> &amp; reproductible","hero.t4":"<b>5</b> juridictions · <b>5</b> langues","hero.term":"Ouvrir le terminal en direct →","js.daily":"actualisation quotidienne automatique · mesure du risque, pas un conseil en investissement","js.gen":"généré {t}","js.live":"{n} relevés en direct","js.prov":"Les relevés en direct sont en cours de mise en service.","js.snapshot":"INSTANTANÉ","js.subscribe":"S'abonner → $48k/an","js.unavail":"Relevés actuels momentanément indisponibles.","meth.h2":"Six méthodes canoniques. Treize prismes en direct. Une ossature auditable.","meth.l1.h3":"Indices composites de stress","meth.l1.n":"01 · STRESS SYSTÈME","meth.l1.p":"Stress de la famille CISS (US / Euro-Area / UK), STLFSI4 et l'indice de stress financier de l'OFR — une agrégation en forme quadratique qui s'amplifie en période de stress corrélé.","meth.l2.n":"02 · CONTRIBUTION AU RISQUE EXTRÊME","meth.l2.p":"L'insuffisance de fonds propres attendue d'un établissement conditionnellement à une baisse systémique du marché — qui devrait être recapitalisé en cas de crise, et à quelle hauteur.","meth.l3.n":"03 · DÉBORDEMENT EXTRÊME","meth.l3.p":"La valeur en risque du système conditionnellement à la détresse d'une institution, et la perte attendue marginale de chaque établissement — de la dépendance de queue, pas de la corrélation moyenne.","meth.l4.n":"04 · CONTAGION EN RÉSEAU","meth.l4.p":"Un moteur DebtRank en pur numpy sur le réseau des expositions interbancaires — une détresse qui se propage une seule fois à travers le graphe, classant l'importance systémique par impact.","meth.l5.h3":"Composite macro à 4 états","meth.l5.n":"05 · RÉGIME MACRO","meth.l5.p":"Probit de récession sur la courbe des taux, la règle de Sahm, les régimes FFR/USD, et un composite à quatre états qui classe le régime macrofinancier en vigueur.","meth.l6.h3":"Débordements Diebold-Yilmaz","meth.l6.n":"+ · INTERCONNEXION","meth.l6.p":"Indice de débordement FEVD généralisé mesurant l'interconnexion entre classes d'actifs — comment les chocs d'un secteur se transmettent au reste du système.","meth.overline":"La méthodologie","meth.p":"Un seul pipeline répond aux questions qu'un desk de stabilité financière se pose réellement — quel est le niveau de stress du système, quels établissements portent le risque extrême, comment le choc se propage-t-il, et dans quel régime sommes-nous. Les mêmes méthodes tournent désormais en direct dans le terminal, aux côtés d'un cockpit quantitatif mondial multi-actifs et d'un classeur de validation de modèle SR 26-2 clé en main.","nav.brief":"Demander un briefing","nav.eng":"Offre","nav.gov":"Gouvernance","nav.live":"Données en direct","nav.meth":"Méthodologie","nav.seal":"TRAÇABILITÉ D'AUDIT","nav.term":"Terminal en direct","nav.who":"Pour qui","pr.h2":"Méthodologie ouverte. Déploiement institutionnel.","pr.overline":"Offre","pr.p":"La méthodologie CBSRM est sous licence Apache-2.0, libre à lire, exécuter et citer. Ce que les institutions nous confient, c'est le déploiement : infrastructure hébergée, extensions de juridictions, packs de validation et support.","pr.t1.badge":"Ouvert","pr.t1.btn":"Obtenir la bibliothèque","pr.t1.for":"Pour chercheurs &amp; évaluation","pr.t1.i1":"Méthodologie publique complète &amp; code source","pr.t1.i2":"CLI, API Python et le Terminal de risque","pr.t1.i3":"Dossiers de crise reproductibles (2008Q4 / 2020Q1 / 2023Q1)","pr.t1.i4":"Livre blanc méthodologique en 12 sections","pr.t1.price":"<b>Gratuit</b> · Apache-2.0","pr.t2.badge":"La plupart des institutions","pr.t2.btn":"Démarrer →","pr.t2.for":"Pour desks de risque &amp; équipes de recherche","pr.t2.i1":"API hébergée et supervisée en lecture seule &amp; tableaux de bord","pr.t2.i2":"Flux de données juridictionnels en direct &amp; actualisation","pr.t2.i3":"PipelineRecord gouverné + accès à la chaîne d'audit","pr.t2.i4":"Prise en main &amp; support prioritaire","pr.t2.price":"à partir de <b>$48,000</b> <span class=\"dim\">/ an · ou $4,000/mois</span>","pr.t3.badge":"Réglementé","pr.t3.btn":"Contactez-nous","pr.t3.for":"Pour banques, banques centrales &amp; SupTech","pr.t3.i1":"Déploiement sur site / VPC / réseau isolé","pr.t3.i2":"Juridictions &amp; instruments sur mesure","pr.t3.i3":"Pack de validation de modèle SR 26-2 &amp; documentation","pr.t3.i4":"SLA, revue de sécurité et support d'intégration","pr.t3.price":"<b>Sur mesure</b>","stats.jur":"Juridictions","stats.open":"Méthodologie ouverte","stats.tests":"Tests validés","stats.wp":"Sections du livre blanc","who.c1.h3":"Desks risque &amp; compte propre","who.c1.p":"Hedge funds et sociétés de négociation pour compte propre qui valorisent le risque systémique et le risque extrême avec des chiffres qu'ils peuvent reproduire et expliquer.","who.c2.h3":"Banques centrales","who.c2.p":"Équipes de stabilité financière et de recherche qui reproduisent CISS, SRISK et CoVaR avec une discipline point-in-time.","who.c3.h3":"Technologies de supervision","who.c3.p":"Éditeurs SupTech et RegTech qui intègrent à leur pile technologique une mesure du risque systémique auditable et citable.","who.c4.h3":"Family offices","who.c4.p":"Allocateurs d'actifs qui veulent une lecture indépendante et transparente du stress du système et de l'exposition à la contagion.","who.c5.h3":"Recherche académique","who.c5.p":"Chercheurs ayant besoin d'une implémentation de référence reproductible et citable pour des résultats de niveau SSRN.","who.h2":"Conçu pour les desks qui doivent défendre le chiffre.","who.overline":"Pour qui","who.p":"Le même code tourne sur le portable d'un chercheur et derrière un service de production — d'un simple déploiement FastAPI à une installation institutionnelle en réseau isolé (air-gapped).","why.bad.h3":"Le statu quo","why.bad.p":"Des implémentations fragmentées, des hypothèses non documentées, des chiffres de fournisseurs impossibles à reproduire, et aucun lignage de la donnée d'entrée au chiffre publié. Un validateur demande « pourquoi ce chiffre est-il ce qu'il est ? » — et personne ne sait répondre.","why.good.p":"Chaque chiffre est reproductible depuis la source. Chaque étape méthodologique porte sa propre version. Chaque événement du cycle de vie est inscrit dans une chaîne d'audit SHA-256. Un même Protocole couvre aussi bien les indicateurs de stress que les mesures de valorisation du risque — ajouter une méthode, c'est un fichier plus une ligne d'enregistrement.","why.h2":"La plupart des chiffres de risque systémique ne résistent pas à une revue de modèle.","why.overline":"Pourquoi CBSRM existe","why.p":"Le code académique est écrit en R, Stata et MATLAB ; les systèmes commerciaux sont des boîtes noires ; les chiffres de référence proviennent de fournisseurs qui ne concordent pas. Rien de tout cela ne passe l'examen d'une fonction de risque de modèle. CBSRM, c'est la méthodologie d'abord."},
+  de:{"_desc":"CBSRM ist eine methodikzentrierte Systemrisiko-Plattform für Institutionen: Stress der CISS-Familie, SRISK, ΔCoVaR/MES, DebtRank und das Makro-Regime mit vier Zuständen — unter einem Protokoll, einer SHA-256-Prüfkette und einer Reproduzierbarkeitsgarantie. Aufgebaut auf den Modell-Governance-Grundsätzen von SR 26-2. Apache-2.0. Risikomessung, keine Anlageberatung.","_title":"CBSRM — Grenzüberschreitender Systemrisiko-Monitor · WaverVanir International","ct.email":"Briefing per E-Mail","ct.h2":"Erleben Sie CBSRM mit den Daten Ihrer Jurisdiktion.","ct.link":"WaverVanir auf LinkedIn","ct.overline":"Briefing anfragen","ct.p":"Ein 30-minütiger Rundgang durch die fünf Perspektiven, die Prüfkette und die Pipeline unter Governance — mit einem live erzeugten, reproduzierbaren Record für das Zeitfenster Ihrer Wahl.","cur.explore":"Jedes Quartal erkunden, 1999 → heute →","cur.h2":"Die heutigen Systemrisiko-Messwerte.","cur.loading":"Aktuelle Messwerte werden geladen…","cur.overline":"Aktuelle Lage · live","cur.p":"Dieselben kanonischen Indizes, die CBSRM reproduziert — berechnet aus den jeweils neuesten öffentlichen Daten, jeder Wert auf die letzte Veröffentlichung seines Anbieters datiert, mit Content-Hash versehen und täglich automatisch aktualisiert. Kein Backtest, sondern der aktuelle Stand.","data.cat.credit":"Tail / Kredit","data.cat.macro":"Makro-Regime","data.cat.stress":"Systemstress","data.lens.CREDIT-SPREAD":"HY-Kreditspread · OAS","data.lens.ECB-CISS-EA":"ECB CISS — Euroraum","data.lens.ECB-CISS-UK":"ECB CISS — Großbritannien","data.lens.ECB-CISS-US":"ECB CISS — USA","data.lens.MACRO-REGIME":"Makro-Regime · 4 Zustände","data.lens.SAHM":"Sahm-Regel · Rezessionssignal","data.lens.STLFSI4":"St.-Louis-Fed-Finanzstress","data.lens.YIELD-CURVE":"Rezessionswahrscheinlichkeit · 12M","data.state.CONTRACTION":"KONTRAKTION","data.state.CREDIT_BENIGN":"KREDIT ENTSPANNT","data.state.CREDIT_STRESS":"KREDITSTRESS","data.state.CREDIT_WIDENING":"KREDIT-AUSWEITUNG","data.state.EXPANSION":"EXPANSION","data.state.NORMAL":"NORMAL","data.state.RECESSION_SIGNAL":"REZESSIONSSIGNAL","data.state.RISK_OFF":"RISK-OFF","data.state.RISK_ON":"RISK-ON","data.state.TRANSITION_DOWN":"ÜBERGANG ABWÄRTS","data.state.TRANSITION_UP":"ÜBERGANG AUFWÄRTS","demo.c1.h3":"Lagebild live · 13 Perspektiven","demo.c1.n":"01 · LAGEBILD","demo.c1.p":"ECB CISS (US/EA/UK), Fed-Finanzstress, Zinsstruktur-Rezessionswahrscheinlichkeit, VIX, ein echter grenzüberschreitender Diebold-Yilmaz-Spillover-Index, HY-Kredit, Fragilität bei Fondsrücknahmen, ESG-Transition — jeweils mit Historie &amp; Analytik.","demo.c2.h3":"Cross-Asset-Risiko · jedes Symbol","demo.c2.n":"02 · QUANT-COCKPIT","demo.c2.p":"Weltindizes, FX, Rohstoffe, Mega-Caps, Krypto. Sharpe / Sortino / annualisierte &amp; EWMA-Vol / Beta / VaR &amp; CVaR / Drawdown, dazu ein Candlestick-Chart mit projizierten Niveaus und einem Volatilitätskegel.","demo.c3.h3":"Krisendossiers unter Governance","demo.c3.n":"03 · KRISEN-PIPELINE","demo.c3.p":"Reproduzierbare GFC- / COVID- / SVB-Dossiers — ein Systemstress-Barometer, DebtRank-Netzwerkansteckung, Regimeklassifikation und ein Krisenvergleich — jedes ein inhaltsadressierter PipelineRecord, den Sie verifizieren können.","demo.c4.h3":"SRISK &amp; ΔCoVaR · live","demo.c4.n":"04 · KAPITALLÜCKE","demo.c4.p":"Live-SRISK: Σ Kapitallücke + je Institut + ΔCoVaR über die Großbanken hinweg — berechnet mit den Engines des NYU V-Lab (Brownlees-Engle) und von Adrian-Brunnermeier aus öffentlichen Bilanzen, Marktkapitalisierung und Kursen.","demo.c5.h3":"SR 26-2 MRM-Ordner","demo.c5.n":"05 · MODELLVALIDIERUNG","demo.c5.p":"Modellinventar &amp; Wesentlichkeitsstufen, konzeptionelle Solidität mit Quellenangaben, ein nach Wesentlichkeit bewertetes Annahmenregister, ein SRISK-Parametersensitivitäts-Sweep, Monte-Carlo-Konvergenz und ein Attestierungsblock — damit Ihre Modellrisikofunktion die Freigabe erteilen kann.","demo.c6.h3":"Reproduzierbar &amp; auditierbar","demo.c6.n":"06 · GOVERNANCE","demo.c6.p":"Jeder Messwert ist inhaltsadressiert (SHA-256); jede Anmeldung und jeder Zugriff wird in ein manipulationssicheres, hash-verkettetes Register geschrieben. Bauen Sie jeden Record unter Governance neu und verifizieren Sie die Bit-für-Bit-Reproduktion. Der Prüfpfad ist das Produkt.","demo.explorer":"Offline-Explorer öffnen →","demo.github":"Quellcode auf GitHub ansehen","demo.h2":"Das Live-Terminal — anmelden und Systemrisiko in Echtzeit verfolgen.","demo.overline":"Jetzt ansehen","demo.p":"Sechs Desks unter einem Governance-Dach — die systemische Lage live, ein globales Cross-Asset-Quant-Cockpit, Krisendossiers unter Governance, Kapitallücken in Echtzeit und ein schlüsselfertiger Modellvalidierungsordner. Jeder Messwert ist reproduzierbar, inhaltsadressiert und revisionssicher protokolliert. Starten Sie kostenlos für 7 Tage — keine Kreditkarte erforderlich.","demo.signin":"Am Live-Terminal anmelden →","ft.blurb":"<b style=\"color:var(--text)\">CBSRM</b> — methodikzentrierte Systemrisikomessung. Reproduzierbar, lückenlos prüfbar, governancefähig.","ft.co":"Unternehmen","ft.copy":"CBSRM-Methodik lizenziert unter Apache-2.0.","ft.l.brief":"Briefing anfragen","ft.l.contact":"Kontakt","ft.l.eng":"Zusammenarbeit","ft.l.gh":"GitHub-Repository","ft.l.gov":"Governance","ft.l.meth":"Methodik","ft.l.term":"Live-Terminal","ft.l.wp":"Methodik-Whitepaper","ft.legal":"CBSRM ist ein Werkzeug zur <b>Messung</b> von Systemrisiken und Finanzstabilität sowie zur Modell-Governance. Es stellt <b>keine</b> Anlageberatung, keine Aufforderung und kein Angebot zum Kauf oder Verkauf von Wertpapieren dar und erteilt keine individuellen Empfehlungen. „An SR 26-2 ausgerichtet“ beschreibt die Designabsicht im Abgleich mit veröffentlichten Grundsätzen des Modellrisikomanagements; dies stellt keine Zusicherung einer aufsichtlichen Genehmigung, Billigung oder Zertifizierung dar.","ft.product":"Produkt","ft.res":"Ressourcen","gov.h2":"Eine Pipeline unter Governance, die Ihre Modellrisiko-Prüfer verifizieren können.","gov.overline":"Der entscheidende Unterschied","gov.p":"Der L3 Composer von CBSRM fügt jede Stufe zu einem inhaltsadressierten <span class=\"mono\">PipelineRecord</span> zusammen — der Unterschied zwischen einem Quant-Werkzeugkasten und einem Modell-Governance-System.","gov.p1":"<b>Eine Pipeline unter Governance.</b> Ein einziger Record umfasst alle Stufen — mit einheitlicher Datumskonvention, einheitlichem Identifikator- &amp; Versionskontrakt und expliziter Herkunftskette Input → Output.","gov.p2":"<b>Inhaltsadressierte Herkunft.</b> Jede Stufe trägt einen SHA-256-Content-Hash; eine Methodikänderung erzeugt einen anderen Hash, den ein Diff sofort erkennt. „Hat sich das Modell geändert?“ wird zum Zeichenkettenvergleich.","gov.p3":"<b>Manipulationssicher.</b> <span class=\"mono\">verify_pipeline_record()</span> leitet jeden Hash aus den eigenen Daten des Records neu ab — der Nachweis, dass die veröffentlichte Kennzahl nach der Komposition nicht verändert wurde.","gov.p4":"<b>SHA-256-Prüfkette.</b> Jedes Lebenszyklus-Ereignis — angefragt, abgerufen, berechnet, ausgeliefert — wird in ein hash-verkettetes Register geschrieben, das Sie Ende-zu-Ende nachvollziehen und verifizieren können.","gov.p5":"<b>An SR 26-2 ausgerichtet.</b> Zweck &amp; Verwendung, konzeptionelle Solidität, laufende Überwachung und Ergebnisanalyse lassen sich direkt auf die Architektur abbilden — das Validierungsgespräch, vorab beantwortet.","hero.brief":"Institutionelles Briefing anfragen","hero.h1":"Systemrisiko, das Sie <span class=\"hl\">reproduzieren, prüfen und verteidigen können.</span>","hero.overline":"Grenzüberschreitender Systemrisiko-Monitor","hero.sub":"CBSRM reproduziert die kanonischen Systemrisiko- und Finanzstabilitätsmaße, mit denen Zentralbanken und Aufsichtsbehörden arbeiten — in modernem, typisiertem, vollständig getestetem Python — unter einem Protokoll, einer SHA-256-Prüfkette und einer Reproduzierbarkeitsgarantie. Aufgebaut auf den Grundsätzen des Modellrisikomanagements nach <b class=\"muted\">SR 26-2</b>.","hero.t1":"<b>Apache-2.0</b> — offene Methodik","hero.t2":"<b>1.071</b> bestandene Tests","hero.t3":"<b>Deterministisch</b> &amp; reproduzierbar","hero.t4":"<b>5</b> Jurisdiktionen · <b>5</b> Sprachen","hero.term":"Live-Terminal öffnen →","js.daily":"täglich automatisch aktualisiert · Risikomessung, keine Anlageberatung","js.gen":"erzeugt {t}","js.live":"{n} Live-Messwerte","js.prov":"Live-Messwerte werden bereitgestellt.","js.snapshot":"SNAPSHOT","js.subscribe":"Abonnieren → $48k/Jahr","js.unavail":"Aktuelle Messwerte derzeit nicht verfügbar.","meth.h2":"Sechs kanonische Methoden. Dreizehn Live-Perspektiven. Ein auditierbares Rückgrat.","meth.l1.h3":"Zusammengesetzte Stressindizes","meth.l1.n":"01 · SYSTEMSTRESS","meth.l1.p":"Stress der CISS-Familie (US / Euroraum / UK), STLFSI4 und der OFR Financial Stress Index — eine Aggregation in quadratischer Form, die bei korreliertem Stress verstärkend wirkt.","meth.l2.n":"02 · TAIL-BEITRAG JE INSTITUT","meth.l2.p":"Erwartete Kapitallücke eines Instituts, bedingt auf einen systemischen Markteinbruch — wer in einer Krise rekapitalisiert werden müsste, und in welchem Umfang.","meth.l3.n":"03 · TAIL-SPILLOVER","meth.l3.p":"Der Value-at-Risk des Systems, bedingt auf ein Institut in Schieflage, und der marginale Expected Shortfall jedes Instituts — Tail-Abhängigkeit statt durchschnittlicher Korrelation.","meth.l4.n":"04 · NETZWERK-ANSTECKUNG","meth.l4.p":"Eine reine numpy-DebtRank-Engine auf dem Netz der Interbankenforderungen — Schieflagen propagieren genau einmal durch den Graphen; die Systemrelevanz wird nach Wirkung geordnet.","meth.l5.h3":"Makro-Komposit mit vier Zuständen","meth.l5.n":"05 · MAKRO-REGIME","meth.l5.p":"Zinsstruktur-Rezessions-Probit, die Sahm-Regel, FFR/USD-Regime und ein Komposit mit vier Zuständen, das das vorherrschende makrofinanzielle Regime klassifiziert.","meth.l6.h3":"Diebold-Yilmaz-Spillover","meth.l6.n":"+ · VERNETZUNG","meth.l6.p":"Generalisierter FEVD-Spillover-Index zur Messung der Vernetzung über Anlageklassen hinweg — wie sich Schocks eines Sektors auf den Rest des Systems übertragen.","meth.overline":"Die Methodik","meth.p":"Eine Pipeline beantwortet die Fragen, die ein Finanzstabilitäts-Desk tatsächlich stellt — wie gestresst ist das System, welche Institute tragen das Tail-Risiko, wie propagiert ein Schock, und in welchem Regime befinden wir uns. Dieselben Methoden laufen jetzt live im Terminal, neben einem globalen Cross-Asset-Quant-Cockpit und einem schlüsselfertigen SR 26-2-Modellvalidierungsordner.","nav.brief":"Briefing anfragen","nav.eng":"Zusammenarbeit","nav.gov":"Governance","nav.live":"Live-Daten","nav.meth":"Methodik","nav.seal":"REVISIONSSICHER","nav.term":"Live-Terminal","nav.who":"Zielgruppen","pr.h2":"Offene Methodik. Institutionelle Bereitstellung.","pr.overline":"Zusammenarbeit","pr.p":"Die CBSRM-Methodik steht unter Apache-2.0 und ist frei lesbar, ausführbar und zitierbar. Institutionen beauftragen uns mit der Bereitstellung: gehostete Infrastruktur, Jurisdiktionserweiterungen, Validierungspakete und Support.","pr.t1.badge":"Offen","pr.t1.btn":"Zur Bibliothek","pr.t1.for":"Für Forschung &amp; Evaluierung","pr.t1.i1":"Vollständige öffentliche Methodik &amp; Quellcode","pr.t1.i2":"CLI, Python-API und das Risiko-Terminal","pr.t1.i3":"Reproduzierbare Krisendossiers (2008Q4 / 2020Q1 / 2023Q1)","pr.t1.i4":"Methodik-Whitepaper mit 12 Abschnitten","pr.t1.price":"<b>Kostenlos</b> · Apache-2.0","pr.t2.badge":"Meistgewählt","pr.t2.btn":"Jetzt starten →","pr.t2.for":"Für Risiko-Desks &amp; Research-Teams","pr.t2.i1":"Gehostete, überwachte Read-only-API &amp; Dashboards","pr.t2.i2":"Live-Datenfeeds je Jurisdiktion &amp; Aktualisierung","pr.t2.i3":"PipelineRecord unter Governance + Prüfketten-Zugriff","pr.t2.i4":"Onboarding &amp; vorrangiger Support","pr.t2.price":"ab <b>$48,000</b> <span class=\"dim\">/ Jahr · oder $4,000/Monat</span>","pr.t3.badge":"Reguliert","pr.t3.btn":"Kontakt aufnehmen","pr.t3.for":"Für Banken, Zentralbanken &amp; SupTech","pr.t3.i1":"On-Prem- / VPC- / Air-Gapped-Deployment","pr.t3.i2":"Individuelle Jurisdiktionen &amp; Instrumente","pr.t3.i3":"SR 26-2-Modellvalidierungspaket &amp; Dokumentation","pr.t3.i4":"SLA, Sicherheitsprüfung und Integrationssupport","pr.t3.price":"<b>Individuell</b>","stats.jur":"Jurisdiktionen","stats.open":"Offene Methodik","stats.tests":"Bestandene Tests","stats.wp":"Whitepaper-Abschnitte","who.c1.h3":"Risiko- &amp; Prop-Desks","who.c1.p":"Hedgefonds und Eigenhandelshäuser, die System- und Tail-Risiken mit Zahlen bepreisen, die sie reproduzieren und erklären können.","who.c2.h3":"Zentralbanken","who.c2.p":"Finanzstabilitäts- und Research-Teams, die CISS, SRISK und CoVaR mit Point-in-Time-Disziplin reproduzieren.","who.c3.h3":"Aufsichtstechnologie","who.c3.p":"SupTech- und RegTech-Anbieter, die auditierbare, zitierfähige Systemrisikomessung in ihren Stack einbetten.","who.c4.h3":"Family Offices","who.c4.p":"Allokatoren, die eine unabhängige, transparente Einschätzung von Systemstress und Ansteckungsrisiken wünschen.","who.c5.h3":"Akademische Forschung","who.c5.p":"Forschende, die eine reproduzierbare, zitierfähige Referenzimplementierung für Zahlen auf SSRN-Niveau benötigen.","who.h2":"Gebaut für die Desks, die die Zahl verteidigen müssen.","who.overline":"Zielgruppen","who.p":"Derselbe Code läuft auf dem Laptop von Forschenden wie hinter einem Produktionsdienst — vom einzelnen FastAPI-Deployment bis zur physisch isolierten (air-gapped) institutionellen Installation.","why.bad.h3":"Der Status quo","why.bad.p":"Fragmentierte Implementierungen, undokumentierte Annahmen, nicht reproduzierbare Anbieterzahlen und keine Herkunftskette vom Input bis zur veröffentlichten Kennzahl. Ein Prüfer fragt: „Warum ist diese Zahl so, wie sie ist?“ — und niemand kann es sagen.","why.good.p":"Jede Zahl ist aus der Quelle reproduzierbar. Jede Methodikstufe trägt ihre eigene Version. Jedes Lebenszyklus-Ereignis wird in eine SHA-256-Prüfkette geschrieben. Ein einziges Protokoll deckt Stressindikatoren und Risikobepreisungsmaße gleichermaßen ab — eine neue Methode ist eine Datei plus eine Registrierungszeile.","why.h2":"Die meisten Systemrisiko-Zahlen überstehen keine Modellprüfung.","why.overline":"Warum es CBSRM gibt","why.p":"Akademischer Code lebt in R, Stata und MATLAB; kommerzielle Systeme sind Black Boxes; Referenzzahlen stammen von Anbietern, die einander widersprechen. Nichts davon besteht vor einer Modellrisikofunktion. CBSRM stellt die Methodik an die erste Stelle."}
+};
+var LANG_KEY='cbsrm_lang',CUR='en';
+function t(k){var d=I18N[CUR];if(d&&d[k]!=null)return d[k];return I18N.en[k]!=null?I18N.en[k]:'';}
+function fmtT(k,vars){var s=t(k);for(var x in vars){s=s.replace('{'+x+'}',vars[x]);}return s;}
+// capture the canonical EN copy from the DOM (before any language switch)
+(function(){
+  var els=document.querySelectorAll('[data-i18n]');
+  for(var i=0;i<els.length;i++){I18N.en[els[i].getAttribute('data-i18n')]=els[i].innerHTML;}
+  I18N.en['_title']=document.title;
+  var md=document.querySelector('meta[name="description"]');
+  I18N.en['_desc']=md?md.getAttribute('content'):'';
+})();
+function applyLang(lang){
+  if(!I18N[lang])lang='en';
+  CUR=lang;try{localStorage.setItem(LANG_KEY,lang);}catch(e){}
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll('[data-i18n]');
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute('data-i18n'),v=t(k);if(v)els[i].innerHTML=v;}
+  if(t('_title'))document.title=t('_title');
+  var md=document.querySelector('meta[name="description"]');
+  if(md&&t('_desc'))md.setAttribute('content',t('_desc'));
+  var sel=document.getElementById('lang-sel');if(sel)sel.value=lang;
+  renderDeskCta();renderCC();
+}
+
 // ─── Stripe Desk checkout ─────────────────────────────────────────────
 // Paste your Stripe Payment Link between the quotes below. When set, the Desk
 // "Get started" button becomes a one-click Stripe checkout. Empty = falls back
 // to "book a briefing" (#contact). No keys live in this file — Stripe hosts checkout.
 var DESK_STRIPE_LINK = "https://buy.stripe.com/6oU00iawt5DkezAbJ3g7e00";
-if (DESK_STRIPE_LINK) {
-  var _d = document.getElementById('desk-cta');
-  if (_d) { _d.href = DESK_STRIPE_LINK; _d.target = "_blank"; _d.rel = "noopener"; _d.textContent = "Subscribe → $48k/yr"; }
+function renderDeskCta(){
+  if(!DESK_STRIPE_LINK)return;
+  var _d=document.getElementById('desk-cta');
+  if(_d){_d.href=DESK_STRIPE_LINK;_d.target="_blank";_d.rel="noopener";_d.textContent=t('js.subscribe');}
 }
-(function(){
+renderDeskCta();
+
+var __ccd=null;
+function renderCC(){
+  if(!__ccd)return;
+  var d=__ccd;
   var TONE={'ECB-CISS-US':[0.1,0.27,0.4],'ECB-CISS-EA':[0.1,0.27,0.4],'ECB-CISS-UK':[0.1,0.27,0.4],
     'STLFSI4':[1,2,3],'YIELD-CURVE':[0.15,0.33,0.5],'SAHM':[0.3,0.5,0.5],'CREDIT-SPREAD':[400,700,1000]};
   var STATE_TONE={'RISK_ON':'benign','TRANSITION_UP':'benign','EXPANSION':'benign','NORMAL':'benign',
     'CREDIT_BENIGN':'benign','TRANSITION_DOWN':'watch','CONTRACTION':'severe','RISK_OFF':'severe'};
+  var CAT={'System stress':'data.cat.stress','Macro regime':'data.cat.macro','Tail / credit':'data.cat.credit'};
   function tone(r){
     if(typeof r.value==='number'){
-      var t=TONE[r.id];if(!t)return '';
+      var tt=TONE[r.id];if(!tt)return '';
       if(r.id==='STLFSI4'&&r.value<0)return 'benign';
-      return r.value<t[0]?'benign':r.value<t[1]?'watch':r.value<t[2]?'elevated':'severe';
+      return r.value<tt[0]?'benign':r.value<tt[1]?'watch':r.value<tt[2]?'elevated':'severe';
     }
     if(r.state)return STATE_TONE[r.state]||'';
     return '';
   }
+  function stateTxt(s){if(!s)return '—';return t('data.state.'+s)||s.replace(/_/g,' ');}
   function fmtVal(r){
     if(typeof r.value==='number'){
       if(r.fmt==='ratio')return r.value.toFixed(4);
@@ -650,29 +776,44 @@ if (DESK_STRIPE_LINK) {
       if(r.fmt==='pp2')return r.value.toFixed(2)+' pp';
       return r.value.toFixed(2);
     }
-    return (r.state||'—').replace(/_/g,' ');
+    return stateTxt(r.state);
   }
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
-  fetch('current.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
-    var ok=(d.readings||[]).filter(function(r){return r.status==='ok';});
-    var grid=document.getElementById('cc-grid'),foot=document.getElementById('cc-foot'),status=document.getElementById('cc-status');
-    if(!ok.length){status.textContent='Live readings are being provisioned.';return;}
-    status.hidden=true;grid.hidden=false;foot.hidden=false;
-    grid.innerHTML=ok.map(function(r){
-      var isNum=typeof r.value==='number';
-      return '<div class="ccard '+tone(r)+'">'
-        +'<div class="ccard__lens">'+esc(r.lens)+'</div>'
-        +'<div class="ccard__label">'+esc(r.label)+'</div>'
-        +'<div class="ccard__val'+(isNum?'':' state')+'">'+esc(fmtVal(r))+'</div>'
-        +'<div class="ccard__meta"><span>'+esc(r.as_of||'')+'</span><span>'+esc(r.source)+'</span></div>'
-        +'</div>';
-    }).join('');
-    var n=d.summary||{},hash=(d.output_sha256||'').slice(0,12);
-    foot.innerHTML='<span class="seal"><span class="dot"></span>SNAPSHOT '+esc(hash)+'…</span>'
-      +'<span>'+esc(n.live||ok.length)+' live readings</span>'
-      +'<span>generated '+esc(d.generated_at_utc||'')+'</span>'
-      +'<span>auto-refreshed daily · risk measurement, not advice</span>';
-  }).catch(function(){document.getElementById('cc-status').textContent='Current readings unavailable right now.';});
+  var ok=(d.readings||[]).filter(function(r){return r.status==='ok';});
+  var grid=document.getElementById('cc-grid'),foot=document.getElementById('cc-foot'),status=document.getElementById('cc-status');
+  if(!ok.length){status.hidden=false;status.textContent=t('js.prov');return;}
+  status.hidden=true;grid.hidden=false;foot.hidden=false;
+  grid.innerHTML=ok.map(function(r){
+    var isNum=typeof r.value==='number';
+    var cat=(CAT[r.lens]&&t(CAT[r.lens]))||r.lens;
+    var label=t('data.lens.'+r.id)||r.label;
+    return '<div class="ccard '+tone(r)+'">'
+      +'<div class="ccard__lens">'+esc(cat)+'</div>'
+      +'<div class="ccard__label">'+esc(label)+'</div>'
+      +'<div class="ccard__val'+(isNum?'':' state')+'">'+esc(fmtVal(r))+'</div>'
+      +'<div class="ccard__meta"><span>'+esc(r.as_of||'')+'</span><span>'+esc(r.source)+'</span></div>'
+      +'</div>';
+  }).join('');
+  var n=d.summary||{},hash=(d.output_sha256||'').slice(0,12);
+  foot.innerHTML='<span class="seal"><span class="dot"></span>'+esc(t('js.snapshot'))+' '+esc(hash)+'…</span>'
+    +'<span>'+esc(fmtT('js.live',{n:n.live||ok.length}))+'</span>'
+    +'<span>'+esc(fmtT('js.gen',{t:d.generated_at_utc||''}))+'</span>'
+    +'<span>'+esc(t('js.daily'))+'</span>';
+}
+fetch('current.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
+  __ccd=d;renderCC();
+}).catch(function(){document.getElementById('cc-status').textContent=t('js.unavail');});
+
+// ─── language boot: ?lang= → localStorage → browser language → en ───
+(function(){
+  var l=null;
+  try{l=new URLSearchParams(location.search).get('lang');}catch(e){}
+  if(!l||!I18N[l]){try{l=localStorage.getItem(LANG_KEY);}catch(e){}}
+  if(!l||!I18N[l]){l=(navigator.language||'en').slice(0,2).toLowerCase();}
+  if(!I18N[l])l='en';
+  if(l!=='en')applyLang(l);
+  var sel=document.getElementById('lang-sel');
+  if(sel){sel.value=l;sel.addEventListener('change',function(){applyLang(sel.value);});}
 })();
 </script>
 </body>

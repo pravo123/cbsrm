@@ -4,8 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='13' fill='%230A0C10'/><g fill='%2342BEEC'><rect x='18' y='34' width='6.5' height='20'/><rect x='28' y='27' width='6.5' height='27'/><rect x='38' y='21' width='6.5' height='33'/></g><path d='M15 44 L45 20' stroke='%23D2A23F' stroke-width='3.2' fill='none' stroke-linecap='round'/><path d='M36 19 L46 18 L45 28' stroke='%23D2A23F' stroke-width='3.2' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
-<title>CBSRM · Systemic Risk Explorer — any quarter, 2007–today</title>
-<meta name="description" content="Explore the canonical systemic-risk lenses (CISS, financial stress, recession probability, macro regime, credit spreads) for ANY quarter since 2007 — reproduced from public data, content-hash stamped. WaverVanir International. Risk measurement, not investment advice.">
+<title>CBSRM · Systemic Risk Explorer — any quarter, 1999–today</title>
+<meta name="description" content="Explore the canonical systemic-risk lenses (CISS, financial stress, recession probability, macro regime, credit spreads) for ANY quarter since 1999 — reproduced from public data, content-hash stamped. WaverVanir International. Risk measurement, not investment advice.">
+<link rel="canonical" href="https://cbsrm.wavervanir.com/explorer.html">
+<meta property="og:title" content="CBSRM · Systemic Risk Explorer — any quarter, 1999–today">
+<meta property="og:description" content="Reproduced-from-public-data systemic-risk readings (CISS, financial stress, recession probability, macro regime, credit spreads) for any quarter since 1999, content-hash stamped.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://cbsrm.wavervanir.com/explorer.html">
+<meta property="og:site_name" content="CBSRM · WaverVanir International">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CBSRM · Systemic Risk Explorer">
+<meta name="twitter:description" content="Any quarter since 1999 across the canonical systemic-risk lenses — reproduced from public data, content-hash stamped. Risk measurement, not investment advice.">
 <style>
   :root{
     --bg:#0A0C10;--surface:#0F141B;--surface-2:#11161F;--border:#1C2330;--border-strong:#283242;
@@ -35,6 +44,9 @@
   .seal{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;color:var(--hash-fg);background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:6px;padding:5px 10px}
   .seal .dot{width:7px;height:7px;border-radius:50%;background:var(--hash-fg);box-shadow:0 0 8px var(--hash-fg)}
   .mast a.home{font-family:var(--mono);font-size:11px;color:var(--text-muted)}
+  .lang{position:relative;display:inline-flex;align-items:center;}
+  .lang select{appearance:none;-webkit-appearance:none;padding-right:24px;font-size:11.5px;}
+  .lang::after{content:"▾";position:absolute;right:9px;pointer-events:none;color:var(--text-dim);font-size:10px;}
 
   /* control bar */
   .controls{border-bottom:1px solid var(--border);background:var(--surface);}
@@ -106,9 +118,12 @@
 <div class="mast">
   <div class="brand">
     <svg class="mk" width="30" height="34" viewBox="0 0 64 72"><use href="#wv-mark"/></svg>
-    <span><span class="wm">CBSRM<span class="dot">.</span></span> <span class="sub">Systemic Risk Explorer</span></span>
+    <span><span class="wm">CBSRM<span class="dot">.</span></span> <span class="sub" data-i18n="ex.sub">Systemic Risk Explorer</span></span>
   </div>
   <div style="display:flex;align-items:center;gap:14px;">
+    <span class="lang"><select id="lang-sel" aria-label="Language">
+      <option value="en">EN</option><option value="ja">日本語</option><option value="es">ES</option><option value="fr">FR</option><option value="de">DE</option>
+    </select></span>
     <span class="seal" id="chain-seal"><span class="dot"></span>CHAIN OK</span>
     <a class="home" href="index.html">↩ wavervanir.com</a>
   </div>
@@ -117,7 +132,7 @@
 <div class="controls">
   <div class="controls__in">
     <div class="qpick">
-      <label for="qsel">Quarter</label>
+      <label for="qsel" data-i18n="ex.quarter">Quarter</label>
       <select id="qsel"></select>
       <button class="btn step" id="prev" title="Previous quarter">◀</button>
       <button class="btn step" id="next" title="Next quarter">▶</button>
@@ -133,40 +148,106 @@
 
 <div class="lede">
   <div>
-    <h1>Systemic-risk readings · <span class="q" id="q-title">—</span></h1>
+    <h1><span data-i18n="ex.h1">Systemic-risk readings</span> · <span class="q" id="q-title">—</span></h1>
     <div class="ctx" id="q-ctx"></div>
   </div>
   <div class="stamp" id="stamp"></div>
 </div>
 
 <div id="grid" class="grid" hidden></div>
-<div id="loading" class="loading">Loading historical readings…</div>
+<div id="loading" class="loading" data-i18n="ex.loading">Loading historical readings…</div>
 
 <footer>
   <div class="foot" id="foot"></div>
-  <div class="nfa">CBSRM reproduces canonical systemic-risk indices from public data (FRED · ECB). Readings are
+  <div class="nfa"><span data-i18n="ex.nfa">CBSRM reproduces canonical systemic-risk indices from public data (FRED · ECB). Readings are
     dated to each provider's publication. Risk measurement and model governance — <b>not investment advice</b>,
-    a solicitation, or an offer to buy or sell any security. © <span id="yr"></span> WaverVanir International ·
+    a solicitation, or an offer to buy or sell any security.</span> © <span id="yr"></span> WaverVanir International ·
     Apache-2.0 methodology.</div>
 </footer>
 
 <script>
 document.getElementById('yr').textContent=new Date().getFullYear();
+
+// ─── i18n · 5 languages (en · ja · es · fr · de — mirrors cbsrm.i18n SUPPORTED_LOCALES) ──
+// Inline HTML is the canonical EN copy (captured at load); data-driven labels
+// (lens ids / regime states / preset windows from history.json) resolve via data.* keys.
+var I18N={
+  en:{
+    "ex.recent":"Most recent quarter — current conditions.",
+    "ex.nodata":"no data",
+    "ex.nohist":"No historical data available.",
+    "ex.loaderr":"Could not load historical data.",
+    "ex.latest":"→ latest",
+    "ex.quarters":"{n} quarters",
+    "ex.gen":"generated {t}",
+    "ex.daily":"auto-refreshed daily",
+    "ex.demo":"DEMO DATA (mock)",
+    "ex.snapshot":"SNAPSHOT",
+    "ex.snap":"snapshot",
+    "data.lens.ECB-CISS-US":"ECB CISS — United States",
+    "data.lens.ECB-CISS-EA":"ECB CISS — Euro Area",
+    "data.lens.ECB-CISS-UK":"ECB CISS — United Kingdom",
+    "data.lens.STLFSI4":"St. Louis Fed Financial Stress",
+    "data.lens.YIELD-CURVE":"Recession probability · 12m",
+    "data.lens.MACRO-REGIME":"Macro regime · 4-state",
+    "data.lens.SAHM":"Sahm Rule recession signal",
+    "data.lens.CREDIT-SPREAD":"HY credit-spread · OAS",
+    "data.cat.stress":"System stress",
+    "data.cat.macro":"Macro regime",
+    "data.cat.credit":"Tail / credit",
+    "data.state.RISK_ON":"RISK ON",
+    "data.state.TRANSITION_UP":"TRANSITION UP",
+    "data.state.TRANSITION_DOWN":"TRANSITION DOWN",
+    "data.state.RISK_OFF":"RISK OFF",
+    "data.state.NORMAL":"NORMAL",
+    "data.state.RECESSION_SIGNAL":"RECESSION SIGNAL",
+    "data.state.EXPANSION":"EXPANSION",
+    "data.state.CONTRACTION":"CONTRACTION",
+    "data.state.CREDIT_BENIGN":"CREDIT BENIGN",
+    "data.state.CREDIT_WIDENING":"CREDIT WIDENING",
+    "data.state.CREDIT_STRESS":"CREDIT STRESS"
+  },
+  ja:{"_title":"CBSRM · システミック・リスク・エクスプローラー — 1999年から現在までの任意の四半期","data.cat.credit":"テール / クレジット","data.cat.macro":"マクロ・レジーム","data.cat.stress":"システム・ストレス","data.lens.CREDIT-SPREAD":"HYクレジットスプレッド · OAS","data.lens.ECB-CISS-EA":"ECB CISS — ユーロ圏","data.lens.ECB-CISS-UK":"ECB CISS — 英国","data.lens.ECB-CISS-US":"ECB CISS — 米国","data.lens.MACRO-REGIME":"マクロ・レジーム · 4状態","data.lens.SAHM":"Sahmルール景気後退シグナル","data.lens.STLFSI4":"セントルイス連銀金融ストレス","data.lens.YIELD-CURVE":"景気後退確率 · 12か月","data.preset.2008Q4":"2008Q4 — 世界金融危機","data.preset.2020Q1":"2020Q1 — COVIDショック","data.preset.2023Q1":"2023Q1 — 地方銀行ストレス","data.state.CONTRACTION":"景気収縮","data.state.CREDIT_BENIGN":"クレジット平穏","data.state.CREDIT_STRESS":"クレジットストレス","data.state.CREDIT_WIDENING":"スプレッド拡大","data.state.EXPANSION":"景気拡大","data.state.NORMAL":"正常","data.state.RECESSION_SIGNAL":"景気後退シグナル","data.state.RISK_OFF":"リスクオフ","data.state.RISK_ON":"リスクオン","data.state.TRANSITION_DOWN":"下方移行","data.state.TRANSITION_UP":"上方移行","ex.daily":"毎日自動更新","ex.demo":"デモデータ(モック)","ex.gen":"生成: {t}","ex.h1":"システミック・リスク計測値","ex.latest":"→ 最新","ex.loaderr":"過去データを読み込めませんでした。","ex.loading":"過去の計測値を読み込み中…","ex.nfa":"CBSRMは公開データ(FRED · ECB)から標準的なシステミック・リスク指数を再現します。計測値には各提供元の公表日を付しています。本サービスはリスク計測およびモデル・ガバナンスであり、<b>投資助言ではなく</b>、勧誘または有価証券の売買の申込みでもありません。","ex.nodata":"データなし","ex.nohist":"過去データはありません。","ex.quarter":"四半期","ex.quarters":"{n}四半期分","ex.recent":"直近の四半期 — 足元の状況。","ex.snap":"スナップショット","ex.snapshot":"スナップショット","ex.sub":"システミック・リスク・エクスプローラー"},
+  es:{"_title":"CBSRM · Explorador de Riesgo Sistémico — cualquier trimestre, 1999–hoy","data.cat.credit":"Cola / crédito","data.cat.macro":"Régimen macro","data.cat.stress":"Estrés del sistema","data.lens.CREDIT-SPREAD":"Diferencial de crédito HY · OAS","data.lens.ECB-CISS-EA":"ECB CISS — Zona del euro","data.lens.ECB-CISS-UK":"ECB CISS — Reino Unido","data.lens.ECB-CISS-US":"ECB CISS — Estados Unidos","data.lens.MACRO-REGIME":"Régimen macro · 4 estados","data.lens.SAHM":"Señal de recesión · regla de Sahm","data.lens.STLFSI4":"Estrés financiero Fed St. Louis","data.lens.YIELD-CURVE":"Probabilidad de recesión · 12m","data.preset.2008Q4":"2008Q4 — Crisis Financiera Global","data.preset.2020Q1":"2020Q1 — Desplome por COVID","data.preset.2023Q1":"2023Q1 — Estrés de banca regional","data.state.CONTRACTION":"CONTRACCIÓN","data.state.CREDIT_BENIGN":"CRÉDITO BENIGNO","data.state.CREDIT_STRESS":"ESTRÉS DE CRÉDITO","data.state.CREDIT_WIDENING":"CRÉDITO SE AMPLÍA","data.state.EXPANSION":"EXPANSIÓN","data.state.NORMAL":"NORMAL","data.state.RECESSION_SIGNAL":"SEÑAL DE RECESIÓN","data.state.RISK_OFF":"RISK OFF","data.state.RISK_ON":"RISK ON","data.state.TRANSITION_DOWN":"TRANSICIÓN BAJISTA","data.state.TRANSITION_UP":"TRANSICIÓN ALCISTA","ex.daily":"actualización automática diaria","ex.demo":"DATOS DEMO (simulados)","ex.gen":"generado {t}","ex.h1":"Lecturas de riesgo sistémico","ex.latest":"→ último","ex.loaderr":"No se pudieron cargar los datos históricos.","ex.loading":"Cargando lecturas históricas…","ex.nfa":"CBSRM reproduce índices canónicos de riesgo sistémico a partir de datos públicos (FRED · ECB). Las lecturas se fechan según la publicación de cada proveedor. Medición de riesgo y gobernanza de modelos — <b>no constituye asesoría de inversión</b>, ni una solicitud, ni una oferta de compra o venta de valor alguno.","ex.nodata":"sin datos","ex.nohist":"No hay datos históricos disponibles.","ex.quarter":"Trimestre","ex.quarters":"{n} trimestres","ex.recent":"Trimestre más reciente — condiciones actuales.","ex.snap":"instantánea","ex.snapshot":"INSTANTÁNEA","ex.sub":"Explorador de Riesgo Sistémico"},
+  fr:{"_title":"CBSRM · Explorateur du risque systémique — tout trimestre, 1999–aujourd'hui","data.cat.credit":"Extrêmes / crédit","data.cat.macro":"Régime macro","data.cat.stress":"Stress du système","data.lens.CREDIT-SPREAD":"Spread de crédit HY · OAS","data.lens.ECB-CISS-EA":"CISS ECB — Zone euro","data.lens.ECB-CISS-UK":"CISS ECB — Royaume-Uni","data.lens.ECB-CISS-US":"CISS ECB — États-Unis","data.lens.MACRO-REGIME":"Régime macro · 4 états","data.lens.SAHM":"Règle de Sahm · signal de récession","data.lens.STLFSI4":"Stress financier Fed de St. Louis","data.lens.YIELD-CURVE":"Probabilité de récession · 12m","data.preset.2008Q4":"2008Q4 — Crise financière mondiale","data.preset.2020Q1":"2020Q1 — Krach COVID","data.preset.2023Q1":"2023Q1 — Stress des banques régionales","data.state.CONTRACTION":"CONTRACTION","data.state.CREDIT_BENIGN":"CRÉDIT CALME","data.state.CREDIT_STRESS":"STRESS CRÉDIT","data.state.CREDIT_WIDENING":"ÉCARTEMENT CRÉDIT","data.state.EXPANSION":"EXPANSION","data.state.NORMAL":"NORMAL","data.state.RECESSION_SIGNAL":"SIGNAL RÉCESSION","data.state.RISK_OFF":"RISK OFF","data.state.RISK_ON":"RISK ON","data.state.TRANSITION_DOWN":"TRANSITION BAISSE","data.state.TRANSITION_UP":"TRANSITION HAUSSE","ex.daily":"actualisation quotidienne automatique","ex.demo":"DONNÉES DÉMO (fictives)","ex.gen":"généré {t}","ex.h1":"Relevés du risque systémique","ex.latest":"→ dernier","ex.loaderr":"Impossible de charger les données historiques.","ex.loading":"Chargement des relevés historiques…","ex.nfa":"CBSRM reproduit les indices canoniques de risque systémique à partir de données publiques (FRED · ECB). Les relevés sont datés de la publication de chaque fournisseur. Mesure du risque et gouvernance des modèles — <b>pas un conseil en investissement</b>, ni une sollicitation, ni une offre d'achat ou de vente d'un quelconque titre financier.","ex.nodata":"aucune donnée","ex.nohist":"Aucune donnée historique disponible.","ex.quarter":"Trimestre","ex.quarters":"{n} trimestres","ex.recent":"Trimestre le plus récent — conditions actuelles.","ex.snap":"instantané","ex.snapshot":"INSTANTANÉ","ex.sub":"Explorateur du risque systémique"},
+  de:{"_title":"CBSRM · Systemrisiko-Explorer — jedes Quartal, 1999–heute","data.cat.credit":"Tail / Kredit","data.cat.macro":"Makro-Regime","data.cat.stress":"Systemstress","data.lens.CREDIT-SPREAD":"HY-Kreditspread · OAS","data.lens.ECB-CISS-EA":"ECB CISS — Euroraum","data.lens.ECB-CISS-UK":"ECB CISS — Großbritannien","data.lens.ECB-CISS-US":"ECB CISS — USA","data.lens.MACRO-REGIME":"Makro-Regime · 4 Zustände","data.lens.SAHM":"Sahm-Regel · Rezessionssignal","data.lens.STLFSI4":"St.-Louis-Fed-Finanzstress","data.lens.YIELD-CURVE":"Rezessionswahrscheinlichkeit · 12M","data.preset.2008Q4":"2008Q4 — Globale Finanzkrise","data.preset.2020Q1":"2020Q1 — COVID-Crash","data.preset.2023Q1":"2023Q1 — Regionalbanken-Stress","data.state.CONTRACTION":"KONTRAKTION","data.state.CREDIT_BENIGN":"KREDIT ENTSPANNT","data.state.CREDIT_STRESS":"KREDITSTRESS","data.state.CREDIT_WIDENING":"KREDIT-AUSWEITUNG","data.state.EXPANSION":"EXPANSION","data.state.NORMAL":"NORMAL","data.state.RECESSION_SIGNAL":"REZESSIONSSIGNAL","data.state.RISK_OFF":"RISK-OFF","data.state.RISK_ON":"RISK-ON","data.state.TRANSITION_DOWN":"ÜBERGANG ABWÄRTS","data.state.TRANSITION_UP":"ÜBERGANG AUFWÄRTS","ex.daily":"täglich automatisch aktualisiert","ex.demo":"DEMO-DATEN (Mock)","ex.gen":"erzeugt {t}","ex.h1":"Systemrisiko-Messwerte","ex.latest":"→ aktuell","ex.loaderr":"Historische Daten konnten nicht geladen werden.","ex.loading":"Historische Messwerte werden geladen…","ex.nfa":"CBSRM reproduziert kanonische Systemrisiko-Indizes aus öffentlichen Daten (FRED · ECB). Messwerte sind auf die Veröffentlichung des jeweiligen Anbieters datiert. Risikomessung und Modell-Governance — <b>keine Anlageberatung</b>, keine Aufforderung und kein Angebot zum Kauf oder Verkauf von Wertpapieren.","ex.nodata":"keine Daten","ex.nohist":"Keine historischen Daten verfügbar.","ex.quarter":"Quartal","ex.quarters":"{n} Quartale","ex.recent":"Jüngstes Quartal — aktuelle Lage.","ex.snap":"Snapshot","ex.snapshot":"SNAPSHOT","ex.sub":"Systemrisiko-Explorer"}
+};
+var LANG_KEY='cbsrm_lang',CUR='en';
+function t(k){var d=I18N[CUR];if(d&&d[k]!=null)return d[k];return I18N.en[k]!=null?I18N.en[k]:'';}
+function fmtT(k,vars){var s=t(k);for(var x in vars){s=s.replace('{'+x+'}',vars[x]);}return s;}
+(function(){
+  var els=document.querySelectorAll('[data-i18n]');
+  for(var i=0;i<els.length;i++){I18N.en[els[i].getAttribute('data-i18n')]=els[i].innerHTML;}
+  I18N.en['_title']=document.title;
+})();
+function applyLang(lang){
+  if(!I18N[lang])lang='en';
+  CUR=lang;try{localStorage.setItem(LANG_KEY,lang);}catch(e){}
+  document.documentElement.lang=lang;
+  var els=document.querySelectorAll('[data-i18n]');
+  for(var i=0;i<els.length;i++){var k=els[i].getAttribute('data-i18n'),v=t(k);if(v)els[i].innerHTML=v;}
+  if(t('_title'))document.title=t('_title');
+  var sel=document.getElementById('lang-sel');if(sel)sel.value=lang;
+  if(window.__redraw)window.__redraw();
+}
+
 (function(){
   var TONE={'ECB-CISS-US':[0.1,0.27,0.4],'ECB-CISS-EA':[0.1,0.27,0.4],'ECB-CISS-UK':[0.1,0.27,0.4],
     'STLFSI4':[1,2,3],'YIELD-CURVE':[0.15,0.33,0.5],'SAHM':[0.3,0.5,0.5],'CREDIT-SPREAD':[400,700,1000]};
   var STATE_TONE={'RISK_ON':'benign','TRANSITION_UP':'benign','EXPANSION':'benign','NORMAL':'benign','CREDIT_BENIGN':'benign',
     'TRANSITION_DOWN':'watch','CREDIT_WIDENING':'watch','CONTRACTION':'severe','RISK_OFF':'severe','CREDIT_STRESS':'severe','RECESSION_SIGNAL':'severe'};
   var STATE_ORD={'RISK_ON':0,'TRANSITION_UP':1,'TRANSITION_DOWN':2,'RISK_OFF':3,'NORMAL':0,'RECESSION_SIGNAL':3,'CREDIT_BENIGN':0,'CREDIT_WIDENING':1.5,'CREDIT_STRESS':3};
+  var CAT={'System stress':'data.cat.stress','Macro regime':'data.cat.macro','Tail / credit':'data.cat.credit'};
   function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
   function numTone(id,v){var t=TONE[id];if(!t||typeof v!=='number')return '';if(id==='STLFSI4'&&v<0)return 'benign';return v<t[0]?'benign':v<t[1]?'watch':v<t[2]?'elevated':'severe';}
   function toneFor(lens,v,s){if(typeof v==='number')return numTone(lens.id,v);if(s)return STATE_TONE[s]||'';return '';}
+  function stateTxt(s){if(!s)return '—';return t('data.state.'+s)||s.replace(/_/g,' ');}
   function fmtVal(lens,v,s){
     if(typeof v==='number'){var f=lens.fmt;
       if(f==='ratio')return v.toFixed(4);if(f==='signed')return (v>=0?'+':'')+v.toFixed(2);
       if(f==='probability')return (v*100).toFixed(1)+'%';if(f==='bps')return Math.round(v)+' bps';
       if(f==='pp2')return v.toFixed(2)+' pp';return v.toFixed(2);}
-    return (s||'—').replace(/_/g,' ');
+    return stateTxt(s);
   }
   // value (numeric) for a lens at a quarter, deriving an ordinal for state-only lenses
   function numAt(lens,q){
@@ -199,29 +280,44 @@ document.getElementById('yr').textContent=new Date().getFullYear();
     document.getElementById('qsel').value=Q[SEL];
     document.getElementById('qrange').value=SEL;
     document.getElementById('q-title').textContent=Q[SEL];
-    var ctx=PRESET[Q[SEL]]||(SEL===Q.length-1?'Most recent quarter — current conditions.':'');
-    document.getElementById('q-ctx').textContent=ctx;
+    setCtx();
     render();
+  }
+  function setCtx(){
+    var q=Q[SEL];
+    var ctx=(t('data.preset.'+q)||PRESET[q])||(SEL===Q.length-1?t('ex.recent'):'');
+    document.getElementById('q-ctx').textContent=ctx;
   }
   function render(){
     var q=Q[SEL], grid=document.getElementById('grid');
     grid.innerHTML=DATA.lenses.map(function(lens){
       var v=lens.values?lens.values[q]:undefined, s=lens.states?lens.states[q]:undefined;
       var isNum=typeof v==='number', tone=toneFor(lens,v,s);
-      var disp=(v==null&&s==null)?'<span style="color:var(--text-dim)">no data</span>':fmtVal(lens,v,s);
+      var disp=(v==null&&s==null)?'<span style="color:var(--text-dim)">'+esc(t('ex.nodata'))+'</span>':esc(fmtVal(lens,v,s));
+      var cat=(CAT[lens.lens]&&t(CAT[lens.lens]))||lens.lens;
+      var label=t('data.lens.'+lens.id)||lens.label;
       return '<div class="panel '+tone+'">'
-        +'<div class="panel__lens">'+esc(lens.lens)+'</div>'
-        +'<div class="panel__label">'+esc(lens.label)+'</div>'
-        +'<div class="panel__row"><div class="panel__val'+(isNum?'':' state')+'">'+esc(disp)+'</div>'
+        +'<div class="panel__lens">'+esc(cat)+'</div>'
+        +'<div class="panel__label">'+esc(label)+'</div>'
+        +'<div class="panel__row"><div class="panel__val'+(isNum?'':' state')+'">'+disp+'</div>'
         +'<div class="panel__unit">'+esc(lens.unit||'')+'</div></div>'
         +sparkline(lens,Q,SEL)
         +'<div class="panel__hint"><span>'+esc(Q[0])+'</span><span>'+esc(lens.source||'')+'</span><span>'+esc(Q[Q.length-1])+'</span></div>'
         +'</div>';
     }).join('');
   }
+  function renderMeta(){
+    if(!DATA)return;
+    var d=DATA,hash=(d.output_sha256||'').slice(0,12);
+    document.getElementById('stamp').innerHTML=esc(t('ex.snap'))+' '+esc(hash)+'…<br>'+esc(fmtT('ex.quarters',{n:Q.length}))+' · '+esc((d.sources||[]).join(' · ')||'FRED · ECB');
+    document.getElementById('foot').innerHTML='<span class="seal"><span class="dot"></span>'+esc(t('ex.snapshot'))+' '+esc(hash)+'…</span>'
+      +'<span>'+esc(Q[0])+' → '+esc(Q[Q.length-1])+'</span><span>'+esc(fmtT('ex.gen',{t:d.generated_at_utc||''}))+'</span>'
+      +(d.mock?'<span style="color:var(--watch)">'+esc(t('ex.demo'))+'</span>':'<span>'+esc(t('ex.daily'))+'</span>');
+  }
+  window.__redraw=function(){if(!DATA)return;renderMeta();setCtx();render();};
   fetch('history.json',{cache:'no-store'}).then(function(r){return r.json();}).then(function(d){
     DATA=d; Q=d.quarters||[];
-    if(!Q.length){document.getElementById('loading').textContent='No historical data available.';return;}
+    if(!Q.length){document.getElementById('loading').textContent=t('ex.nohist');return;}
     (d.presets||[]).forEach(function(p){PRESET[p.quarter]=p.label;});
     var sel=document.getElementById('qsel');
     sel.innerHTML=Q.map(function(q){return '<option value="'+q+'">'+q+'</option>';}).join('');
@@ -230,23 +326,31 @@ document.getElementById('yr').textContent=new Date().getFullYear();
     document.getElementById('edge-hi').textContent=Q[Q.length-1];
     var pc=document.getElementById('presets');
     pc.innerHTML=(d.presets||[]).map(function(p){return '<button class="chip gold" data-q="'+p.quarter+'">'+esc(p.quarter)+'</button>';}).join('')
-      +'<button class="chip" data-q="__latest">→ latest</button>';
+      +'<button class="chip" data-q="__latest" data-i18n="ex.latest">'+esc(t('ex.latest'))+'</button>';
     pc.addEventListener('click',function(e){var b=e.target.closest('[data-q]');if(!b)return;
       setIdx(b.getAttribute('data-q')==='__latest'?Q.length-1:Q.indexOf(b.getAttribute('data-q')));});
     sel.addEventListener('change',function(){setIdx(Q.indexOf(sel.value));});
     rng.addEventListener('input',function(){setIdx(parseInt(rng.value,10));});
     document.getElementById('prev').addEventListener('click',function(){setIdx(SEL-1);});
     document.getElementById('next').addEventListener('click',function(){setIdx(SEL+1);});
-    var hash=(d.output_sha256||'').slice(0,12);
-    document.getElementById('stamp').innerHTML='snapshot '+esc(hash)+'…<br>'+esc(Q.length)+' quarters · '+esc((d.sources||[]).join(' · ')||'FRED · ECB');
-    document.getElementById('foot').innerHTML='<span class="seal"><span class="dot"></span>SNAPSHOT '+esc(hash)+'…</span>'
-      +'<span>'+esc(Q[0])+' → '+esc(Q[Q.length-1])+'</span><span>generated '+esc(d.generated_at_utc||'')+'</span>'
-      +(d.mock?'<span style="color:var(--watch)">DEMO DATA (mock)</span>':'<span>auto-refreshed daily</span>');
+    renderMeta();
     document.getElementById('chain-seal').lastChild.textContent=' CHAIN OK';
     document.getElementById('loading').hidden=true;
     document.getElementById('grid').hidden=false;
     setIdx(Q.length-1);
-  }).catch(function(e){document.getElementById('loading').textContent='Could not load historical data.';});
+  }).catch(function(e){document.getElementById('loading').textContent=t('ex.loaderr');});
+})();
+
+// ─── language boot: ?lang= → localStorage → browser language → en ───
+(function(){
+  var l=null;
+  try{l=new URLSearchParams(location.search).get('lang');}catch(e){}
+  if(!l||!I18N[l]){try{l=localStorage.getItem(LANG_KEY);}catch(e){}}
+  if(!l||!I18N[l]){l=(navigator.language||'en').slice(0,2).toLowerCase();}
+  if(!I18N[l])l='en';
+  if(l!=='en')applyLang(l);
+  var sel=document.getElementById('lang-sel');
+  if(sel){sel.value=l;sel.addEventListener('change',function(){applyLang(sel.value);});}
 })();
 </script>
 </body>

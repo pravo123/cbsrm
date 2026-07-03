@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-07-02T12:59:07Z",
+  "generated_at_utc": "2026-07-03T14:33:44Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -9,9 +9,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-07-01",
+      "as_of": "2026-07-02",
       "fmt": "ratio",
-      "value": 0.011755,
+      "value": 0.013004,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -21,9 +21,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-07-01",
+      "as_of": "2026-07-02",
       "fmt": "ratio",
-      "value": 0.013726,
+      "value": 0.011888,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -33,9 +33,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-07-01",
+      "as_of": "2026-07-02",
       "fmt": "ratio",
-      "value": 0.009258,
+      "value": 0.004395,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -57,9 +57,9 @@
       "unit": "Estrella–Mishkin",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-07-01",
+      "as_of": "2026-07-02",
       "fmt": "probability",
-      "value": 0.179683,
+      "value": 0.173566,
       "interpretation": "Recession probability 12 months out, conditional on current 10Y-3M Treasury spread, via Estrella-Mishkin probit. Persistent inversion = run-length >= 60 trading days."
     },
     {
@@ -80,9 +80,9 @@
       "unit": "pp · trigger 0.50",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-05-01",
+      "as_of": "2026-06-01",
       "fmt": "pp2",
-      "value": 0.1,
+      "value": 0.066667,
       "state": "NORMAL",
       "interpretation": "Sahm Rule: 3-month avg of UNRATE minus its trailing 12-month minimum, in percentage points. >= 0.50 pp = RECESSION_TRIGGERED (historical perfect record); >= 0.30 pp = EARLY_WARNING."
     },
@@ -93,9 +93,9 @@
       "unit": "bps",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-06-30",
+      "as_of": "2026-07-01",
       "fmt": "bps",
-      "value": 275.0,
+      "value": 274.0,
       "state": "CREDIT_BENIGN",
       "interpretation": "HY OAS regime classifier. Level >= 1000 bps OR 1-month change >= 200 bps signals acute credit stress."
     }
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "1c576b5bc52d1f887e1ae7fe5d738ffb792cb2d785a1ce1996be47f73ee6260d"
+  "output_sha256": "abe73ce5443382b1656dac3f1568e8b7e5106fa5009e323d85dec67373ec116a"
 }

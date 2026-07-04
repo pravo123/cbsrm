@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-07-03T14:33:44Z",
+  "generated_at_utc": "2026-07-04T14:01:39Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -93,9 +93,9 @@
       "unit": "bps",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-07-01",
+      "as_of": "2026-07-02",
       "fmt": "bps",
-      "value": 274.0,
+      "value": 275.0,
       "state": "CREDIT_BENIGN",
       "interpretation": "HY OAS regime classifier. Level >= 1000 bps OR 1-month change >= 200 bps signals acute credit stress."
     }
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "abe73ce5443382b1656dac3f1568e8b7e5106fa5009e323d85dec67373ec116a"
+  "output_sha256": "b5719205809c1bfe7dbe8bb837158f0ddcd97bd6497005f54c9a025496b4ca38"
 }

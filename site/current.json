@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-08-12T13:50:46Z",
+  "generated_at_utc": "2026-08-13T13:50:42Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -45,9 +45,9 @@
       "unit": "z · 0 = normal",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-07-31",
+      "as_of": "2026-08-07",
       "fmt": "signed",
-      "value": -0.5063,
+      "value": -0.7709,
       "interpretation": "0 = normal conditions; >0 above-average stress; <0 below-average. Weekly-Thursday cadence."
     },
     {
@@ -57,7 +57,7 @@
       "unit": "Estrella–Mishkin",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-08-11",
+      "as_of": "2026-08-12",
       "fmt": "probability",
       "value": 0.153216,
       "interpretation": "Recession probability 12 months out, conditional on current 10Y-3M Treasury spread, via Estrella-Mishkin probit. Persistent inversion = run-length >= 60 trading days."
@@ -93,9 +93,9 @@
       "unit": "bps",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-08-10",
+      "as_of": "2026-08-11",
       "fmt": "bps",
-      "value": 270.0,
+      "value": 272.0,
       "state": "CREDIT_BENIGN",
       "interpretation": "HY OAS regime classifier. Level >= 1000 bps OR 1-month change >= 200 bps signals acute credit stress."
     }
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "abd8b34ab5d797580ea6cd132614e6b7cd6ea08db2877063cfeab927b5f11bf5"
+  "output_sha256": "41c870b69ade6393a0be8854bd06d43ee6fb486358f531edaf4645fb3a6aaf38"
 }

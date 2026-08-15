@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-history/1.0.0",
-  "generated_at_utc": "2026-08-14T13:46:24Z",
+  "generated_at_utc": "2026-08-15T13:01:44Z",
   "quarters": [
     "1999Q1",
     "1999Q2",
@@ -731,7 +731,7 @@
         "2025Q4": 0.198833,
         "2026Q1": 0.184358,
         "2026Q2": 0.189109,
-        "2026Q3": 0.160295
+        "2026Q3": 0.151825
       }
     },
     {
@@ -1104,5 +1104,5 @@
     "FRED"
   ],
   "disclaimer": "Historical quarterly readings reproduced from public data (ECB SDMX + FRED), at each provider's quarter-end observation. Risk measurement — not investment advice.",
-  "output_sha256": "d6897c13185dd4c648a0a17cd172778ce9e3b4266ddca355fcccb7b88cd4630c"
+  "output_sha256": "fcac5311eefd40eae09934715d14f44bca43d005792b57ea7c0da8c85818ecbc"
 }

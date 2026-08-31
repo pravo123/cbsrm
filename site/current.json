@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-08-30T16:44:19Z",
+  "generated_at_utc": "2026-08-31T19:08:45Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -9,9 +9,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-08-27",
+      "as_of": "2026-08-28",
       "fmt": "ratio",
-      "value": 0.018623,
+      "value": 0.01849,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -21,9 +21,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-08-27",
+      "as_of": "2026-08-28",
       "fmt": "ratio",
-      "value": 0.016755,
+      "value": 0.01647,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -33,9 +33,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-08-27",
+      "as_of": "2026-08-28",
       "fmt": "ratio",
-      "value": 0.001958,
+      "value": 0.001619,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -93,9 +93,9 @@
       "unit": "bps",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-08-27",
+      "as_of": "2026-08-28",
       "fmt": "bps",
-      "value": 263.0,
+      "value": 260.0,
       "state": "CREDIT_BENIGN",
       "interpretation": "HY OAS regime classifier. Level >= 1000 bps OR 1-month change >= 200 bps signals acute credit stress."
     }
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "842487a364d829c467ad9bf6a332a626e245da508f449450e29d0f4e0c55f795"
+  "output_sha256": "108ed857d6b8b6ae214f4ff208699a538252af82883786bfc4bc7b6326f030f5"
 }

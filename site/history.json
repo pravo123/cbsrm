@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-history/1.0.0",
-  "generated_at_utc": "2026-09-06T15:32:40Z",
+  "generated_at_utc": "2026-09-08T16:41:55Z",
   "quarters": [
     "1999Q1",
     "1999Q2",
@@ -247,7 +247,7 @@
         "2025Q4": 0.017201,
         "2026Q1": 0.03238,
         "2026Q2": 0.00951,
-        "2026Q3": 0.014425
+        "2026Q3": 0.034151
       }
     },
     {
@@ -368,7 +368,7 @@
         "2025Q4": 0.0218,
         "2026Q1": 0.055373,
         "2026Q2": 0.009753,
-        "2026Q3": 0.027148
+        "2026Q3": 0.025745
       }
     },
     {
@@ -489,7 +489,7 @@
         "2025Q4": 0.001502,
         "2026Q1": 0.082982,
         "2026Q2": 0.001214,
-        "2026Q3": 0.002291
+        "2026Q3": 0.012655
       }
     },
     {
@@ -1080,7 +1080,7 @@
         "2025Q4": 281.0,
         "2026Q1": 328.0,
         "2026Q2": 275.0,
-        "2026Q3": 265.0
+        "2026Q3": 268.0
       },
       "states": {
         "2023Q3": "CREDIT_BENIGN",
@@ -1104,5 +1104,5 @@
     "FRED"
   ],
   "disclaimer": "Historical quarterly readings reproduced from public data (ECB SDMX + FRED), at each provider's quarter-end observation. Risk measurement — not investment advice.",
-  "output_sha256": "c818c1bf987d000ad905d7fdc6c0e61b5d99ee1a8b435eab5656012a2b215b7f"
+  "output_sha256": "ca148660c98b11cbb8597f807f39259c88535eb83eea7639a920dcfb98ac895b"
 }

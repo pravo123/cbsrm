@@ -6,6 +6,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Test count references corrected to the verified figure: `pytest tests/` on `main` at commit `a95240d` (2026-09-15) collects and passes **1,015** tests (0 failed, 0 skipped). README badge and Tests section, `PRODUCT_ROADMAP_v0.9.md`, `LAUNCH_COMMAND_CENTER.md`, `GITHUB_RELEASE_v0.9.0.md` and `site/index.html` (which previously stated 1,071) now all state 1,015. Historical dated entries (555 at `v0.8.0`, 944 at the 2026-05-24 slice log line) are left as recorded.
+
 ## [0.9.0] - 2026-05-25
 
 ### Added

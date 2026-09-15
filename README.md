@@ -4,7 +4,7 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-944_passing-brightgreen.svg)](#tests)
+[![Tests](https://img.shields.io/badge/tests-1015_passing-brightgreen.svg)](#tests)
 [![Version](https://img.shields.io/badge/version-0.9.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
 [![Live demo](https://img.shields.io/badge/live_demo-Risk_Terminal-1f6feb.svg)](https://pravo123.github.io/cbsrm/)
@@ -100,7 +100,7 @@ CBSRM is the public half of a paired system. The private companion (VolanX) appl
 
 ```bash
 pytest tests/ -v
-# 944 passing on current main in <25s; all HTTP mocked; Monte Carlo seeded for determinism.
+# 1,015 passing on current main (verified 2026-09-15, commit a95240d) in <25s; all HTTP mocked; Monte Carlo seeded for determinism.
 ```
 
 ## Whitepaper

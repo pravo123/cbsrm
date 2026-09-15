@@ -68,7 +68,7 @@ Additional v0.9 slices landed on `main` since the prior docs checkpoint:
 | **Macro-composite Streamlit viewer** | `dashboard/macro_composite_viewer.py` | Standalone offline page; pure `build_viewer_artifacts(window_id) -> dict` helper is the testable surface; Streamlit lazy-imported inside `render()`; selectbox + inline Markdown body + `.md`/`.json` download buttons. |
 | **Macro-composite registry surfaces flip** | `cbsrm/reporting/registry.py` | One-shot catalog-honesty flip: macro-composite entry's `surfaces` field now advertises the three executable front-ends (CLI subcommand + 3 API routes + standalone Streamlit viewer) instead of the prior catalog-only pointer. Drift guards across the registry, API-catalog, API-macro-composite, and Streamlit-viewer test files flipped in lockstep. |
 
-Test count on current `main`: **944 passed** (+389 vs `v0.8.0` tag; zero regressions).
+Test count on current `main`: **1,015 passed** (verified 2026-09-15; +460 vs `v0.8.0` tag; zero regressions).
 
 Surfaces that remain NOT yet on `main`: real binary PDF byte stream, unified `PipelineRecord` composer, manifest / audit / persistence exposure for the `macro-composite` report (CLI / API / Streamlit front-ends now all shipped), `classify_regime` integration for the macro-composite builder, live-data adapters, multi-tenant accounts.
 
@@ -195,7 +195,7 @@ In order. Each one fits the rc-style discipline used through v0.8: feature branc
 - **Default mode is the v0.8 mode.** Every new surface defaults to the behavior that already exists. Opt-in for new behavior, not opt-out.
 - **No new network in tests.** The convention established in `tests/test_cli_crisis_dossier.py` and `tests/test_api_crisis_dossiers.py` (monkeypatch `urllib.request.urlopen` and `requests.Session.request` to fail) extends to every new test file.
 - **Optional deps stay optional.** PDF requires `cbsrm[pdf]`; live-data live mode does not require new deps (uses existing `cbsrm.data`); API hardening adds no required deps.
-- **Pre-merge gate:** full suite green (currently at 944 on `main`, +389 since `v0.8.0`; remaining slices will continue the growth), no `.py` changes outside the allowlist for each slice, CHANGELOG entry present.
+- **Pre-merge gate:** full suite green (currently at 1,015 on `main`, +460 since `v0.8.0`; remaining slices will continue the growth), no `.py` changes outside the allowlist for each slice, CHANGELOG entry present.
 - **Branch discipline:** one slice = one branch = one merge commit = one annotated tag where appropriate (`v0.8.1` after slice 1, etc., to keep the audit trail clean).
 
 ---

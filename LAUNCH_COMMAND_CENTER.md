@@ -22,7 +22,7 @@
 | Surface | Status | Reference |
 |---|---|---|
 | **`main`** | ahead of `v0.8.0` by additive v0.9 commits; CI green | `git log v0.8.0..main` |
-| **Tests on `main`** | **944 passed** (was 555 at `v0.8.0`; +389 from v0.9 additive slices) | `pytest tests/` |
+| **Tests on `main`** | **1,015 passed** (verified 2026-09-15; was 555 at `v0.8.0`; +460 from v0.9 additive slices) | `pytest tests/` |
 | **Report registry (v0.9)** | `cbsrm.reporting.get_report_catalog` / `list_report_ids` / `get_report_metadata`; 2 entries (`crisis-dossier`, `macro-composite`) | `cbsrm/reporting/registry.py` |
 | **Catalog CLI (v0.9)** | `cbsrm reports` — JSON dump of the registry catalog | `cbsrm/cli.py` |
 | **Catalog API (v0.9)** | `GET /reports` — JSON catalog endpoint | `cbsrm/api/routes.py` |
@@ -222,7 +222,7 @@ A 90-minute sequence assuming the prerequisites in §§3-9 are complete. Steps t
 
 | # | Step | Approx time | Depends on |
 |---|---|---:|---|
-| 1 | Final `pytest tests/` on `main` — confirm the current expected count (**944 passed** on `main` as of this revision; was 555 at the `v0.8.0` tag) | 1 min | — |
+| 1 | Final `pytest tests/` on `main` — confirm the current expected count (**1,015 passed** on `main` as of 2026-09-15; was 555 at the `v0.8.0` tag) | 1 min | — |
 | 2 | Open <https://github.com/pravo123/cbsrm/releases/new?tag=v0.8.0> | 1 min | Step 1 |
 | 3 | ▸ Paste `GITHUB_RELEASE_v0.8.0.md`; publish | 3 min | Step 2 |
 | 4 | ▸ Capture the Release URL | 0 min | Step 3 |

@@ -33,7 +33,7 @@ on top of it. Body below is copy-paste ready for
   manifest, content-addressed sqlite report store, and a tamper-evident
   sqlite audit chain — all opt-in, all exposed across CLI, HTTP API,
   and Streamlit with bit-for-bit-identical bytes.
-- **944 tests passing** (up from 555 at v0.8.0).
+- **1,015 tests passing** (up from 555 at v0.8.0).
 - **No new runtime dependencies.** FastAPI optional under `cbsrm[api]`;
   Streamlit lazily imported inside each viewer; `markdown` optional
   under `cbsrm[html]`.
@@ -96,7 +96,7 @@ join key — no audit-chain coupling required.
 
 ## Quality + footprint
 
-- **944 tests passing** (was 555 at v0.8.0).
+- **1,015 tests passing** (was 555 at v0.8.0).
 - **No new runtime dependencies.** FastAPI stays under `cbsrm[api]`;
   the new `markdown`-package-backed HTML renderer is gated by the
   optional `cbsrm[html]` extra.
@@ -139,7 +139,7 @@ Verify:
 
 ```bash
 python -c "import cbsrm; print(cbsrm.__version__)"   # -> 0.9.0
-pytest tests/                                        # -> 944 passed
+pytest tests/                                        # -> 1,015 passed
 cbsrm reports | jq '.reports[].id'                   # -> crisis-dossier, macro-composite
 cbsrm macro-composite 2008Q4 --format markdown | head
 cbsrm crisis-dossier 2008Q4 --format html > lehman.html

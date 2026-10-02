@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>CBSRM | Laghubitta Risk Layer</title>
+<meta name="description" content="CBSRM is a branch risk monitor, early-warning and stress-testing layer for microfinance institutions. It sits beside the Core Banking System and analyses an authorised export. Pilot prototype on synthetic data. Not a regulatory report.">
+<style>
+  /* CBSRM laghubitta risk layer: product page. Self-contained: zero external
+     dependencies, no scripts, no images. Shares the visual system of
+     laghubitta.html. Pilot prototype. Synthetic sample data. */
+  :root{
+    --bg:#0A0C10; --surface:#0F141B; --surface-2:#11161F;
+    --border:#1C2330; --border-strong:#283242;
+    --accent:#3A78C9;
+    --text:#E4E9F2; --text-strong:#F2F5FA; --text-muted:#8C99AE; --text-dim:#828FA4;
+    --benign:#4F9E84; --watch:#C9A24B; --elevated:#D98A3A; --severe:#C2545A;
+    --hash-bg:#0F1B17; --hash-bd:#1E3A30;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Code","SF Mono",Consolas,Menlo,monospace;
+    --gutter:48px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;}
+  .wrap{max-width:1440px;margin:0 auto;}
+  a{color:var(--accent);text-decoration:none;} a:hover{text-decoration:underline;}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px;}
+  h1,h2,h3{margin:0;}
+  p{margin:0;}
+
+  /* masthead */
+  .rt-mast{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 24px;
+    border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .rt-brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .rt-wordmark{font-family:var(--mono);font-size:16px;font-weight:600;color:var(--text-strong);letter-spacing:.02em;}
+  .rt-wordmark .dot{color:var(--accent);}
+  .rt-overline{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);}
+  .rt-tag{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+  .rt-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
+  .rt-nav a{color:var(--text-muted);padding:6px 10px;border-radius:5px;border:1px solid transparent;}
+  .rt-nav a:hover{color:var(--text-strong);border-color:var(--border-strong);text-decoration:none;}
+  .rt-nav a.rt-nav__cta{color:var(--text-strong);border-color:var(--accent);background:#0F1828;}
+  .rt-lozenge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--benign);
+    background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:5px;padding:4px 9px;}
+  .rt-lozenge .seal-dot{width:7px;height:7px;border-radius:50%;background:var(--benign);flex:none;}
+
+  /* banner */
+  .banner{margin:0;padding:10px 24px;background:#1A1508;border-bottom:1px solid #3A2F12;color:var(--watch);
+    font-family:var(--mono);font-size:13px;letter-spacing:.02em;}
+  .banner b{color:#E8C66A;}
+
+  /* buttons */
+  .btns{display:flex;gap:12px;flex-wrap:wrap;}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:13.5px;font-weight:500;
+    padding:12px 20px;border-radius:7px;border:1px solid var(--border-strong);cursor:pointer;
+    transition:background .15s,border-color .15s,color .15s;white-space:nowrap;}
+  .btn:hover{text-decoration:none;}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#4A88D9;border-color:#4A88D9;color:#fff;}
+  .btn-ghost{background:var(--surface);color:var(--text);}
+  .btn-ghost:hover{border-color:#3A4A63;color:var(--text-strong);background:var(--surface-2);}
+
+  /* hero */
+  .hero{position:relative;display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:64px;align-items:center;
+    padding:88px var(--gutter) 92px;border-bottom:1px solid var(--border);overflow:hidden;
+    min-height:min(840px,calc(100vh - 100px));isolation:isolate;}
+  .hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+    background-size:48px 48px;opacity:.45;
+    -webkit-mask-image:radial-gradient(ellipse 70% 80% at 72% 45%,#000 0%,transparent 70%);
+    mask-image:radial-gradient(ellipse 70% 80% at 72% 45%,#000 0%,transparent 70%);}
+  .hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+    background:radial-gradient(ellipse 45% 55% at 74% 46%,rgba(58,120,201,.16),transparent 70%);}
+  .eyebrow{display:inline-flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--text-muted);margin-bottom:22px;}
+  .eyebrow .pip{width:8px;height:8px;border-radius:2px;background:var(--accent);flex:none;}
+  .hero h1{font-size:clamp(31px,3.3vw,54px);line-height:1.08;letter-spacing:-.022em;font-weight:650;color:var(--text-strong);
+    max-width:17ch;}
+  .hero h1 .h1-sub{display:block;font-size:.86em;color:var(--text-muted);font-weight:500;margin-top:.22em;}
+  .hero__lede{font-size:clamp(15.5px,1.08vw,18px);line-height:1.62;color:var(--text);max-width:60ch;margin:26px 0 32px;}
+  .hero__lede b{color:var(--text-strong);font-weight:600;}
+  .hero__facts{list-style:none;margin:30px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:10px 22px;
+    font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .hero__facts li{display:flex;align-items:center;gap:8px;}
+  .hero__facts li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--benign);flex:none;}
+  .hero__facts b{color:var(--text);font-weight:500;}
+
+  /* hero preview (illustrative, synthetic) */
+  .pv{background:var(--surface);border:1px solid var(--border-strong);border-radius:10px;padding:18px 20px 20px;
+    box-shadow:0 30px 80px -30px rgba(0,0,0,.8),0 0 0 1px rgba(58,120,201,.06);min-width:0;}
+  .pv__hd{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;
+    padding-bottom:12px;border-bottom:1px solid var(--border);margin-bottom:12px;}
+  .pv__title{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);}
+  .pv__tag{font-family:var(--mono);font-size:10.5px;color:var(--watch);}
+  .pv__cols,.pv__row{display:grid;grid-template-columns:86px minmax(0,1fr) 78px;gap:12px;align-items:center;}
+  .pv__cols{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
+  .pv__cols span:last-child{text-align:right;}
+  .pv__row{padding:7px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+  .pv__row .nm{font-family:var(--mono);color:var(--text);white-space:nowrap;}
+  .pv__track{position:relative;height:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;}
+  .pv__track i{position:absolute;top:0;bottom:0;left:0;border-radius:1px;}
+  .pv__track::after{content:"";position:absolute;top:-4px;bottom:-4px;left:58%;border-left:1px dashed var(--text-dim);opacity:.7;}
+  .lvl{justify-self:end;font:10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:3px;border:1px solid;}
+  .lvl.b{color:var(--benign);border-color:#1E3A30;background:#0F1B17;}
+  .lvl.w{color:var(--watch);border-color:#4A3E1E;background:#1A1608;}
+  .lvl.e{color:var(--elevated);border-color:#4A3420;background:#1A120A;}
+  .lvl.s{color:var(--severe);border-color:#4A2A30;background:#1A1014;}
+  .bg-b{background:var(--benign)} .bg-w{background:var(--watch)} .bg-e{background:var(--elevated)} .bg-s{background:var(--severe)} .bg-a{background:var(--accent)}
+  .pv__thr{display:flex;justify-content:flex-end;gap:6px;align-items:center;font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:8px;}
+  .pv__thr::before{content:"";width:14px;border-top:1px dashed var(--text-dim);}
+  .pv__split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:12px;margin-top:14px;}
+  .pv__box{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:11px 12px;min-width:0;}
+  .pv__lbl{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:9px;}
+  .pv__alert{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);margin-top:7px;min-width:0;}
+  .pv__alert span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sev{display:inline-block;flex:none;font:10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:3px 6px;border-radius:3px;border:1px solid;}
+  .sev.high{color:var(--severe);border-color:#4A2A30;background:#1A1014;}
+  .sev.medium{color:var(--watch);border-color:#4A3E1E;background:#1A1608;}
+  .pv__sbar{display:grid;grid-template-columns:62px minmax(0,1fr);gap:8px;align-items:center;font-family:var(--mono);font-size:10.5px;color:var(--text-muted);margin-top:7px;}
+  .pv__sbar .t{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;position:relative;}
+  .pv__sbar .t i{position:absolute;top:0;bottom:0;left:0;border-radius:1px;}
+  .rt-block{background:var(--hash-bg);border:1px solid var(--hash-bd);border-radius:6px;padding:10px 12px;}
+  .rt-block .rid{font-family:var(--mono);font-size:9.5px;color:var(--text-dim);letter-spacing:.1em;text-transform:uppercase;}
+  .rt-block .hsh{font-family:var(--mono);font-size:11px;color:var(--benign);word-break:break-all;margin-top:3px;}
+  .pv .rt-block{margin-top:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .pv .rt-block .hsh{margin-top:0;}
+
+  /* sections and panels */
+  .rt-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;background:var(--border);border-bottom:1px solid var(--border);}
+  .rt-panel{background:var(--bg);padding:56px var(--gutter);min-width:0;}
+  .col-5{grid-column:span 5} .col-7{grid-column:span 7} .col-6{grid-column:span 6} .col-12{grid-column:span 12}
+  .rt-panel__hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap;}
+  .rt-panel__title{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin:0;font-weight:400;}
+  .rt-panel__title .ix{font-family:var(--mono);color:var(--accent);margin-right:10px;letter-spacing:.06em;}
+  .rt-cite{font-family:var(--mono);font-size:10.5px;color:var(--text-dim);text-align:right;}
+  .lead{font-size:clamp(20px,1.6vw,26px);line-height:1.3;letter-spacing:-.01em;color:var(--text-strong);font-weight:600;max-width:34ch;margin-bottom:12px;}
+  .body{font-size:15px;line-height:1.65;color:var(--text-muted);max-width:72ch;}
+  .body b{color:var(--text);font-weight:600;}
+
+  /* connects */
+  .flow{display:flex;align-items:stretch;justify-content:center;gap:0;flex-wrap:wrap;margin:6px 0 10px;}
+  .flow .box{flex:1 1 240px;max-width:340px;background:var(--surface);border:1px solid var(--border-strong);border-radius:6px;
+    padding:14px 16px;text-align:center;font-size:14px;color:var(--text-strong);display:flex;align-items:center;justify-content:center;}
+  .flow .box.mid{border-color:var(--accent);background:#0F1828;}
+  .flow .arrow{display:flex;align-items:center;padding:0 12px;color:var(--accent);font-size:24px;font-family:var(--mono);}
+  .flow-note{text-align:center;color:var(--text-muted);font-size:13px;margin:0;}
+  .connect .flow{margin:34px 0 14px;}
+  .connect .flow .box{min-height:84px;font-size:15px;line-height:1.4;}
+  .connect .flow-note{font-size:15px;color:var(--text);}
+  .vs{list-style:none;margin:36px auto 0;padding:0;max-width:1100px;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .vs li{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1fr);border-top:1px solid var(--border);}
+  .vs li:first-child{border-top:0;}
+  .vs li > *{padding:13px 18px;font-size:14px;line-height:1.55;min-width:0;}
+  .vs .k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);
+    background:var(--surface);display:flex;align-items:center;}
+  .vs .cbs{color:var(--text-muted);border-left:1px solid var(--border);}
+  .vs .rm{color:var(--text);border-left:1px solid var(--border);background:#0C121C;}
+  .vs .hd > *{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding-top:11px;padding-bottom:11px;}
+  .vs .hd .cbs{color:var(--text-muted);background:var(--surface);}
+  .vs .hd .rm{color:var(--accent);background:#0F1828;}
+  .vs .lbl{display:none;}
+
+  /* pilot steps */
+  .steps{list-style:none;margin:28px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;counter-reset:none;}
+  .step{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:22px 22px 24px;min-width:0;}
+  .step__n{display:flex;align-items:center;gap:12px;font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.08em;margin-bottom:14px;}
+  .step__n b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;border:1px solid var(--accent);
+    background:#0F1828;color:var(--text-strong);font-size:13px;font-weight:600;letter-spacing:0;}
+  .step__n::after{content:"";flex:1;border-top:1px dashed var(--border-strong);}
+  .step:last-child .step__n::after{border-top-color:transparent;}
+  .step h3{font-size:18px;color:var(--text-strong);font-weight:600;margin-bottom:8px;}
+  .step p{font-size:14px;line-height:1.62;color:var(--text-muted);}
+  .step p a{font-family:var(--mono);font-size:13px;}
+  .step__meta{margin-top:14px;font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+
+  /* provides */
+  .provides{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-direction:column;gap:0;border-top:1px solid var(--border);}
+  .provides li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:12px;padding:16px 0;border-bottom:1px solid var(--border);}
+  .provides .mk{font-family:var(--mono);font-size:12px;color:var(--accent);padding-top:2px;}
+  .provides h3{font-size:15.5px;color:var(--text-strong);font-weight:600;margin-bottom:4px;}
+  .provides p{font-size:14px;line-height:1.6;color:var(--text-muted);}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--text);background:var(--surface-2);border:1px solid var(--border-strong);
+    border-radius:4px;padding:3px 8px;white-space:nowrap;}
+
+  /* privacy */
+  .priv{display:flex;flex-direction:column;gap:10px;margin-top:22px;}
+  .priv__row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;padding:12px 14px;border-radius:6px;
+    background:var(--surface);border:1px solid var(--border);font-size:14px;line-height:1.55;color:var(--text);}
+  .priv__row .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);padding-top:2px;}
+  .priv__row.ok{background:var(--hash-bg);border-color:var(--hash-bd);}
+  .priv__row.ok .v{color:var(--text-strong);}
+
+  /* gets */
+  .gets{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:28px;}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 18px 22px;min-width:0;
+    display:flex;flex-direction:column;transition:border-color .15s;}
+  .card:hover{border-color:var(--border-strong);}
+  .card__k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);
+    display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+  .card__k::before{content:"";width:16px;height:2px;background:var(--accent);flex:none;}
+  .card h3{font-size:17px;color:var(--text-strong);font-weight:600;margin-bottom:8px;line-height:1.3;}
+  .card p{font-size:13.5px;line-height:1.6;color:var(--text-muted);}
+  .card .chips{margin-top:12px;}
+  .card__foot{margin-top:auto;padding-top:14px;}
+  .card .rt-block{margin-top:14px;}
+  .card .rt-block .hsh{font-size:10.5px;word-break:normal;overflow-wrap:anywhere;}
+
+  /* status */
+  .status{list-style:none;margin:22px 0 0;padding:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .status li{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:center;padding:13px 16px;
+    border-top:1px solid var(--border);font-size:14px;line-height:1.55;color:var(--text);}
+  .status li:first-child{border-top:0;}
+  .status .lvl{justify-self:start;}
+
+  /* call to action */
+  .cta{text-align:center;padding:76px var(--gutter) 80px;background:
+    radial-gradient(ellipse 50% 90% at 50% 0%,rgba(58,120,201,.12),transparent 70%),var(--bg);}
+  .cta .rt-panel__title{margin-bottom:16px;}
+  .cta .cta__h{font-size:clamp(26px,2.4vw,38px);line-height:1.15;letter-spacing:-.015em;color:var(--text-strong);font-weight:650;
+    max-width:24ch;margin:0 auto 14px;}
+  .cta .body{margin:0 auto 30px;max-width:62ch;}
+  .cta .btns{justify-content:center;}
+  .cta__mail{margin-top:18px;font-family:var(--mono);font-size:12.5px;color:var(--text-dim);}
+
+  .rt-foot{padding:18px 24px 30px;color:var(--text-dim);font-size:12px;}
+  .rt-foot p{margin:0 0 6px;}
+
+  @media (max-width:1280px){
+    .gets{grid-template-columns:repeat(3,minmax(0,1fr));}
+  }
+  @media (max-width:1180px){
+    :root{--gutter:32px;}
+    .hero{grid-template-columns:minmax(0,1fr);gap:48px;min-height:0;padding-top:64px;padding-bottom:64px;}
+    .hero h1{max-width:22ch;}
+    .pv{max-width:640px;}
+    .col-5,.col-6,.col-7{grid-column:span 12;}
+  }
+  @media (max-width:900px){
+    .steps{grid-template-columns:minmax(0,1fr);}
+    .step__n::after{display:none;}
+    .gets{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+  @media (max-width:760px){
+    .connect .flow{flex-direction:column;align-items:center;}
+    .connect .flow .box{flex:0 0 auto;width:100%;max-width:420px;min-height:0;}
+    .connect .flow .arrow{padding:6px 0;transform:rotate(90deg);}
+    .vs li{grid-template-columns:minmax(0,1fr);}
+    .vs .hd{display:none;}
+    .vs .cbs,.vs .rm{border-left:0;border-top:1px solid var(--border);}
+    .vs .lbl{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px;}
+    .vs .cbs .lbl{color:var(--text-dim);} .vs .rm .lbl{color:var(--accent);}
+    .priv__row,.status li{grid-template-columns:minmax(0,1fr);gap:6px;}
+  }
+  @media (max-width:640px){
+    :root{--gutter:16px;}
+    .rt-mast{padding:14px 16px;}
+    .banner{padding:10px 16px;}
+    .rt-panel{padding:40px var(--gutter);}
+    .hero{padding-top:44px;padding-bottom:48px;gap:36px;}
+    .hero::after{background:radial-gradient(ellipse 90% 40% at 50% 70%,rgba(58,120,201,.14),transparent 70%);}
+    .gets{grid-template-columns:minmax(0,1fr);}
+    .pv{padding:14px 14px 16px;}
+    .pv__cols,.pv__row{grid-template-columns:72px minmax(0,1fr) 70px;gap:8px;}
+    .pv__split{grid-template-columns:minmax(0,1fr);}
+    .btns .btn{flex:1 1 auto;justify-content:center;}
+    .cta{padding:56px var(--gutter) 60px;}
+    .rt-foot{padding:18px 16px 30px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- masthead -->
+  <header class="rt-mast">
+    <div class="rt-brand">
+      <span class="rt-wordmark">CBSRM<span class="dot"> ·</span></span>
+      <span class="rt-overline">Microfinance Risk Layer</span>
+      <span class="rt-tag">for laghubitta institutions</span>
+    </div>
+    <nav class="rt-nav" aria-label="Primary">
+      <a href="laghubitta-app.html">Open the app</a>
+      <a href="laghubitta.html">Sample dashboard</a>
+      <a class="rt-nav__cta" href="#request-pilot">Request a pilot</a>
+    </nav>
+  </header>
+
+  <!-- banner -->
+  <p class="banner" role="note"><b>Pilot prototype. Sample data is synthetic. Not a regulatory report.</b></p>
+
+  <main>
+  <!-- hero -->
+  <section class="hero" id="hero" aria-labelledby="heroT">
+    <div class="hero__copy">
+      <p class="eyebrow"><span class="pip" aria-hidden="true"></span>Risk layer for microfinance institutions</p>
+      <h1 id="heroT">Branch risk monitor, early warning and stress testing<span class="h1-sub">beside your Core Banking System.</span></h1>
+      <p class="hero__lede">CBSRM reads an <b>authorised export</b> from the institution's existing CBS or MIS and turns it into a month-end view of portfolio risk, branch by branch: PAR and overdue migration, concentration, early-warning alerts against agreed thresholds, and stress tests for rate, farm income, monsoon, regional disaster and funding shocks. It is <b>read-only</b>. It posts nothing back and changes no account, so the CBS stays the ledger of record.</p>
+      <div class="btns">
+        <a class="btn btn-primary" href="laghubitta-app.html">Open the app <span aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href="laghubitta.html">View sample dashboard</a>
+      </div>
+      <ul class="hero__facts">
+        <li><b>Read-only</b>&nbsp;no posting to the CBS</li>
+        <li><b>In the browser</b>&nbsp;the file is not uploaded</li>
+        <li><b>Hash-chained</b>&nbsp;audit trail</li>
+      </ul>
+    </div>
+
+    <div class="hero__viz">
+      <div class="pv" role="img" aria-label="Illustrative preview of the branch risk monitor on synthetic sample data: six branches with a PAR30 bar against a threshold and a status, two early-warning alerts, a monsoon stress comparison and an audit chain head.">
+        <div class="pv__hd">
+          <span class="pv__title">Branch risk monitor</span>
+          <span class="pv__tag">synthetic sample · illustrative</span>
+        </div>
+        <div class="pv__cols"><span>Branch</span><span>PAR30</span><span>Status</span></div>
+        <div class="pv__row"><span class="nm">Branch 01</span><span class="pv__track"><i class="bg-b" style="width:22%"></i></span><span class="lvl b">Normal</span></div>
+        <div class="pv__row"><span class="nm">Branch 02</span><span class="pv__track"><i class="bg-w" style="width:47%"></i></span><span class="lvl w">Watch</span></div>
+        <div class="pv__row"><span class="nm">Branch 03</span><span class="pv__track"><i class="bg-e" style="width:64%"></i></span><span class="lvl e">Elevated</span></div>
+        <div class="pv__row"><span class="nm">Branch 04</span><span class="pv__track"><i class="bg-b" style="width:15%"></i></span><span class="lvl b">Normal</span></div>
+        <div class="pv__row"><span class="nm">Branch 05</span><span class="pv__track"><i class="bg-s" style="width:83%"></i></span><span class="lvl s">Severe</span></div>
+        <div class="pv__row"><span class="nm">Branch 06</span><span class="pv__track"><i class="bg-b" style="width:29%"></i></span><span class="lvl b">Normal</span></div>
+        <div class="pv__thr">alert threshold</div>
+        <div class="pv__split">
+          <div class="pv__box">
+            <div class="pv__lbl">Early-warning alerts</div>
+            <div class="pv__alert"><span class="sev high">high</span><span>Branch 05 · PAR30 above threshold</span></div>
+            <div class="pv__alert"><span class="sev medium">medium</span><span>Branch 03 · roll rate above threshold</span></div>
+          </div>
+          <div class="pv__box">
+            <div class="pv__lbl">Stress · monsoon</div>
+            <div class="pv__sbar"><span>base</span><span class="t"><i class="bg-a" style="width:38%"></i></span></div>
+            <div class="pv__sbar"><span>stressed</span><span class="t"><i class="bg-e" style="width:71%"></i></span></div>
+          </div>
+        </div>
+        <div class="rt-block"><span class="rid">Audit chain head</span><span class="hsh">sample · 8f67c681…bd41850</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rt-grid">
+
+    <!-- how it connects -->
+    <section class="rt-panel col-12 connect" id="how-it-connects" aria-labelledby="hcT">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="hcT"><span class="ix">01</span>How it connects</h2>
+        <span class="rt-cite">CBS versus CBSRM</span></div>
+      <p class="lead">The CBS keeps the books. CBSRM reads them and tells you where the risk is.</p>
+      <div class="flow">
+        <div class="box">Existing CBS / MIS (export, report or API)</div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="box mid">CBSRM risk layer</div>
+        <div class="arrow" aria-hidden="true">→</div>
+        <div class="box">Management, board and regulator-oriented reports</div>
+      </div>
+      <p class="flow-note">CBSRM does not replace the Core Banking System. It analyses authorised data from it.</p>
+
+      <ul class="vs" aria-label="What the CBS does compared with what CBSRM does">
+        <li class="hd" aria-hidden="true"><span class="k"></span><span class="cbs">Core Banking System / MIS</span><span class="rm">CBSRM risk layer</span></li>
+        <li><span class="k">Role</span>
+          <span class="cbs"><span class="lbl">CBS / MIS</span>Records transactions, accounts and repayments. It is the ledger of record.</span>
+          <span class="rm"><span class="lbl">CBSRM</span>Reads an authorised export of that ledger. It keeps no ledger of its own.</span></li>
+        <li><span class="k">Work</span>
+          <span class="cbs"><span class="lbl">CBS / MIS</span>Posts disbursements, collections and interest, day to day.</span>
+          <span class="rm"><span class="lbl">CBSRM</span>Computes portfolio risk, stress results and early-warning alerts by branch.</span></li>
+        <li><span class="k">Access</span>
+          <span class="cbs"><span class="lbl">CBS / MIS</span>Read and write, inside the institution's own systems.</span>
+          <span class="rm"><span class="lbl">CBSRM</span>Read-only. No posting, no write-back, no change to any account.</span></li>
+      </ul>
+    </section>
+
+    <!-- pilot -->
+    <section class="rt-panel col-12" id="pilot" aria-labelledby="plT">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="plT"><span class="ix">02</span>What a pilot looks like</h2>
+        <span class="rt-cite">three steps, repeated each month-end</span></div>
+      <p class="lead">Export, calibrate, review.</p>
+      <ol class="steps">
+        <li class="step">
+          <div class="step__n"><b>1</b></div>
+          <h3>Export</h3>
+          <p>The institution exports an anonymised or centre-level aggregated portfolio file from its CBS/MIS in the template format (<a href="laghubitta_template.csv">laghubitta_template.csv</a>).</p>
+          <div class="step__meta">no customer names or IDs</div>
+        </li>
+        <li class="step">
+          <div class="step__n"><b>2</b></div>
+          <h3>Calibrate</h3>
+          <p>Thresholds, provisioning rates and scenarios are set together with the institution's risk team against current NRB directives.</p>
+          <div class="step__meta">set with the risk team</div>
+        </li>
+        <li class="step">
+          <div class="step__n"><b>3</b></div>
+          <h3>Review</h3>
+          <p>Management and board receive the branch risk monitor, alerts, stress results and a board summary each month-end.</p>
+          <div class="step__meta">every month-end</div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- provides -->
+    <section class="rt-panel col-6" id="provides" aria-labelledby="prT">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="prT"><span class="ix">03</span>What the institution provides</h2></div>
+      <p class="lead">Three things, none of them customer-identifying.</p>
+      <ul class="provides">
+        <li><span class="mk">01</span><div>
+          <h3>An anonymised or aggregated portfolio export</h3>
+          <p>From the CBS/MIS, in the template format. Centre-level aggregates are enough. No customer names or IDs are needed.</p></div></li>
+        <li><span class="mk">02</span><div>
+          <h3>A balance-sheet summary</h3>
+          <p>The handful of figures needed for capital, liquidity and funding stress.</p>
+          <div class="chips"><span class="chip">capital</span><span class="chip">RWA</span><span class="chip">liquid assets</span><span class="chip">90 day inflows</span><span class="chip">90 day outflows</span><span class="chip">borrowings</span></div></div></li>
+        <li><span class="mk">03</span><div>
+          <h3>A contact in risk or MIS</h3>
+          <p>One person who knows the export and can sit in on calibration.</p></div></li>
+      </ul>
+    </section>
+
+    <!-- privacy -->
+    <section class="rt-panel col-6" id="privacy" aria-labelledby="pvT">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="pvT"><span class="ix">04</span>Privacy</h2>
+        <span class="rt-lozenge"><span class="seal-dot" aria-hidden="true"></span>processed in the browser</span></div>
+      <p class="lead">The app processes the file in the browser. Nothing is uploaded.</p>
+      <div class="priv">
+        <div class="priv__row ok"><span class="k">Where it runs</span><span class="v">In the browser tab, on the computer that opens the file.</span></div>
+        <div class="priv__row ok"><span class="k">Upload</span><span class="v">None. The file is read locally and is not sent to a server.</span></div>
+        <div class="priv__row"><span class="k">What it needs</span><span class="v">No customer names or IDs. An anonymised or centre-level aggregated file is enough for the pilot.</span></div>
+        <div class="priv__row"><span class="k">What it records</span><span class="v">A SHA-256 of the input file and the hash chain of computed results, so a figure can be traced back to the exact file that produced it.</span></div>
+      </div>
+    </section>
+
+    <!-- gets -->
+    <section class="rt-panel col-12" id="gets" aria-labelledby="gtT">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="gtT"><span class="ix">05</span>What it gets</h2>
+        <span class="rt-cite">see them on the <a href="laghubitta.html">sample dashboard</a></span></div>
+      <p class="lead">Five outputs, every month-end.</p>
+      <div class="gets">
+        <article class="card">
+          <div class="card__k">Monitor</div>
+          <h3>Branch risk monitor</h3>
+          <p>PAR and a 24 month trend for every branch, filterable by province and district, with overdue migration and concentration across the portfolio.</p>
+        </article>
+        <article class="card">
+          <div class="card__k">Alerts</div>
+          <h3>Early-warning alerts</h3>
+          <p>Rules flag branches that cross agreed thresholds, ranked by severity, each with the value and the threshold that triggered it.</p>
+          <div class="chips"><span class="sev high">high</span><span class="sev medium">medium</span></div>
+        </article>
+        <article class="card">
+          <div class="card__k">Stress</div>
+          <h3>Stress tests</h3>
+          <p>Each scenario recomputes PAR, provisions, capital and the 90 day liquidity gap.</p>
+          <div class="chips"><span class="chip">rate</span><span class="chip">farm income</span><span class="chip">monsoon</span><span class="chip">regional disaster</span><span class="chip">funding squeeze</span><span class="chip">custom</span></div>
+        </article>
+        <article class="card">
+          <div class="card__k">Board</div>
+          <h3>Board summary report</h3>
+          <p>A short month-end summary for management and the board, drawn from the same computed figures as the monitor.</p>
+        </article>
+        <article class="card">
+          <div class="card__k">Audit</div>
+          <h3>Audit trail</h3>
+          <p>SHA-256 of the input file and a hash-chained record of every computed block.</p>
+          <div class="rt-block"><div class="rid">input file · chain head</div><div class="hsh">sha256 → block → block → head</div></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- status -->
+    <section class="rt-panel col-12" id="status" aria-labelledby="stT">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="stT"><span class="ix">06</span>Status</h2>
+        <span class="rt-cite">what exists today, and what does not</span></div>
+      <p class="lead">A working prototype. The institution-specific work is still to do.</p>
+      <ul class="status">
+        <li><span class="lvl b">Running</span><span>The prototype runs end to end on synthetic data: the app, the sample dashboard and the audit trail.</span></li>
+        <li><span class="lvl w">Not done</span><span>CBS integration is pilot work and has not been done for any institution.</span></li>
+        <li><span class="lvl w">Not done</span><span>Data mapping from an institution's own CBS/MIS export to the template is pilot work and has not been done.</span></li>
+        <li><span class="lvl w">Not done</span><span>Calibration against current NRB directives is pilot work and has not been done.</span></li>
+        <li><span class="lvl e">Illustrative</span><span>Thresholds and provisioning rates shown in the app and the sample dashboard are illustrative, to be calibrated.</span></li>
+        <li><span class="lvl s">Not claimed</span><span>No regulatory approval or compliance is claimed. Outputs are not a regulatory report.</span></li>
+      </ul>
+    </section>
+
+    <!-- call to action -->
+    <section class="rt-panel col-12 cta" id="request-pilot" aria-labelledby="ctT">
+      <h2 class="rt-panel__title" id="ctT">Request a pilot</h2>
+      <p class="cta__h">Try it on your own portfolio export.</p>
+      <p class="body">Write with the CBS or MIS the institution uses and a contact in risk or MIS. The first step is a short call to walk through the template and the calibration list.</p>
+      <div class="btns">
+        <a class="btn btn-primary" href="mailto:prabhawa@wavervanir.com?subject=CBSRM%20laghubitta%20pilot">Request a pilot</a>
+        <a class="btn btn-ghost" href="laghubitta-app.html">Open the app <span aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost" href="laghubitta.html">View sample dashboard</a>
+      </div>
+      <p class="cta__mail">prabhawa@wavervanir.com</p>
+    </section>
+  </div>
+  </main>
+
+  <!-- footer -->
+  <footer class="rt-foot">
+    <p>WaverVanir International · <a href="https://github.com/pravo123/cbsrm" rel="noopener">github.com/pravo123/cbsrm</a></p>
+    <p>Sample data in the app and the dashboard is synthetic. "Sample Laghubitta (synthetic data)" is not a real institution; no real branch list or figures are used.
+      Pilot prototype, not a regulatory report. Thresholds and provisioning rates are illustrative, to be calibrated. No compliance or regulatory approval is claimed.</p>
+  </footer>
+</div>
+</body>
+</html>

@@ -538,7 +538,7 @@ function openMapper(parsed,meta,initial){
   el("start").hidden=true;el("dash").hidden=true;el("mapper").hidden=false;
   mapperView=M.render(el("mapper"),{fileName:meta.fileName,headers:parsed.rows[0],sampleRows:parsed.rows.slice(1,4),mapping:initial||null,
     onApply:function(mapping){
-      var csv=M.apply(parsed.rows,mapping);
+      var csv=M.apply(parsed.rows,mapping,parsed.lines);
       closeMapper();el("start").hidden=false;
       meta.mapping=mapping;
       if(!loadText(csv,meta)){

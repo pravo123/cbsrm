@@ -46,8 +46,8 @@
     loan_id: { label: "account id", desc: "account or centre account id, the same every month" },
     branch_id: { label: "branch code", desc: "branch code, for example BR001" },
     branch_name: { label: "branch name", desc: "branch name" },
-    district: { label: "district", desc: "district name" },
-    province: { label: "province", desc: "province, one of the 7" },
+    district: { label: "district name", desc: "district name" },
+    province: { label: "province name", desc: "province, one of the 7" },
     product: { label: "loan product", desc: "loan product name" },
     sector: { label: "economic sector", desc: "economic sector or loan purpose" },
     disbursed_npr: { label: "amount disbursed", desc: "principal disbursed to date, NPR" },
@@ -62,9 +62,9 @@
 
   /* Other names a CBS or MIS export commonly uses for each field. Compared after norm(). */
   var SYNONYMS = {
-    as_of: ["date", "as_of_date", "report_date", "reporting_date", "month_end", "month_end_date",
-      "period", "period_end", "report_month"],
-    loan_id: ["account_id", "account_no", "account_number", "acc_no", "centre_id", "center_id",
+    as_of: ["date", "as_of_date", "as_on", "as_on_date", "report_date", "reporting_date", "month_end",
+      "month_end_date", "period", "period_end", "report_month"],
+    loan_id: ["account_id", "account_no", "account_number", "acc_no", "ac_no", "centre_id", "center_id",
       "centre_account", "center_account", "loan_no", "loan_number", "loan_account"],
     branch_id: ["branch_code", "branch_no", "branch_number", "br_code"],
     branch_name: ["branch", "branch_title"],
@@ -87,6 +87,23 @@
       "demand_amount"],
     collected_npr: ["collected", "collection", "repayment", "paid", "amount_collected",
       "collected_amount", "collection_amount", "repaid", "amount_paid"]
+  };
+
+  /* Words that, in a column name, mean the column holds some other kind of value than the numeric
+   * field: a date, a count or serial number, interest, penalty or overdue amounts, a code or name.
+   * A fuzzy match to a numeric field is not made when the column name has one of these words and
+   * the field name or synonym it is compared with does not ("Overdue Amount" is not due_npr,
+   * "Interest Outstanding" is not outstanding_npr, "Disbursement Date" is not disbursed_npr).
+   * Exact and synonym matches are not affected. */
+  var NOT_AMOUNT = ["date", "dt", "by", "no", "number", "count", "days", "since", "interest", "penalty",
+    "overdue", "rate", "sheet", "code", "id", "name", "type", "status"];
+  var NOT_DAYS = ["date", "dt", "by", "amount", "amt", "npr", "rs", "interest", "penalty", "code", "id",
+    "name", "status"];
+  var NOT_FLAG = ["date", "dt", "by", "amount", "amt", "npr", "rs", "no", "number", "count", "code", "id",
+    "name"];
+  var BLOCK = {
+    disbursed_npr: NOT_AMOUNT, outstanding_npr: NOT_AMOUNT, writeoff_npr: NOT_AMOUNT, due_npr: NOT_AMOUNT,
+    collected_npr: NOT_AMOUNT, days_past_due: NOT_DAYS, restructured: NOT_FLAG, written_off: NOT_FLAG
   };
 
   function label(f) { return FIELDS[f] ? FIELDS[f].label : f.replace(/_/g, " "); }
@@ -124,15 +141,23 @@
 
   /* Score of file column h for field f: 1 exact, 0.9 synonym, else the best name similarity to
    * the field or a synonym of 6 or more letters, if at least THRESHOLD, capped at 0.85. Short
-   * synonyms ("dpd", "due", "state") count only as exact synonyms. */
+   * synonyms ("dpd", "due", "state") count only as exact synonyms. A fuzzy comparison is skipped
+   * when h has a BLOCK word for f that the compared name lacks. */
   function scorePair(f, h) {
     var nh = norm(h);
     if (!nh) return 0;
     if (nh === norm(f)) return SCORE_EXACT;
     var syn = SYNONYMS[f] || [], i;
     for (i = 0; i < syn.length; i++) if (norm(syn[i]) === nh) return SCORE_SYNONYM;
-    var best = similarity(h, f);
-    for (i = 0; i < syn.length; i++) if (norm(syn[i]).length >= 6) best = Math.max(best, similarity(h, syn[i]));
+    var block = BLOCK[f] || [], th = tokens(h);
+    function allowed(target) {
+      var tt = tokens(target);
+      return !th.some(function (t) { return block.indexOf(t) >= 0 && tt.indexOf(t) < 0; });
+    }
+    var best = allowed(f) ? similarity(h, f) : 0;
+    for (i = 0; i < syn.length; i++) {
+      if (norm(syn[i]).length >= 6 && allowed(syn[i])) best = Math.max(best, similarity(h, syn[i]));
+    }
     return best >= THRESHOLD ? Math.min(best, SCORE_FUZZY_MAX) : 0;
   }
 
@@ -208,27 +233,47 @@
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
 
-  /* apply(parsedRows, mapping) -> CSV text with the template header (COLUMNS order).
-   * parsedRows is LaghubittaEngine.parseCSV(text).rows, first row the header. Values are copied
-   * as they are. A row whose value count differs from the header keeps that difference, so
-   * LaghubittaEngine.validate still reports it, on the same row number. Throws when the mapping
-   * has problems. */
-  function apply(parsedRows, mapping) {
+  /* Number of physical lines a parsed row spans (line breaks inside quoted values add lines),
+   * counted the way LaghubittaEngine.parseCSV counts them. */
+  function rowSpan(row) {
+    var n = 1;
+    (row || []).forEach(function (v) { var m = String(v == null ? "" : v).match(/\r\n|\r|\n/g); if (m) n += m.length; });
+    return n;
+  }
+
+  /* apply(parsedRows, mapping, lines) -> CSV text with the template header (COLUMNS order).
+   * parsedRows is LaghubittaEngine.parseCSV(text).rows, first row the header; lines (optional) is
+   * parseCSV(text).lines. Values are copied as they are. Blank lines are added so that every row
+   * starts on the same line number as in the source file, so the "Row N" in
+   * LaghubittaEngine.validate messages points at the right line of the user's file (with lines
+   * given, this also holds when the file has blank lines between rows). A row whose value count
+   * differs from the header keeps that difference, so the validator still reports it. Throws when
+   * the mapping has problems. */
+  function apply(parsedRows, mapping, lines) {
     if (!parsedRows || !parsedRows.length) throw new Error("The file has no rows.");
     var cols = engine().COLUMNS, hs = cleanHeaders(parsedRows[0]);
     var problems = validate(mapping, hs);
     if (problems.length) throw new Error("The column mapping cannot be applied. " + problems.join(" "));
     var idx = cols.map(function (f) { return hs.indexOf(colValue(mapping[f])); });
-    var lines = [cols.map(csvCell).join(",")];
+    var useLines = Array.isArray(lines) && lines.length === parsedRows.length;
+    var out = [], at = 1, src = 1;   /* next output line; source line where the next row starts */
+    function put(vals, r) {
+      var start = useLines && lines[r] > 0 ? lines[r] : src;
+      while (at < start) { out.push(""); at++; }
+      out.push(vals.map(csvCell).join(","));
+      at += rowSpan(vals);
+      src = start + rowSpan(parsedRows[r]);
+    }
+    put(cols, 0);
     for (var r = 1; r < parsedRows.length; r++) {
       var row = parsedRows[r] || [];
       var vals = idx.map(function (i) { return i < row.length ? row[i] : ""; });
       var delta = row.length - hs.length, k;
       if (delta > 0) for (k = 0; k < delta; k++) vals.push("");
       else if (delta < 0) vals.length = Math.max(2, vals.length + delta);
-      lines.push(vals.map(csvCell).join(","));
+      put(vals, r);
     }
-    return lines.join("\n") + "\n";
+    return out.join("\n") + "\n";
   }
 
   /* ---------------- mapping file (addendum section 5) ---------------- */

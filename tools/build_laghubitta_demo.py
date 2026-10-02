@@ -566,7 +566,8 @@ def classification_block(loans: pd.DataFrame, as_of: str, cfg: dict) -> dict:
         if b["max_dpd"] is not None:
             inside &= d <= b["max_dpd"]
         bal = float(live.loc[inside, "outstanding_npr"].sum())
-        rows.append({"key": b["key"], "label": b["label"], "min_dpd": b["min_dpd"],
+        label = b.get("label") if isinstance(b.get("label"), str) and b["label"].strip() else b["key"]
+        rows.append({"key": b["key"], "label": label, "min_dpd": b["min_dpd"],
                      "max_dpd": b["max_dpd"], "n_loans": int(inside.sum()), "balance_npr": bal,
                      "share": _ratio(bal, gross), "provision_rate": b["provision_rate"],
                      "provision_npr": bal * b["provision_rate"]})

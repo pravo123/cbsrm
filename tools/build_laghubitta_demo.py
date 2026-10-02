@@ -38,7 +38,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-SEED = 20261002
+SEED = 20261007
 CONTRACT_VERSION = 1
 INSTITUTION = "Sample Laghubitta (synthetic data)"
 LAST_MONTH_END = (2026, 9)  # latest as_of = 2026-09-30
@@ -91,8 +91,8 @@ PROVINCE_DISTRICTS = {
 }
 # Branches whose risk ramps up over the last few months (the "story").
 # (district, ramp length in months, hazard multiplier at the latest month)
-DETERIORATING = {"Siraha": (6, 16.0), "Rautahat": (6, 14.0), "Kapilvastu": (5, 14.0),
-                 "Bardiya": (5, 12.0), "Saptari": (4, 12.0)}
+DETERIORATING = {"Siraha": (6, 19.75), "Rautahat": (6, 17.25), "Kapilvastu": (5, 17.25),
+                 "Bardiya": (5, 11.0), "Saptari": (4, 14.75)}
 AGRI_PROVINCES = ("Madhesh", "Lumbini")
 
 SECTORS = ["Agriculture", "Livestock", "Retail Trade", "Services",
@@ -123,10 +123,14 @@ SEASON = {1: 0.8, 2: 0.8, 3: 0.9, 4: 1.0, 5: 1.1, 6: 1.8, 7: 2.6, 8: 2.4,
 FARM_SECTORS = ("Agriculture", "Livestock")
 
 BASE_HAZARD = 0.010
-CURE_BY_MISSED = [0.0, 0.50, 0.33, 0.20, 0.12, 0.08, 0.05, 0.03, 0.02]
+CURE_BY_MISSED = [0.0, 0.75, 0.40, 0.20, 0.12, 0.08, 0.05, 0.03, 0.02]
 STAY_PROB = 0.22
 WRITE_OFF_AT = 9          # missed installments
 PREPAY_PROB = 0.006
+# Background arrears: one small centre per branch services interest only with
+# two instalments overdue (31 to 59 days), sized at this share of the branch's
+# opening gross, so every branch carries a little PAR30 (separate RNG stream).
+BACKGROUND_PAR = (0.010, 0.030)
 INITIAL_LOANS = 1080
 NEW_PER_MONTH = 38
 
@@ -218,7 +222,7 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
               "out": outstanding, "missed": 0, "arrears": 0.0,
               "arrears_p": 0.0, "restructured": 0, "offset": int(rng.integers(1, 30)),
               # seasoned loans already have a repayment history at the panel start
-              "start": -1 if seasoned else t, "done": False}
+              "start": -1 if seasoned else t, "done": False, "chronic": False}
         if seasoned and rng.random() < 0.04:   # some seasoned arrears at start
             ln["missed"] = int(rng.integers(1, 5))
             ln["arrears_p"] = r2(min(ln["missed"] * ln["inst_p"], outstanding * 0.5))
@@ -227,6 +231,21 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
 
     for _ in range(INITIAL_LOANS):
         loans.append(new_loan(0, seasoned=True))
+
+    rng_bg = np.random.default_rng(SEED + 1)
+    by_branch: dict[str, list[dict]] = {}
+    for ln in loans:
+        by_branch.setdefault(ln["branch_id"], []).append(ln)
+    for b in branches:
+        accts = by_branch.get(b["branch_id"], [])
+        if not accts:
+            continue
+        gross0 = sum(a["out"] for a in accts)
+        a = min(accts, key=lambda x: (x["out"], x["loan_id"]))   # smallest centre
+        out = r2(rng_bg.uniform(*BACKGROUND_PAR) * gross0)
+        a.update(chronic=True, out=out, disbursed=max(a["disbursed"], out), missed=2,
+                 arrears_p=r2(out * 0.06))
+        a["arrears"] = r2(a["arrears_p"] * 1.1)
 
     rows: list[dict] = []
     for t, as_of in enumerate(dates):
@@ -243,7 +262,10 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
                    "district": ln["district"], "province": ln["province"],
                    "product": ln["product"], "sector": ln["sector"],
                    "disbursed_npr": ln["disbursed"]}
-            if ln["start"] == t:   # disbursement month: no demand yet
+            if ln["chronic"]:      # background arrears: interest only, stuck at 31-59 dpd
+                interest = r2(ln["out"] * ln["rate"] / 12.0)
+                due, collected = r2(interest + ln["arrears"]), interest
+            elif ln["start"] == t:   # disbursement month: no demand yet
                 due = collected = 0.0
             else:
                 if rng.random() < PREPAY_PROB and ln["missed"] == 0:

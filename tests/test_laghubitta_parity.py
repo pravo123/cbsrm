@@ -216,6 +216,13 @@ def test_findings(loans, demo):
             assert close(f["top_" + col + "_share"], top[1] / g.sum())
 
 
+def test_product_page_chain_head_is_current(demo):
+    """The product page shows the sample's audit chain head; it must not go stale."""
+    html = (ROOT / "site" / "laghubitta-product.html").read_text(encoding="utf-8")
+    head = demo["audit"]["head_hash"]
+    assert f'id="heroChainHead">sample · {head[:8]}…{head[-7:]}<' in html
+
+
 def _generator():
     spec = importlib.util.spec_from_file_location(
         "build_laghubitta_demo", ROOT / "tools" / "build_laghubitta_demo.py")

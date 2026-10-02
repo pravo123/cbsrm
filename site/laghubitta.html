@@ -148,6 +148,7 @@
   .flow .box.mid{border-color:var(--accent);background:#0F1828;}
   .flow .arrow{display:flex;align-items:center;padding:0 12px;color:var(--accent);font-size:24px;font-family:var(--mono);}
   .flow-note{text-align:center;color:var(--text-muted);font-size:13px;margin:0;}
+  .flow-note.flow-api{color:var(--watch);margin:0 0 6px;}
 
   .rt-foot{padding:18px 24px 30px;color:var(--text-dim);font-size:12px;}
   .rt-foot p{margin:0 0 6px;}
@@ -298,12 +299,13 @@
     <section class="rt-panel col-12" aria-labelledby="hcT">
       <div class="rt-panel__hd"><h2 class="rt-panel__title" id="hcT">How it connects</h2></div>
       <div class="flow">
-        <div class="box">Existing CBS / MIS (export, report or API)</div>
+        <div class="box">Existing CBS / MIS (CSV export)</div>
         <div class="arrow" aria-hidden="true">→</div>
         <div class="box mid">CBSRM risk layer</div>
         <div class="arrow" aria-hidden="true">→</div>
-        <div class="box">Management, board and regulator-oriented reports</div>
+        <div class="box">Management and board reports (board summary, alerts CSV)</div>
       </div>
+      <p class="flow-note flow-api">Direct API connection is pilot work, not built yet.</p>
       <p class="flow-note">CBSRM does not replace the Core Banking System. It analyses authorised data from it.</p>
     </section>
   </div>

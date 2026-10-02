@@ -154,6 +154,7 @@
   .flow .box.mid{border-color:var(--accent);background:#0F1828;}
   .flow .arrow{display:flex;align-items:center;padding:0 12px;color:var(--accent);font-size:24px;font-family:var(--mono);}
   .flow-note{text-align:center;color:var(--text-muted);font-size:13px;margin:0;}
+  .flow-note.flow-api{color:var(--watch);margin:0 0 6px;}
   .connect .flow{margin:34px 0 14px;}
   .connect .flow .box{min-height:84px;font-size:15px;line-height:1.4;}
   .connect .flow-note{font-size:15px;color:var(--text);}
@@ -308,7 +309,7 @@
     <div class="hero__copy">
       <p class="eyebrow"><span class="pip" aria-hidden="true"></span>Risk layer for microfinance institutions</p>
       <h1 id="heroT">Branch risk monitor, early warning and stress testing<span class="h1-sub">beside your Core Banking System.</span></h1>
-      <p class="hero__lede">CBSRM reads an <b>authorised export</b> from the institution's existing CBS or MIS and turns it into a month-end view of portfolio risk, branch by branch: PAR and overdue migration, concentration, early-warning alerts against agreed thresholds, and stress tests for rate, farm income, monsoon, regional disaster and funding shocks. It is <b>read-only</b>. It posts nothing back and changes no account, so the CBS stays the ledger of record.</p>
+      <p class="hero__lede">CBSRM reads an <b>authorised CSV export</b> from the institution's existing CBS or MIS and turns it into a month-end view of portfolio risk: PAR, a trend and early-warning alerts against agreed thresholds for every branch, overdue migration and concentration across the portfolio, and stress tests for rate, farm income, monsoon, regional disaster and funding shocks. It is <b>read-only</b>. It posts nothing back and changes no account, so the CBS stays the ledger of record.</p>
       <div class="btns">
         <a class="btn btn-primary" href="laghubitta-app.html">Open the app <span aria-hidden="true">→</span></a>
         <a class="btn btn-ghost" href="laghubitta.html">View sample dashboard</a>
@@ -316,7 +317,7 @@
       <ul class="hero__facts">
         <li><b>Read-only</b>&nbsp;no posting to the CBS</li>
         <li><b>In the browser</b>&nbsp;the file is not uploaded</li>
-        <li><b>Hash-chained</b>&nbsp;audit trail</li>
+        <li><b>SHA-256</b>&nbsp;of every input file</li>
       </ul>
     </div>
 
@@ -346,7 +347,7 @@
             <div class="pv__sbar"><span>stressed</span><span class="t"><i class="bg-e" style="width:71%"></i></span></div>
           </div>
         </div>
-        <div class="rt-block"><span class="rid">Audit chain head</span><span class="hsh">sample · 4f6f4561…cb1f967</span></div>
+        <div class="rt-block"><span class="rid">Audit chain head</span><span class="hsh" id="heroChainHead">sample · 23539458…885c2e0</span></div>
       </div>
     </div>
   </section>
@@ -359,12 +360,13 @@
         <span class="rt-cite">CBS versus CBSRM</span></div>
       <p class="lead">The CBS keeps the books. CBSRM reads them and tells you where the risk is.</p>
       <div class="flow">
-        <div class="box">Existing CBS / MIS (export, report or API)</div>
+        <div class="box">Existing CBS / MIS (CSV export)</div>
         <div class="arrow" aria-hidden="true">→</div>
         <div class="box mid">CBSRM risk layer</div>
         <div class="arrow" aria-hidden="true">→</div>
-        <div class="box">Management, board and regulator-oriented reports</div>
+        <div class="box">Management and board reports (board summary, alerts CSV)</div>
       </div>
+      <p class="flow-note flow-api">Direct API connection is pilot work, not built yet.</p>
       <p class="flow-note">CBSRM does not replace the Core Banking System. It analyses authorised data from it.</p>
 
       <ul class="vs" aria-label="What the CBS does compared with what CBSRM does">
@@ -484,7 +486,7 @@
       <ul class="status">
         <li><span class="lvl b">Running</span><span>The prototype runs end to end on synthetic data: the app, the sample dashboard and the audit trail.</span></li>
         <li><span class="lvl w">Not done</span><span>CBS integration is pilot work and has not been done for any institution.</span></li>
-        <li><span class="lvl w">Not done</span><span>Data mapping from an institution's own CBS/MIS export to the template is pilot work and has not been done.</span></li>
+        <li><span class="lvl w">Not done</span><span>The app has a column mapper for CSV exports, but mapping and checking an institution's own CBS/MIS export is pilot work and has not been done.</span></li>
         <li><span class="lvl w">Not done</span><span>Calibration against current NRB directives is pilot work and has not been done.</span></li>
         <li><span class="lvl e">Illustrative</span><span>Thresholds and provisioning rates shown in the app and the sample dashboard are illustrative, to be calibrated.</span></li>
         <li><span class="lvl s">Not claimed</span><span>No regulatory approval or compliance is claimed. Outputs are not a regulatory report.</span></li>

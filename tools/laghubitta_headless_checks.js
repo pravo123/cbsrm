@@ -83,9 +83,25 @@ async function badgeChecks(browser) {
   await p.close();
 }
 
+const PAGES = ["laghubitta.html", "laghubitta-app.html", "laghubitta-product.html"];
+
+async function connectChecks(browser) {
+  for (const page of PAGES) {
+    const p = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    await p.goto(BASE + page); await p.waitForTimeout(300);
+    if (page === "laghubitta-app.html") { await p.click("#btnSample"); await p.waitForSelector('html[data-ready="1"]'); }
+    const t = await p.evaluate(() => document.body.innerText);
+    check(`connect: ${page} says "Existing CBS / MIS (CSV export)"`, t.includes("Existing CBS / MIS (CSV export)"), "");
+    check(`connect: ${page} says the API connection is not built`, t.includes("Direct API connection is pilot work, not built yet."), "");
+    check(`connect: ${page} makes no API or regulator-report claim`, !/export, report or API|regulator-oriented reports/i.test(t), "");
+    await p.close();
+  }
+}
+
 (async () => {
   const browser = await pw.chromium.launch();
   try {
+    await connectChecks(browser);
     await badgeChecks(browser);
   } finally { await browser.close(); }
   let failed = 0;

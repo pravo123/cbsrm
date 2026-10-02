@@ -3,3 +3,6 @@
 site/laghubitta_loans.csv -text
 site/laghubitta_demo.json -text
 site/laghubitta.html -text
+# Laghubitta app: template CSV and engine served byte-for-byte on every checkout.
+site/laghubitta_template.csv -text
+site/laghubitta-engine.js -text

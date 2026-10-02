@@ -1,0 +1,4 @@
+as_of,loan_id,branch_id,branch_name,district,province,product,sector,disbursed_npr,outstanding_npr,days_past_due,restructured,written_off,writeoff_npr,due_npr,collected_npr
+2026-09-30,CTR-0001,BR001,Example Branch 1,Jhapa,Koshi,Group Loan,Agriculture,5000000.00,3200000.00,0,0,0,0.00,260000.00,260000.00
+2026-09-30,CTR-0002,BR001,Example Branch 1,Jhapa,Koshi,Micro Enterprise,Retail Trade,12000000.00,9100000.00,45,0,0,0.00,610000.00,120000.00
+2026-09-30,CTR-0003,BR002,Example Branch 2,Morang,Koshi,Livestock,Livestock,8000000.00,0.00,240,0,1,2100000.00,0.00,0.00

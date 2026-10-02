@@ -224,6 +224,7 @@
     .flow .arrow{transform:rotate(90deg);padding:4px 0;width:100%;justify-content:center;}
   }
   @media (max-width:1180px){.start-grid{grid-template-columns:1fr;}.cfg-grid{grid-template-columns:repeat(2,1fr);}}
+  @media (max-width:640px){.cfg-grid{grid-template-columns:minmax(0,1fr);}}
   @media print{
     @page{size:A4;margin:14mm;}
     html,body{background:#fff !important;color:#111 !important;}
@@ -414,6 +415,7 @@ var RULE_KEY={PAR30_LEVEL:"par30_level",PAR30_JUMP:"par30_jump",ROLL_RATE:"roll_
 var S={src:null,label:"",fileName:"",bytes:0,sha:null,ds:null,ref:null,verify:null,config:E.defaultConfig(),bs:null,bsDefault:null,
   baseScenarios:null,custom:null,D:null,scen:"base",sortKey:"par30",sortDir:-1,sel:null,rows:0};
 var D=null;
+var DEFAULT_CUSTOM={id:"custom",label:"Custom scenario (your parameters)",base_shift:0.05,farm_mult:2.0,province:"Madhesh",province_mult:2.0,funding_cost_bps:100,inflow_haircut:0.10,outflow_mult:1.10};
 
 function el(id){return document.getElementById(id);}
 function isNum(v){return typeof v==="number"&&isFinite(v);}
@@ -450,7 +452,7 @@ function loadText(text,meta){
   S.bsDefault=meta.ref?JSON.parse(JSON.stringify(meta.ref.balance_sheet)):E.defaultBalanceSheet(inst.gross_npr);
   S.bs=JSON.parse(JSON.stringify(S.bsDefault));
   S.baseScenarios=meta.ref?JSON.parse(JSON.stringify(meta.ref.scenarios)):JSON.parse(JSON.stringify(E.DEFAULT_SCENARIOS));
-  S.custom={id:"custom",label:"Custom scenario (your parameters)",base_shift:0.05,farm_mult:2.0,province:"Madhesh",province_mult:2.0,funding_cost_bps:100,inflow_haircut:0.10,outflow_mult:1.10};
+  S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));
   S.scen="base";S.sel=null;
   S.verify=null;
   if(S.src==="sample"&&S.ref){
@@ -553,6 +555,7 @@ function onSettings(){
       var okv=isFinite(x)&&x>=0&&!(f.int&&Math.floor(x)!==x);
       inp.classList.toggle("bad",!okv);
       if(!okv){bad.push(f.l);return;}
+      if(inp.value===fmtField(f))return;   /* unchanged: keep the exact stored value */
       setP(obj(f.o),f.k,x/f.sc);
     });
     el("cfgStatus").textContent=bad.length?"Not applied (needs a number of 0 or more): "+bad.join(", "):"Applied. Figures below are recomputed.";
@@ -560,8 +563,10 @@ function onSettings(){
   },120);
 }
 function isDefault(){
-  return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault);
+  return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault)&&JSON.stringify(S.custom)===JSON.stringify(DEFAULT_CUSTOM);
 }
+function bsAssumed(){return S.src==="upload"&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault);}
+function bsNote(){return bsAssumed()?"assumed balance sheet: replace in Settings":S.src==="upload"?"balance sheet entered in Settings":"sample balance sheet";}
 
 function customScenario(){
   var c=S.custom,sc={id:"custom",label:"Custom scenario (your parameters)",base_shift:c.base_shift,
@@ -613,8 +618,8 @@ function renderKpis(){
     {lbl:"PAR90",v:pct(L.par90,2),d:d("par90"),tone:tPar(L.par90*2),s:series("par90")},
     {lbl:"NPL ratio (>"+D.config.npl_dpd_threshold+" days)",v:pct(L.npl_ratio,2),d:d("npl_ratio"),tone:tPar(L.npl_ratio*2),s:series("npl_ratio")},
     {lbl:"Collection efficiency",v:pct(L.collection_efficiency,1),d:d("collection_efficiency"),tone:tCe(L.collection_efficiency),s:series("collection_efficiency")},
-    {lbl:"CAR (base)",v:pct(base.car,2),d:"balance sheet in settings",tone:tCar(base.car),s:null},
-    {lbl:"90 day liquidity gap",v:crore(base.liquidity_gap_90d_npr)+'<span class="u">crore</span>',d:"balance sheet in settings",tone:tGap(base.liquidity_gap_90d_npr),s:null}
+    {lbl:"CAR (base)"+(bsAssumed()?" · assumed":""),v:pct(base.car,2),d:bsNote(),tone:tCar(base.car),s:null},
+    {lbl:"90 day liquidity gap"+(bsAssumed()?" · assumed":""),v:crore(base.liquidity_gap_90d_npr)+'<span class="u">crore</span>',d:bsNote(),tone:tGap(base.liquidity_gap_90d_npr),s:null}
   ];
   el("kpis").innerHTML=tiles.map(function(t){
     return '<div class="rt-kpi"><div class="rt-kpi__label">'+t.lbl+'</div><div class="rt-kpi__val is-'+t.tone+'">'+t.v+'</div>'+
@@ -790,7 +795,7 @@ function renderBoard(){
   var base=baseRes();
   el("board").innerHTML='<h1>Board summary · portfolio risk</h1>'+
     '<p class="bmeta">'+esc(S.src==="sample"?"Sample Laghubitta (synthetic data)":S.fileName)+' · as of '+latest+' · prepared with CBSRM (pilot prototype)</p>'+
-    '<p class="bdisc">Pilot prototype. '+(S.src==="sample"?"Sample data is synthetic. ":"")+'Not a regulatory report. Thresholds, provisioning rates and scenarios are illustrative, to be calibrated. Amounts in NPR crore.</p>'+
+    '<p class="bdisc">Pilot prototype. '+(S.src==="sample"?"Sample data is synthetic. ":"")+'Not a regulatory report. Thresholds, provisioning rates and scenarios are illustrative, to be calibrated. '+(bsAssumed()?"CAR, capital and liquidity figures use an ASSUMED balance sheet sized from the portfolio, not the institution's own figures. ":S.src==="upload"?"CAR, capital and liquidity figures use the balance sheet entered in Settings. ":"")+'Amounts in NPR crore.</p>'+
     '<h2>Headline</h2><table class="bt"><tr><th>Gross portfolio</th><th>PAR30</th><th>PAR90</th><th>NPL</th><th>Collection efficiency</th><th>CAR (base)</th><th>90 day liquidity gap</th><th>Alerts</th></tr>'+
     "<tr><td>"+crore(L.gross_npr)+"</td><td>"+pct(L.par30,2)+"</td><td>"+pct(L.par90,2)+"</td><td>"+pct(L.npl_ratio,2)+"</td><td>"+pct(L.collection_efficiency,1)+"</td><td>"+pct(base.car,2)+"</td><td>"+crore(base.liquidity_gap_90d_npr)+"</td><td>"+D.alerts.length+"</td></tr></table>"+
     '<h2>Stress scenarios</h2><table class="bt"><tr><th>Scenario</th><th>PAR30</th><th>CAR</th><th>Liquidity gap</th><th>Extra provisions</th></tr>'+sc+"</table>"+
@@ -823,7 +828,7 @@ drop.addEventListener("drop",function(e){var f=e.dataTransfer&&e.dataTransfer.fi
 el("btnAnother").addEventListener("click",function(){el("dash").hidden=true;el("start").hidden=false;el("loadMsg").hidden=true;window.scrollTo(0,0);});
 el("btnPrint").addEventListener("click",function(){renderBoard();window.print();});
 el("btnAlertsCsv").addEventListener("click",downloadAlerts);
-el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});
+el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});
 el("cfgGrid").addEventListener("input",onSettings);
 el("cfgGrid").addEventListener("change",onSettings);
 el("scSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;S.scen=b.getAttribute("data-id");renderScenario();});

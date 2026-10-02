@@ -430,14 +430,14 @@
         <div class="priv__row ok"><span class="k">Where it runs</span><span class="v">In the browser tab, on the computer that opens the file.</span></div>
         <div class="priv__row ok"><span class="k">Upload</span><span class="v">None. The file is read locally and is not sent to a server.</span></div>
         <div class="priv__row"><span class="k">What it needs</span><span class="v">No customer names or IDs. An anonymised or centre-level aggregated file is enough for the pilot.</span></div>
-        <div class="priv__row"><span class="k">What it records</span><span class="v">A SHA-256 of the input file and the hash chain of computed results, so a figure can be traced back to the exact file that produced it.</span></div>
+        <div class="priv__row"><span class="k">What it records</span><span class="v">A SHA-256 of the input file and the parameter set used, so a figure can be traced back to the exact file and settings that produced it. The hash-chained record of every computed block is produced by the open-source library for the sample dataset and shown on the sample dashboard.</span></div>
       </div>
     </section>
 
     <!-- gets -->
     <section class="rt-panel col-12" id="gets" aria-labelledby="gtT">
       <div class="rt-panel__hd"><h2 class="rt-panel__title" id="gtT"><span class="ix">05</span>What it gets</h2>
-        <span class="rt-cite">see them on the <a href="laghubitta.html">sample dashboard</a></span></div>
+        <span class="rt-cite">try them in the <a href="laghubitta-app.html">app</a> or see the <a href="laghubitta.html">sample dashboard</a></span></div>
       <p class="lead">Five outputs, every month-end.</p>
       <div class="gets">
         <article class="card">
@@ -465,7 +465,7 @@
         <article class="card">
           <div class="card__k">Audit</div>
           <h3>Audit trail</h3>
-          <p>SHA-256 of the input file and a hash-chained record of every computed block.</p>
+          <p>SHA-256 of the input file and the parameter set in the app; for the sample dataset, a hash-chained record of every computed block from the open-source library.</p>
           <div class="rt-block"><div class="rid">input file · chain head</div><div class="hsh">sha256 → block → block → head</div></div>
         </article>
       </div>

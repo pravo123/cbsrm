@@ -51,21 +51,30 @@
   /* ---------------- CSV parsing (RFC 4180 style) ---------------- */
   function parseCSV(text) {
     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-    var rows = [], row = [], field = "", i = 0, q = false, n = text.length, c;
+    var rows = [], lines = [], row = [], field = "", i = 0, q = false, n = text.length, c, line = 1, rowLine = 1;
     while (i < n) {
       c = text[i];
       if (q) {
         if (c === '"') { if (text[i + 1] === '"') { field += '"'; i += 2; continue; } q = false; i++; continue; }
+        if (c === "\n" || (c === "\r" && text[i + 1] !== "\n")) line++;
         field += c; i++; continue;
       }
       if (c === '"' && field === "") { q = true; i++; continue; }
       if (c === ",") { row.push(field); field = ""; i++; continue; }
-      if (c === "\r") { i++; continue; }
-      if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; continue; }
+      if (c === "\r" || c === "\n") {          /* LF, CRLF and lone CR all end a row */
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(field); rows.push(row); lines.push(rowLine);
+        row = []; field = ""; i++; line++; rowLine = line; continue;
+      }
       field += c; i++;
     }
-    if (field !== "" || row.length) { row.push(field); rows.push(row); }
-    return { unterminatedQuote: q, rows: rows.filter(function (r) { return !(r.length === 1 && r[0].trim() === ""); }) };
+    if (field !== "" || row.length) { row.push(field); rows.push(row); lines.push(rowLine); }
+    var outRows = [], outLines = [];
+    rows.forEach(function (r, k) {
+      if (!(r.length === 1 && r[0].trim() === "")) { outRows.push(r); outLines.push(lines[k]); }
+    });
+    /* lines[k] is the physical line in the file where rows[k] starts */
+    return { unterminatedQuote: q, rows: outRows, lines: outLines };
   }
 
   /* ---------------- section 2: schema validation ---------------- */
@@ -90,7 +99,7 @@
     if (parsed.unterminatedQuote) errors.push("The file has an opening quote (\") that is never closed, so it cannot be read as CSV.");
     if (!parsed.rows.length) return { ok: false, rows: [], errors: ["The file has no rows."], warnings: [], summary: null };
     var header = parsed.rows[0].map(function (h) { return h.trim(); });
-    var idx = {};
+    var idx = Object.create(null);
     header.forEach(function (h, i) { idx[h] = i; });
     var missing = COLUMNS.filter(function (c) { return !(c in idx); });
     if (missing.length) {
@@ -104,12 +113,12 @@
       errors.push("The file has a header but no data rows.");
       return { ok: false, rows: [], errors: errors, warnings: warnings, summary: null };
     }
-    var seen = {};
+    var seen = Object.create(null);
     function bad(lineNo, msg) {
       if (errors.length < maxErrors) errors.push("Row " + lineNo + ": " + msg);
     }
     for (var r = 1; r < parsed.rows.length; r++) {
-      var raw = parsed.rows[r], line = r + 1, okRow = true;
+      var raw = parsed.rows[r], line = parsed.lines[r], okRow = true;
       if (raw.length !== header.length) {
         bad(line, "expected " + header.length + " values but found " + raw.length + ". Check for a missing or extra comma.");
         badRows++; continue;
@@ -156,12 +165,12 @@
       errors.push("Stopped listing after " + maxErrors + " problems; " + badRows + " rows in total have problems.");
     }
     var ok = errors.length === 0 && out.length > 0;
-    var dates = {};
+    var dates = Object.create(null);
     out.forEach(function (x) { dates[x.as_of] = 1; });
     var nDates = Object.keys(dates).length;
     if (ok && nDates < 2) warnings.push("Only one month-end found. Migration, roll rates and alerts need at least two consecutive month-ends.");
     if (ok) {
-      var unknownProv = {};
+      var unknownProv = Object.create(null);
       out.forEach(function (x) { if (PROVINCES.indexOf(x.province) < 0) unknownProv[x.province] = 1; });
       var up = Object.keys(unknownProv);
       if (up.length) warnings.push("Province name" + (up.length > 1 ? "s" : "") + " not in the list of 7 provinces: " + up.slice(0, 5).join(", ") + ". They are kept as written.");
@@ -172,7 +181,7 @@
 
   /* ---------------- dataset ---------------- */
   function Dataset(rows) {
-    var byDate = {}, branchInfo = {};
+    var byDate = Object.create(null), branchInfo = Object.create(null);
     rows.forEach(function (x) {
       (byDate[x.as_of] = byDate[x.as_of] || []).push(x);
       if (!branchInfo[x.branch_id]) branchInfo[x.branch_id] = { branch_id: x.branch_id, branch_name: x.branch_name, district: x.district, province: x.province };
@@ -208,7 +217,7 @@
     by = by || []; config = config || DEFAULT_CONFIG;
     var rows = ds.byDate[asOf] || [], nplT = config.npl_dpd_threshold;
     if (!by.length) { var s = emptySums(); rows.forEach(function (x) { addRow(s, x, nplT); }); return [finish(s)]; }
-    var groups = {}, keys = {};
+    var groups = Object.create(null), keys = Object.create(null);
     rows.forEach(function (x) {
       var kv = by.map(function (c) { return x[c]; }), k = kv.join("\u0001");
       if (!groups[k]) { groups[k] = emptySums(); keys[k] = kv; }
@@ -226,7 +235,7 @@
 
   function bucketBalances(ds, asOf, by) {
     by = by || [];
-    var rows = ds.byDate[asOf] || [], groups = {}, keys = {};
+    var rows = ds.byDate[asOf] || [], groups = Object.create(null), keys = Object.create(null);
     rows.forEach(function (x) {
       if (x.written_off !== 0) return;
       var kv = by.map(function (c) { return x[c]; }), k = kv.join("\u0001");
@@ -247,7 +256,7 @@
   /* ---------------- section 5: migration, concentration, alerts ---------------- */
   function migrationMatrix(ds, fromAsOf, toAsOf, weight, filter) {
     weight = weight || "outstanding";
-    var to = {};
+    var to = Object.create(null);
     (ds.byDate[toAsOf] || []).forEach(function (x) {
       if (filter && !filter(x)) return;
       to[x.loan_id] = x.written_off === 1 ? "written_off" : assignBucket(x.days_past_due);
@@ -279,7 +288,7 @@
   }
 
   function shares(ds, asOf, by) {
-    var g = {}, tot = 0;
+    var g = Object.create(null), tot = 0;
     (ds.byDate[asOf] || []).forEach(function (x) {
       if (x.written_off !== 0) return;
       g[x[by]] = (g[x[by]] || 0) + x.outstanding_npr; tot += x.outstanding_npr;
@@ -298,7 +307,7 @@
 
   function branchAlerts(ds, asOf, prevAsOf, config) {
     config = config || DEFAULT_CONFIG;
-    var th = config.alerts, cur = {}, prv = {};
+    var th = config.alerts, cur = Object.create(null), prv = Object.create(null);
     portfolioMetrics(ds, asOf, ["branch_id"], config).forEach(function (r) { cur[r.branch_id] = r; });
     portfolioMetrics(ds, prevAsOf, ["branch_id"], config).forEach(function (r) { prv[r.branch_id] = r; });
     var ids = Object.keys(cur).concat(Object.keys(prv).filter(function (k) { return !(k in cur); })).sort();
@@ -324,10 +333,11 @@
   function applyScenario(segments, bs, sc, config) {
     config = config || DEFAULT_CONFIG;
     var rates = config.provision_rates, shift = sc.base_shift || 0, sm = sc.sector_mult || {}, pm = sc.province_mult || {};
+    function mult(o, k) { return Object.prototype.hasOwnProperty.call(o, k) && o[k] != null ? o[k] : 1; }
     var T = {}, U = {};
     BUCKETS.forEach(function (b) { T[b] = 0; U[b] = 0; });
     segments.forEach(function (g) {
-      var s = Math.min(1, shift * (sm[g.sector] != null ? sm[g.sector] : 1) * (pm[g.province] != null ? pm[g.province] : 1));
+      var s = Math.min(1, shift * mult(sm, g.sector) * mult(pm, g.province));
       var st = { current: (1 - s) * g.current, b1_30: (1 - s) * g.b1_30 + s * g.current,
         b31_90: (1 - s) * g.b31_90 + s * g.b1_30, b91_180: (1 - s) * g.b91_180 + s * g.b31_90,
         b180p: g.b180p + s * g.b91_180 };
@@ -371,9 +381,9 @@
     config = config || DEFAULT_CONFIG;
     var dates = ds.dates, latest = dates[dates.length - 1], prev = dates.length > 1 ? dates[dates.length - 2] : null;
     var institution = dates.map(function (d) { var m = portfolioMetrics(ds, d, [], config)[0]; m.as_of = d; return m; });
-    var perDate = {};
+    var perDate = Object.create(null);
     dates.forEach(function (d) {
-      perDate[d] = {};
+      perDate[d] = Object.create(null);
       portfolioMetrics(ds, d, ["branch_id"], config).forEach(function (r) { perDate[d][r.branch_id] = r; });
     });
     var empty = finish(emptySums());
@@ -425,16 +435,25 @@
     function metrics(where, e, a) { METRICS.forEach(function (k) { cmp(where + "." + k, e[k], a[k], k in AMOUNT_KEYS); }); }
     if (JSON.stringify(ref.as_of_dates) !== JSON.stringify(comp.as_of_dates)) mism.push("as_of_dates differ");
     ref.institution.forEach(function (r, i) { metrics("institution[" + r.as_of + "]", r, comp.institution[i] || {}); });
-    var cb = {}; comp.branches.forEach(function (b) { cb[b.branch_id] = b; });
+    function sameKeys(where, a, b) {
+      var x = a.slice().sort().join("\u0001"), y = b.slice().sort().join("\u0001");
+      if (x !== y) mism.push(where + ": key sets differ (reference " + a.length + ", engine " + b.length + ")");
+    }
+    sameKeys("branches", ref.branches.map(function (b) { return b.branch_id; }), comp.branches.map(function (b) { return b.branch_id; }));
+    ["by_district", "by_product", "by_sector"].forEach(function (k) {
+      sameKeys(k, ref[k].map(function (r) { return r.key; }), comp[k].map(function (r) { return r.key; }));
+    });
+    sameKeys("segments", ref.segments.map(function (x) { return x.sector + "|" + x.province; }), comp.segments.map(function (x) { return x.sector + "|" + x.province; }));
+    var cb = Object.create(null); comp.branches.forEach(function (b) { cb[b.branch_id] = b; });
     ref.branches.forEach(function (b) {
       var c = cb[b.branch_id]; if (!c) { mism.push("branch " + b.branch_id + " missing"); return; }
       b.series.forEach(function (s, i) { metrics(b.branch_id + "[" + s.as_of + "]", s, c.series[i] || {}); });
     });
     ["by_district", "by_product", "by_sector"].forEach(function (k) {
-      var cm = {}; comp[k].forEach(function (r) { cm[r.key] = r; });
+      var cm = Object.create(null); comp[k].forEach(function (r) { cm[r.key] = r; });
       ref[k].forEach(function (r) { metrics(k + "[" + r.key + "]", r, cm[r.key] || {}); });
     });
-    var cs = {}; comp.segments.forEach(function (s) { cs[s.sector + "|" + s.province] = s; });
+    var cs = Object.create(null); comp.segments.forEach(function (s) { cs[s.sector + "|" + s.province] = s; });
     ref.segments.forEach(function (s) { var c = cs[s.sector + "|" + s.province] || {}; BUCKETS.forEach(function (b) { cmp("segment " + s.sector + "/" + s.province + "." + b, s[b], c[b], true); }); });
     if (ref.migration && comp.migration) {
       BUCKETS.forEach(function (b) {

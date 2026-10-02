@@ -1,0 +1,5 @@
+# Laghubitta pilot demo artefacts: no end-of-line conversion on any checkout,
+# so the audited sha256 of the CSV (and the JSON/HTML bytes) is identical everywhere.
+site/laghubitta_loans.csv -text
+site/laghubitta_demo.json -text
+site/laghubitta.html -text

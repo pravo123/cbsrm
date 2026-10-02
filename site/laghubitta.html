@@ -153,6 +153,17 @@
   .rt-foot p{margin:0 0 6px;}
   .muted{color:var(--text-dim);font-size:11.5px;}
 
+
+  /* shared laghubitta navigation */
+  .lb-nav{display:inline-flex;gap:4px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
+  .lb-nav a{color:var(--text-muted);padding:5px 10px;border-radius:5px;border:1px solid transparent;text-decoration:none;}
+  .lb-nav a:hover{color:var(--text-strong);border-color:var(--border-strong);text-decoration:none;}
+  .lb-nav a[aria-current="page"]{color:var(--text-strong);border-color:var(--accent);background:#0F1828;}
+  .sc-wrap{overflow-x:auto;min-width:0;}
+  @media (max-width:1180px){.sc-grid{grid-template-columns:minmax(0,1fr) !important;}}
+  @media (max-width:640px){.rt-mast,.banner{padding-left:16px;padding-right:16px;} .rt-kpis{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+    .rt-kpi{padding:10px 12px;} .rt-kpi__val{font-size:20px;} .sc-tbl th,.sc-tbl td{white-space:normal;} .bar{grid-template-columns:110px 1fr 56px;}
+    .hgrid,.rules{grid-template-columns:1fr !important;} .chainlist{columns:1;} .flow .arrow{transform:rotate(90deg);width:100%;justify-content:center;}}
   @media (max-width:1180px){
     .rt-kpis{grid-template-columns:repeat(3,1fr);}
     .col-4,.col-5,.col-6,.col-7,.col-8{grid-column:span 12;}
@@ -171,6 +182,7 @@
       <span class="rt-tag" id="instLabel">Sample Laghubitta (synthetic data)</span>
     </div>
     <div class="rt-mast__right">
+      <nav class="lb-nav" aria-label="Laghubitta pages"><a href="laghubitta-product.html">Product</a><a href="laghubitta-app.html">App</a><a href="laghubitta.html" aria-current="page">Sample dashboard</a></nav>
       <span>As of <b class="tn" id="asOf" style="color:var(--text-strong)">-</b></span>
       <span class="rt-lozenge" title="Audit hash-chain head"><span class="seal-dot"></span><span id="sealTxt">AUDIT CHAIN</span></span>
     </div>
@@ -192,8 +204,8 @@
       <div class="seg" id="scSeg" role="group" aria-label="Scenario"></div>
       <div class="sc-grid">
         <div class="sc-params" id="scParams"></div>
-        <table class="sc-tbl"><thead><tr><th class="l">Measure</th><th>Base</th><th>Stressed</th><th>Change</th></tr></thead>
-          <tbody id="scBody"></tbody></table>
+        <div class="sc-wrap"><table class="sc-tbl"><thead><tr><th class="l">Measure</th><th>Base</th><th>Stressed</th><th>Change</th></tr></thead>
+          <tbody id="scBody"></tbody></table></div>
       </div>
     </section>
 
@@ -303,6 +315,10 @@ function pct(v,d){return isNum(v)?(v*100).toFixed(d==null?1:d)+"%":"—";}
 function pp(v){return isNum(v)?((v>=0?"+":"")+(v*100).toFixed(2)+" pp"):"—";}
 function crore(v,d){return isNum(v)?(v/1e7).toLocaleString("en-US",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d}):"—";}
 function scrore(v){return isNum(v)?((v>=0?"+":"")+crore(v)):"—";}
+function inr(v){if(!isNum(v))return "\u2014";var neg=v<0,s=String(Math.round(Math.abs(v))),last=s.slice(-3),rest=s.slice(0,-3);
+  if(rest)rest=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return (neg?"-":"")+"NPR "+(rest?rest+","+last:last);}
+function bsLines(bs){var L={capital_npr:"capital",rwa_npr:"risk-weighted assets",liquid_assets_npr:"liquid assets",inflows_90d_npr:"90 day inflows",outflows_90d_npr:"90 day outflows",borrowings_npr:"borrowings"};
+  return Object.keys(L).map(function(k){return L[k]+" "+inr(bs[k]);}).join(" · ");}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function el(id){return document.getElementById(id);}
 
@@ -533,7 +549,7 @@ function renderAudit(){
   el("auVer").textContent="contract v"+D.meta.contract_version+" · generated "+D.meta.generated_at;
   el("sealTxt").textContent="CHAIN "+a.head_hash.slice(0,10)+"…";
   el("auChain").innerHTML=a.chain.map(function(r,i){return "<div>"+(i+1)+". "+esc(r.name)+" <span>"+r.hash.slice(0,16)+"…</span></div>";}).join("");
-  el("auCfg").textContent="parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config,null,1).replace(/\n\s*/g," ")+"\nbalance sheet (NPR) "+JSON.stringify(D.balance_sheet).replace(/,/g,", ");
+  el("auCfg").textContent="parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config,null,1).replace(/\n\s*/g," ")+"\nbalance sheet: "+bsLines(D.balance_sheet);
 }
 
 function selectBranch(id){state.sel=id;renderBranches();renderTrend();}

@@ -40,6 +40,12 @@
   .rt-wordmark .dot{color:var(--accent);}
   .rt-overline{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);}
   .rt-tag{font-family:var(--mono);font-size:11px;color:var(--text-dim);}
+
+  /* shared laghubitta navigation */
+  .lb-nav{display:inline-flex;gap:4px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
+  .lb-nav a{color:var(--text-muted);padding:5px 10px;border-radius:5px;border:1px solid transparent;text-decoration:none;}
+  .lb-nav a:hover{color:var(--text-strong);border-color:var(--border-strong);text-decoration:none;}
+  .lb-nav a[aria-current="page"]{color:var(--text-strong);border-color:var(--accent);background:#0F1828;}
   .rt-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
   .rt-nav a{color:var(--text-muted);padding:6px 10px;border-radius:5px;border:1px solid transparent;}
   .rt-nav a:hover{color:var(--text-strong);border-color:var(--border-strong);text-decoration:none;}
@@ -287,11 +293,10 @@
       <span class="rt-overline">Microfinance Risk Layer</span>
       <span class="rt-tag">for laghubitta institutions</span>
     </div>
-    <nav class="rt-nav" aria-label="Primary">
-      <a href="laghubitta-app.html">Open the app</a>
-      <a href="laghubitta.html">Sample dashboard</a>
+    <div class="rt-nav">
+      <nav class="lb-nav" aria-label="Laghubitta pages"><a href="laghubitta-product.html" aria-current="page">Product</a><a href="laghubitta-app.html">App</a><a href="laghubitta.html">Sample dashboard</a></nav>
       <a class="rt-nav__cta" href="#request-pilot">Request a pilot</a>
-    </nav>
+    </div>
   </header>
 
   <!-- banner -->

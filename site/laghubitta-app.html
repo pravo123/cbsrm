@@ -159,6 +159,12 @@
     .sc-grid,.hgrid,.rules{grid-template-columns:1fr;}
   }
 
+
+  /* shared laghubitta navigation */
+  .lb-nav{display:inline-flex;gap:4px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
+  .lb-nav a{color:var(--text-muted);padding:5px 10px;border-radius:5px;border:1px solid transparent;text-decoration:none;}
+  .lb-nav a:hover{color:var(--text-strong);border-color:var(--border-strong);text-decoration:none;}
+  .lb-nav a[aria-current="page"]{color:var(--text-strong);border-color:var(--accent);background:#0F1828;}
   /* ---- app additions ---- */
   .rt-mast__right a{font-family:var(--mono);font-size:12px;}
   .privacy{margin:0;padding:9px 24px;background:var(--hash-bg);border-bottom:1px solid var(--hash-bd);color:var(--text);
@@ -252,8 +258,7 @@
       <span class="rt-tag" id="dsLabel">no data loaded</span>
     </div>
     <div class="rt-mast__right">
-      <a href="laghubitta-product.html">Product</a>
-      <a href="laghubitta.html">Sample dashboard</a>
+      <nav class="lb-nav" aria-label="Laghubitta pages"><a href="laghubitta-product.html">Product</a><a href="laghubitta-app.html" aria-current="page">App</a><a href="laghubitta.html">Sample dashboard</a></nav>
       <span id="asOfWrap" hidden>As of <b class="tn" id="asOf" style="color:var(--text-strong)">-</b></span>
       <span class="rt-lozenge" id="verifiedBadge" hidden title=""><span class="seal-dot"></span><span>Verified against the open-source reference library</span></span>
     </div>
@@ -423,6 +428,10 @@ function pct(v,d){return isNum(v)?(v*100).toFixed(d==null?1:d)+"%":"—";}
 function pp(v){return isNum(v)?((v>=0?"+":"")+(v*100).toFixed(2)+" pp"):"—";}
 function crore(v,d){return isNum(v)?(v/1e7).toLocaleString("en-US",{minimumFractionDigits:d==null?2:d,maximumFractionDigits:d==null?2:d}):"—";}
 function scrore(v){return isNum(v)?((v>=0?"+":"")+crore(v)):"—";}
+function inr(v){if(!isNum(v))return "\u2014";var neg=v<0,s=String(Math.round(Math.abs(v))),last=s.slice(-3),rest=s.slice(0,-3);
+  if(rest)rest=rest.replace(/\B(?=(\d{2})+(?!\d))/g,",");return (neg?"-":"")+"NPR "+(rest?rest+","+last:last);}
+function bsLines(bs){var L={capital_npr:"capital",rwa_npr:"risk-weighted assets",liquid_assets_npr:"liquid assets",inflows_90d_npr:"90 day inflows",outflows_90d_npr:"90 day outflows",borrowings_npr:"borrowings"};
+  return Object.keys(L).map(function(k){return L[k]+" "+inr(bs[k]);}).join(" · ");}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function tPar(v){return !isNum(v)?"neutral":v<0.05?"benign":v<0.10?"watch":v<0.20?"elevated":"severe";}
 function tCe(v){return !isNum(v)?"neutral":v>=0.95?"benign":v>=0.90?"watch":v>=0.80?"elevated":"severe";}
@@ -784,7 +793,7 @@ function renderAudit(){
   el("auRef").textContent=ref;
   el("auRec").textContent=S.rows.toLocaleString("en-US")+" records · "+D.as_of_dates.length+" · "+D.branches.length;
   el("auVer").textContent="engine laghubitta-engine.js · contract v1"+(isDefault()?" · default parameters":" · parameters changed");
-  el("auCfg").textContent="parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config)+"\nbalance sheet (NPR) "+JSON.stringify(D.balance_sheet)+"\ncustom scenario "+JSON.stringify(customScenario());
+  el("auCfg").textContent="parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config)+"\nbalance sheet ("+bsNote()+"): "+bsLines(D.balance_sheet)+"\ncustom scenario "+JSON.stringify(customScenario());
 }
 function renderBoard(){
   var inst=D.institution,L=inst[inst.length-1],latest=D.as_of_dates[D.as_of_dates.length-1];
@@ -802,7 +811,7 @@ function renderBoard(){
     '<h2>Branches with the highest PAR30</h2><table class="bt"><tr><th>Branch</th><th>District</th><th>Province</th><th>Gross</th><th>PAR30</th><th>Coll. eff.</th><th>Alerts</th></tr>'+top+"</table>"+
     '<h2>Early-warning alerts</h2><p>'+(Object.keys(byRule).sort().map(function(k){return k+": "+byRule[k];}).join(" · ")||"none")+'</p>'+
     '<h2>Audit</h2><p class="bhash">Input file sha256: '+esc(S.sha||"not available in this browser")+"<br>Records: "+S.rows.toLocaleString("en-US")+" · month-ends: "+D.as_of_dates.length+" · branches: "+D.branches.length+
-    "<br>Parameters: "+esc(JSON.stringify(D.config))+"</p>";
+    "<br>Balance sheet ("+esc(bsNote())+"): "+esc(bsLines(D.balance_sheet))+"<br>Parameters: "+esc(JSON.stringify(D.config))+"</p>";
 }
 
 /* ---------------- exports ---------------- */

@@ -111,8 +111,8 @@ PRODUCT_DEFAULT = (["Group Loan", "Micro Enterprise", "Housing Improvement"],
 
 # Seasonal multiplier on the monthly miss hazard, by calendar month. Monsoon
 # (Jun to Sep) hurts farm cash flows; post-harvest (Nov, Dec) is strongest.
-SEASON = {1: 0.9, 2: 0.9, 3: 1.0, 4: 1.0, 5: 1.1, 6: 1.4, 7: 1.8, 8: 1.7,
-          9: 1.3, 10: 1.0, 11: 0.7, 12: 0.7}
+SEASON = {1: 0.8, 2: 0.8, 3: 0.9, 4: 1.0, 5: 1.1, 6: 1.8, 7: 2.6, 8: 2.4,
+          9: 1.6, 10: 1.0, 11: 0.5, 12: 0.5}
 FARM_SECTORS = ("Agriculture", "Livestock")
 
 BASE_HAZARD = 0.010
@@ -205,12 +205,18 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
         disbursed = float(round(rng.uniform(lo, hi) / 1000.0) * 1000.0)
         age = int(rng.integers(0, int(term * 0.6))) if seasoned else 0
         outstanding = r2(disbursed * (1 - age / term))
-        return {"loan_id": f"LN{len(loans) + 1:05d}", **b, "product": product,
-                "sector": sector, "disbursed": disbursed, "term": term,
-                "rate": rate, "inst_p": r2(disbursed / term),
-                "out": outstanding, "missed": 0, "arrears": 0.0,
-                "arrears_p": 0.0, "restructured": 0, "offset": int(rng.integers(1, 30)),
-                "start": t, "done": False}
+        ln = {"loan_id": f"LN{len(loans) + 1:05d}", **b, "product": product,
+              "sector": sector, "disbursed": disbursed, "term": term,
+              "rate": rate, "inst_p": r2(disbursed / term),
+              "out": outstanding, "missed": 0, "arrears": 0.0,
+              "arrears_p": 0.0, "restructured": 0, "offset": int(rng.integers(1, 30)),
+              # seasoned loans already have a repayment history at the panel start
+              "start": -1 if seasoned else t, "done": False}
+        if seasoned and rng.random() < 0.04:   # some seasoned arrears at start
+            ln["missed"] = int(rng.integers(1, 5))
+            ln["arrears_p"] = r2(min(ln["missed"] * ln["inst_p"], outstanding * 0.5))
+            ln["arrears"] = r2(ln["arrears_p"] * 1.1)
+        return ln
 
     for _ in range(INITIAL_LOANS):
         loans.append(new_loan(0, seasoned=True))
@@ -230,10 +236,8 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
                    "district": ln["district"], "province": ln["province"],
                    "product": ln["product"], "sector": ln["sector"],
                    "disbursed_npr": ln["disbursed"]}
-            if ln["start"] == t:   # disbursement month (or panel start): no demand yet
+            if ln["start"] == t:   # disbursement month: no demand yet
                 due = collected = 0.0
-                if t == 0 and rng.random() < 0.04:   # some seasoned arrears at start
-                    ln["missed"] = int(rng.integers(1, 5))
             else:
                 if rng.random() < PREPAY_PROB and ln["missed"] == 0:
                     ln["done"] = True
@@ -250,7 +254,7 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
                 if m == 0:
                     outcome = "miss" if u < BASE_HAZARD * h_mult * season else "pay"
                 else:
-                    cure = CURE_BY_MISSED[min(m, 8)] * c_mult / max(season, 1.0)
+                    cure = min(0.95, CURE_BY_MISSED[min(m, 8)] * c_mult / season)
                     outcome = ("cure" if u < cure else
                                "pay" if u < cure + STAY_PROB else "miss")
                 if (m >= 3 and h_mult > 1.0 and t >= N_MONTHS - 4

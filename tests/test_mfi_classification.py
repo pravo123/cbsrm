@@ -90,11 +90,16 @@ def book() -> pd.DataFrame:
 
 def test_default_matches_addendum_exactly():
     assert DEFAULT_CLASSIFICATION == {"bands": [
-        {"key": "pass", "label": "Pass", "min_dpd": 0, "max_dpd": 30, "provision_rate": 0.01},
-        {"key": "watchlist", "label": "Watchlist", "min_dpd": 31, "max_dpd": 90, "provision_rate": 0.05},
-        {"key": "substandard", "label": "Substandard", "min_dpd": 91, "max_dpd": 180, "provision_rate": 0.25},
-        {"key": "doubtful", "label": "Doubtful", "min_dpd": 181, "max_dpd": 365, "provision_rate": 0.50},
-        {"key": "loss", "label": "Loss", "min_dpd": 366, "max_dpd": None, "provision_rate": 1.00},
+        {"key": "pass", "label": "Pass", "min_dpd": 0, "max_dpd": 30,
+         "provision_rate": 0.01},
+        {"key": "watchlist", "label": "Watchlist", "min_dpd": 31, "max_dpd": 90,
+         "provision_rate": 0.05},
+        {"key": "substandard", "label": "Substandard", "min_dpd": 91, "max_dpd": 180,
+         "provision_rate": 0.25},
+        {"key": "doubtful", "label": "Doubtful", "min_dpd": 181, "max_dpd": 365,
+         "provision_rate": 0.50},
+        {"key": "loss", "label": "Loss", "min_dpd": 366, "max_dpd": None,
+         "provision_rate": 1.00},
     ]}
 
 
@@ -149,6 +154,24 @@ def test_assign_class_values_in_no_band_are_missing():
     assert result.iloc[3] == "watchlist"
 
 
+def test_assign_class_values_that_are_not_numbers_are_missing():
+    # Same rule as the site engine: only numbers are placed, text is not converted.
+    values = pd.Series([None, "", "31", True, False, 31, np.int64(91), 10**400], dtype=object)
+    result = assign_class(values)
+    assert result.isna().tolist() == [True] * 5 + [False] * 3
+    assert result.iloc[5:].tolist() == ["watchlist", "substandard", "loss"]
+    assert assign_class(pd.Series([True, False])).isna().all()
+    assert assign_class(pd.Series([True, None], dtype="boolean")).isna().all()
+    assert assign_class(pd.Series(["0", "31"])).isna().all()
+
+
+def test_assign_class_nullable_integers_and_infinity():
+    result = assign_class(pd.Series([0, pd.NA, 400], dtype="Int64"))
+    assert result.isna().tolist() == [False, True, False]
+    assert assign_class(pd.Series([np.inf, -np.inf])).tolist()[0] == "loss"
+    assert assign_class(pd.Series([-np.inf])).isna().all()
+
+
 def test_assign_class_empty():
     result = assign_class(pd.Series([], dtype="int64"))
     assert result.empty
@@ -173,7 +196,8 @@ def test_assign_class_single_day_band():
 
 def test_assign_class_none_config_means_default():
     values = pd.Series([0, 31, 91, 181, 366])
-    pd.testing.assert_series_equal(assign_class(values, None), assign_class(values, DEFAULT_CLASSIFICATION))
+    pd.testing.assert_series_equal(
+        assign_class(values, None), assign_class(values, DEFAULT_CLASSIFICATION))
 
 
 def test_assign_class_rejects_invalid_config_with_readable_problems():
@@ -309,10 +333,17 @@ def test_table_custom_cutoffs_shift_boundary_loans(book):
 def test_table_label_falls_back_to_key():
     config = {"bands": [
         {"key": "ok", "min_dpd": 0, "max_dpd": 9, "provision_rate": 0.0},
-        {"key": "bad", "label": None, "min_dpd": 10, "max_dpd": None, "provision_rate": 1.0},
+        {"key": "late", "label": None, "min_dpd": 10, "max_dpd": 19, "provision_rate": 0.1},
+        {"key": "later", "label": "", "min_dpd": 20, "max_dpd": 29, "provision_rate": 0.2},
+        {"key": "latest", "label": " \t\ufeff", "min_dpd": 30, "max_dpd": 39,
+         "provision_rate": 0.3},
+        {"key": "bad", "label": 5, "min_dpd": 40, "max_dpd": None, "provision_rate": 1.0},
     ]}
     assert validate_classification(config) == []
-    assert classification_table(_loans([]), AS_OF, config)["label"].tolist() == ["ok", "bad"]
+    table = classification_table(_loans([]), AS_OF, config)
+    assert table["label"].tolist() == ["ok", "late", "later", "latest", "bad"]
+    kept = _config(_band("a", 0, None, 0.5, label=" Kept as written "))
+    assert classification_table(_loans([]), AS_OF, kept)["label"].tolist() == [" Kept as written "]
 
 
 def test_table_whole_float_and_numpy_cutoffs_are_normalised():
@@ -381,6 +412,7 @@ MAX = "max_dpd must be a whole number of days, 0 or more, or empty for no upper 
     (1, {"key": ""}, ['Band 2 needs a key, a short name such as "pass".']),
     (1, {"key": "   "}, ['Band 2 needs a key, a short name such as "pass".']),
     (1, {"key": 7}, ['Band 2 needs a key, a short name such as "pass".']),
+    (1, {"key": "\ufeff\u3000"}, ['Band 2 needs a key, a short name such as "pass".']),
     (2, {"key": "pass"},
      ['Band 3 ("pass") uses the same key as band 1. Each band needs a different key.']),
     # min_dpd
@@ -404,6 +436,8 @@ MAX = "max_dpd must be a whole number of days, 0 or more, or empty for no upper 
     (1, {"max_dpd": 90.5}, [f'Band 2 ("watchlist"): {MAX}']),
     (1, {"max_dpd": float("inf")}, [f'Band 2 ("watchlist"): {MAX}']),
     (1, {"max_dpd": False}, [f'Band 2 ("watchlist"): {MAX}']),
+    (1, {"max_dpd": 1e21}, [f'Band 2 ("watchlist"): {MAX}']),
+    (1, {"max_dpd": 10**400}, [f'Band 2 ("watchlist"): {MAX}']),
     (2, {"max_dpd": None},
      ['Band 3 ("substandard") has no upper limit (empty max_dpd), but only the last band '
       'may be open-ended.']),
@@ -422,9 +456,23 @@ MAX = "max_dpd must be a whole number of days, 0 or more, or empty for no upper 
     (1, {"provision_rate": "0.05"}, [f'Band 2 ("watchlist"): {RATE}']),
     (1, {"provision_rate": True}, [f'Band 2 ("watchlist"): {RATE}']),
     (1, {"provision_rate": float("nan")}, [f'Band 2 ("watchlist"): {RATE}']),
+    (1, {"provision_rate": 10**400}, [f'Band 2 ("watchlist"): {RATE}']),
+    (1, {"provision_rate": np.True_}, [f'Band 2 ("watchlist"): {RATE}']),
 ])
 def test_validate_band_problems(position, changes, expected):
     assert validate_classification(_default_with(position, **changes)) == expected
+
+
+def test_validate_day_limits_stop_at_the_largest_exact_javascript_whole_number():
+    top = 2**53 - 1
+    config = _config(_band("a", 0, top - 1, 0.1), _band("b", top, None, 0.2))
+    assert validate_classification(config) == []
+    table = classification_table(_loans([{"days_past_due": 10**6}]), AS_OF, config)
+    assert table["min_dpd"].tolist() == [0, top]
+    assert table["max_dpd"].tolist() == [top - 1, None]
+    assert table["n_loans"].tolist() == [1, 0]
+    too_far = _config(_band("a", 0, top, 0.1), _band("b", top + 1, None, 0.2))
+    assert validate_classification(too_far) == [f'Band 2 ("b"): {MIN}']
 
 
 def test_validate_max_before_min_in_middle_band():

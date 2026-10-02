@@ -547,3 +547,18 @@ def test_calls_do_not_mutate_defaults_configs_or_inputs(book):
     assert config == THREE_BANDS
     pd.testing.assert_frame_equal(book, before)
     assert classification_table(book, AS_OF)["provision_rate"].iloc[0] == 0.01
+
+
+def test_missing_max_dpd_key_is_open_ended_like_the_js_engine():
+    """A band with no max_dpd key validates like max_dpd=None and must not crash."""
+    cfg = {"bands": [
+        {"key": "a", "label": "A", "min_dpd": 0, "max_dpd": 30, "provision_rate": 0.1},
+        {"key": "b", "label": "B", "min_dpd": 31, "provision_rate": 1.0},
+    ]}
+    assert validate_classification(cfg) == []
+    assert list(assign_class(pd.Series([0, 31, 400]), cfg)) == ["a", "b", "b"]
+    frame = pd.DataFrame({"as_of": ["2026-09-30"] * 2, "written_off": [0, 0],
+                          "outstanding_npr": [100.0, 50.0], "days_past_due": [0, 400]})
+    table = classification_table(frame, "2026-09-30", cfg)
+    assert table["max_dpd"].tolist() == [30, None]
+    assert table["balance_npr"].tolist() == [100.0, 50.0]

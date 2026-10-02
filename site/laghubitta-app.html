@@ -283,7 +283,7 @@
   </header>
 
   <p class="banner" role="note"><b>Pilot prototype. Sample data is synthetic. Not a regulatory report.</b>
-    &nbsp;Defaults are illustrative, to be calibrated. Amounts in NPR crore (1 crore = 10,000,000).</p>
+    &nbsp;Defaults are illustrative, to be calibrated. Amounts in NPR crore (1 crore = 1,00,00,000).</p>
   <p class="privacy" role="note"><span class="seal-dot"></span><b>Your file is processed in this browser. Nothing is uploaded.</b>
     The page reads the file you choose locally and makes no network request with it.</p>
 
@@ -502,7 +502,7 @@ function loadText(text,meta){
   S.bsDefault=meta.ref?JSON.parse(JSON.stringify(meta.ref.balance_sheet)):E.defaultBalanceSheet(inst.gross_npr);
   S.bs=JSON.parse(JSON.stringify(S.bsDefault));
   S.baseScenarios=meta.ref?JSON.parse(JSON.stringify(meta.ref.scenarios)):JSON.parse(JSON.stringify(E.DEFAULT_SCENARIOS));
-  S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));
+  S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));S.customDefault=null;
   S.scen="base";S.sel=null;
   S.verify=null;
   if(S.src==="sample"&&S.ref){
@@ -541,7 +541,7 @@ function loadSample(){
 var M=window.LaghubittaMapper||null,mapperView=null;
 function closeMapper(){if(mapperView){mapperView.destroy();mapperView=null;}el("mapper").hidden=true;el("mapper").innerHTML="";}
 function openMapper(parsed,meta,initial){
-  closeMapper();clearLoaded();
+  closeMapper();clearLoaded();el("loadMsg").hidden=true;
   el("start").hidden=true;el("dash").hidden=true;el("mapper").hidden=false;
   mapperView=M.render(el("mapper"),{fileName:meta.fileName,headers:parsed.rows[0],sampleRows:parsed.rows.slice(1,4),mapping:initial||null,
     onApply:function(mapping){
@@ -615,7 +615,8 @@ function fmtField(f){var v=getP(obj(f.o),f.k);if(f.sel)return v;var x=v*f.sc;ret
 function buildSettings(){
   var groups=[];FIELDS.forEach(function(f){if(groups.indexOf(f.g)<0)groups.push(f.g);});
   var provs=Object.keys(S.ds.branchInfo).map(function(b){return S.ds.branchInfo[b].province;}).filter(function(p,i,a){return a.indexOf(p)===i;}).sort();
-  if(provs.indexOf(S.custom.province)<0)S.custom.province=provs[0]||"";
+  if(provs.indexOf(S.custom.province)<0){S.custom.province=provs[0]||"";}
+  if(!S.customDefault){S.customDefault=JSON.parse(JSON.stringify(S.custom));}
   el("cfgGrid").innerHTML=groups.map(function(g){
     return '<fieldset><legend>'+esc(g)+'</legend>'+FIELDS.filter(function(f){return f.g===g;}).map(function(f){
       var input=f.sel?'<select id="'+fid(f)+'">'+provs.map(function(p){return "<option"+(p===S.custom.province?" selected":"")+">"+esc(p)+"</option>";}).join("")+"</select>"
@@ -667,7 +668,7 @@ function clearLoaded(){
   el("dsLabel").textContent="no data loaded";el("asOfWrap").hidden=true;el("asOf").textContent="-";
 }
 function isDefault(){
-  return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault)&&JSON.stringify(S.custom)===JSON.stringify(DEFAULT_CUSTOM)&&JSON.stringify(S.cls)===JSON.stringify(E.DEFAULT_CLASSIFICATION);
+  return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault)&&JSON.stringify(S.custom)===JSON.stringify(S.customDefault||DEFAULT_CUSTOM)&&JSON.stringify(S.cls)===JSON.stringify(E.DEFAULT_CLASSIFICATION);
 }
 function bsAssumed(){return S.src==="upload"&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault);}
 function bsNote(){return bsAssumed()?"assumed balance sheet: replace in Settings":S.src==="upload"?"balance sheet entered in Settings":"sample balance sheet";}
@@ -978,7 +979,7 @@ drop.addEventListener("drop",function(e){var f=e.dataTransfer&&e.dataTransfer.fi
 el("btnAnother").addEventListener("click",function(){closeMapper();clearLoaded();el("dash").hidden=true;el("start").hidden=false;el("loadMsg").hidden=true;window.scrollTo(0,0);});
 el("btnPrint").addEventListener("click",function(){renderBoard();window.print();});
 el("btnAlertsCsv").addEventListener("click",downloadAlerts);
-el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));S.cls=E.defaultClassification();buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});
+el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));S.custom=JSON.parse(JSON.stringify(S.customDefault||DEFAULT_CUSTOM));S.cls=E.defaultClassification();buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});
 el("cfgGrid").addEventListener("input",onSettings);
 el("cfgGrid").addEventListener("change",onSettings);
 el("scSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;S.scen=b.getAttribute("data-id");renderScenario();});

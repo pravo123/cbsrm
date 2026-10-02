@@ -198,7 +198,7 @@ def _band_codes(days_past_due: pd.Series, bands: list[dict]) -> np.ndarray:
     codes = np.full(len(values), -1, dtype=np.int64)
     for position, band in enumerate(bands):
         inside = values >= band["min_dpd"]
-        if band["max_dpd"] is not None:
+        if band.get("max_dpd") is not None:
             inside &= values <= band["max_dpd"]
         codes[inside & (codes == -1)] = position
     return codes
@@ -254,7 +254,7 @@ def classification_table(
         "label": [band["label"] if _is_text(band.get("label")) else band["key"] for band in bands],
         "min_dpd": pd.Series([int(band["min_dpd"]) for band in bands], dtype="int64"),
         "max_dpd": pd.Series(
-            [None if band["max_dpd"] is None else int(band["max_dpd"]) for band in bands],
+            [None if band.get("max_dpd") is None else int(band["max_dpd"]) for band in bands],
             dtype=object,
         ),
         "n_loans": pd.Series(counts, dtype="int64"),

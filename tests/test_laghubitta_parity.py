@@ -54,7 +54,10 @@ def assert_metrics(expected: dict, actual: dict, where: str) -> None:
 
 
 def test_input_hash_matches_csv(demo):
-    assert demo["audit"]["input_sha256"] == hashlib.sha256(CSV.read_bytes()).hexdigest()
+    # The generator writes LF line endings; a CRLF checkout (Windows autocrlf)
+    # must not change the audited digest, so normalise before hashing.
+    data = CSV.read_bytes().replace(b"\r\n", b"\n")
+    assert demo["audit"]["input_sha256"] == hashlib.sha256(data).hexdigest()
 
 
 def test_config_matches_library(demo):

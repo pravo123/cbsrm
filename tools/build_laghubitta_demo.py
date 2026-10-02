@@ -2,9 +2,15 @@
 
 Deterministic generator for the illustrative CBSRM pilot prototype. It writes
 
-  site/laghubitta_loans.csv   loan-month panel (contract section 2)
+  site/laghubitta_loans.csv   account-month panel (contract section 2)
   site/laghubitta_demo.json   computed figures (contract section 6)
   site/laghubitta.html        rewrites the inline <script id="demo-data"> block
+
+Each CSV row is a centre-level pooled account (group loans aggregated per
+centre) at one month-end. The column is still called `loan_id`, per the
+contract schema. Amounts are simulated at single-account ticket sizes and
+multiplied by SCALE (100) when written, so a branch carries roughly NPR 10 to
+35 crore and the institution about NPR 1,200 crore. Ratios are unaffected.
 
 All data is SYNTHETIC. Institution label: "Sample Laghubitta (synthetic data)".
 Thresholds and provisioning rates are illustrative, to be calibrated. No
@@ -38,6 +44,7 @@ INSTITUTION = "Sample Laghubitta (synthetic data)"
 LAST_MONTH_END = (2026, 9)  # latest as_of = 2026-09-30
 N_MONTHS = 24
 MAX_LOANS = 2000
+SCALE = 100  # every NPR amount (CSV money columns, balance sheet) is x100
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
@@ -93,7 +100,7 @@ SECTORS = ["Agriculture", "Livestock", "Retail Trade", "Services",
 SECTOR_W_AGRI = [0.38, 0.25, 0.14, 0.10, 0.08, 0.05]
 SECTOR_W_OTHER = [0.12, 0.08, 0.30, 0.26, 0.14, 0.10]
 
-PRODUCTS = {  # name: (min ticket, max ticket, term months, annual rate)
+PRODUCTS = {  # name: (min ticket, max ticket, term months, annual rate); before SCALE
     "Group Loan": (30_000, 150_000, 24, 0.14),
     "Micro Enterprise": (100_000, 500_000, 36, 0.145),
     "Agriculture Seasonal": (50_000, 200_000, 12, 0.13),
@@ -303,7 +310,7 @@ def to_csv_bytes(df: pd.DataFrame) -> bytes:
     buf = io.StringIO()
     out = df.copy()
     for c in MONEY_COLS:
-        out[c] = out[c].map(lambda v: f"{v:.2f}")
+        out[c] = out[c].map(lambda v: f"{v * SCALE:.2f}")
     out.to_csv(buf, index=False, lineterminator="\n")
     return buf.getvalue().encode("utf-8")
 
@@ -590,13 +597,16 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
     alerts = branch_alerts(loans, latest, prev, cfg)
 
     g = institution[-1]["gross_npr"]
+    def sized(k: float) -> float:   # rounded on the unscaled gross, then x SCALE
+        return float(round(k * g / SCALE, -3) * SCALE)
+
     balance_sheet = {
-        "capital_npr": float(round(0.125 * g, -3)),
-        "rwa_npr": float(round(1.08 * g, -3)),
-        "liquid_assets_npr": float(round(0.11 * g, -3)),
-        "inflows_90d_npr": float(round(0.24 * g, -3)),
-        "outflows_90d_npr": float(round(0.28 * g, -3)),
-        "borrowings_npr": float(round(0.70 * g, -3)),
+        "capital_npr": sized(0.125),
+        "rwa_npr": sized(1.08),
+        "liquid_assets_npr": sized(0.11),
+        "inflows_90d_npr": sized(0.24),
+        "outflows_90d_npr": sized(0.28),
+        "borrowings_npr": sized(0.70),
     }
     scen_results = [apply_scenario(segments, balance_sheet, s, cfg) for s in SCENARIOS]
 

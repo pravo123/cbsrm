@@ -376,8 +376,125 @@
       inflows_90d_npr: r(0.24), outflows_90d_npr: r(0.28), borrowings_npr: r(0.70) };
   }
 
+  /* ---------------- addendum v1.1 section 3: configurable classification ----------------
+   * Mirrors cbsrm/mfi/classification.py (same rules, same problem messages, same rows).
+   * Bands, day cut-offs and provision rates are placeholders pending calibration.
+   * They are NOT NRB values and make no compliance claim. Every display of the
+   * table carries CLASSIFICATION_NOTE. A band with a missing or blank label shows its key.
+   * Day limits are whole numbers up to Number.MAX_SAFE_INTEGER (2^53 - 1).
+   * Paste inside the factory, before its `return {`; uses clone() and ratio().
+   * Private helpers are prefixed `cls` so they cannot clash with engine helpers. */
+  var DEFAULT_CLASSIFICATION = { bands: [
+    { key: "pass", label: "Pass", min_dpd: 0, max_dpd: 30, provision_rate: 0.01 },
+    { key: "watchlist", label: "Watchlist", min_dpd: 31, max_dpd: 90, provision_rate: 0.05 },
+    { key: "substandard", label: "Substandard", min_dpd: 91, max_dpd: 180, provision_rate: 0.25 },
+    { key: "doubtful", label: "Doubtful", min_dpd: 181, max_dpd: 365, provision_rate: 0.50 },
+    { key: "loss", label: "Loss", min_dpd: 366, max_dpd: null, provision_rate: 1.00 }
+  ] };   // placeholders pending calibration; not NRB values
+  var CLASSIFICATION_NOTE = "Configurable five-band classification. Bands and rates are " +
+    "placeholders pending calibration to the current NRB directive for D-class institutions.";
+  var CLS_MAX_DAYS = 9007199254740991;   // Number.MAX_SAFE_INTEGER; Python uses 2**53 - 1
+
+  function clsIsObj(x) { return x !== null && typeof x === "object" && !Array.isArray(x); }
+  function clsIsNum(x) { return typeof x === "number" && isFinite(x); }
+  function clsIsDays(x) { return clsIsNum(x) && Math.floor(x) === x && x >= 0 && x <= CLS_MAX_DAYS; }
+  function clsIsText(x) { return typeof x === "string" && x.trim() !== ""; }
+  function clsBandName(i, b) {
+    var k = clsIsObj(b) ? b.key : undefined;
+    return clsIsText(k) ? "Band " + i + " (\"" + k + "\")" : "Band " + i;
+  }
+
+  /* Returns plain-language problems with a classification config, [] if valid. */
+  function validateClassification(config) {
+    if (!clsIsObj(config)) return ["The classification settings must be an object with a \"bands\" list."];
+    var bands = config.bands;
+    if (!Array.isArray(bands)) return ["The classification settings need a \"bands\" list."];
+    if (!bands.length) return ["At least one band is needed."];
+    var problems = [], seen = Object.create(null), prevEnd = null, last = bands.length;
+    bands.forEach(function (b, idx) {
+      var i = idx + 1;
+      if (!clsIsObj(b)) {
+        problems.push("Band " + i + " must be an object with key, label, min_dpd, max_dpd and provision_rate.");
+        prevEnd = null; return;
+      }
+      var name = clsBandName(i, b), key = b.key, low = b.min_dpd, high = b.max_dpd, rate = b.provision_rate;
+      if (!clsIsText(key)) problems.push("Band " + i + " needs a key, a short name such as \"pass\".");
+      else if (key in seen) problems.push(name + " uses the same key as band " + seen[key] + ". Each band needs a different key.");
+      else seen[key] = i;
+      var lowOk = clsIsDays(low);
+      if (!lowOk) problems.push(name + ": min_dpd must be a whole number of days, 0 or more.");
+      else if (i === 1 && low !== 0) problems.push(name + " must start at 0 days past due, but its min_dpd is " + low + ".");
+      else if (i > 1 && prevEnd !== null && low !== prevEnd + 1) {
+        problems.push(name + " must start at " + (prevEnd + 1) + " days past due, one day after band " +
+          (i - 1) + " ends, but its min_dpd is " + low + ".");
+      }
+      prevEnd = null;
+      if (high == null) {
+        if (i < last) problems.push(name + " has no upper limit (empty max_dpd), but only the last band may be open-ended.");
+      } else if (!clsIsDays(high)) {
+        problems.push(name + ": max_dpd must be a whole number of days, 0 or more, or empty for no upper limit.");
+      } else {
+        prevEnd = high;
+        if (i === last) problems.push(name + " is the last band, so its max_dpd must be empty (no upper limit) so that every loan falls in a band.");
+        if (lowOk && high < low) problems.push(name + " ends at " + high + " days past due, before it starts at " + low + ". max_dpd must be at least min_dpd.");
+      }
+      if (!clsIsNum(rate) || rate < 0 || rate > 1) problems.push(name + ": provision_rate must be a number from 0 to 1 (for example 0.25 for 25%).");
+    });
+    return problems;
+  }
+
+  function clsCheckedBands(config) {
+    if (config == null) config = DEFAULT_CLASSIFICATION;
+    var problems = validateClassification(config);
+    if (problems.length) throw new Error("Invalid classification config: " + problems.join(" "));
+    return config.bands;
+  }
+  /* Band position for a days-past-due value, or -1 when no band has min_dpd <= dpd <= max_dpd.
+   * Only numbers are placed: null, undefined, text ("31") and true/false are in no band. */
+  function clsIndex(dpd, bands) {
+    if (typeof dpd !== "number") return -1;
+    for (var i = 0; i < bands.length; i++) {
+      var b = bands[i];
+      if (dpd >= b.min_dpd && (b.max_dpd == null || dpd <= b.max_dpd)) return i;
+    }
+    return -1;
+  }
+  /* Band key, or null for a value in no band (not a number, negative, NaN, or a fraction
+   * between bands such as 30.5). Throws when the config is invalid; a null or missing
+   * config means DEFAULT_CLASSIFICATION. */
+  function assignClass(dpd, config) {
+    var bands = clsCheckedBands(config), i = clsIndex(dpd, bands);
+    return i < 0 ? null : bands[i].key;
+  }
+
+  /* One row per band, in band order, over live rows (written_off === 0) at asOf:
+   * {key, label, min_dpd, max_dpd (null when open-ended), n_loans, balance_npr,
+   *  share (NaN when gross is 0), provision_rate, provision_npr}. Empty bands are kept with
+   * zeros. A live row whose days fit no band counts towards gross but not towards any band. */
+  function classificationTable(ds, asOf, config) {
+    var bands = clsCheckedBands(config), rows = ds.byDate[asOf] || [], gross = 0;
+    var n = bands.map(function () { return 0; }), bal = bands.map(function () { return 0; });
+    rows.forEach(function (x) {
+      if (x.written_off !== 0) return;
+      gross += x.outstanding_npr;
+      var i = clsIndex(x.days_past_due, bands);
+      if (i >= 0) { n[i] += 1; bal[i] += x.outstanding_npr; }
+    });
+    return bands.map(function (b, i) {
+      return { key: b.key, label: clsIsText(b.label) ? b.label : b.key, min_dpd: b.min_dpd,
+        max_dpd: b.max_dpd == null ? null : b.max_dpd, n_loans: n[i], balance_npr: bal[i],
+        share: ratio(bal[i], gross), provision_rate: b.provision_rate, provision_npr: bal[i] * b.provision_rate };
+    });
+  }
+
   /* ---------------- whole dashboard in the demo JSON shape (contract section 6) ---------------- */
-  function computeAll(ds, config, balanceSheet, scenarios) {
+  function classificationBlock(ds, asOf, classConfig) {
+    var cfg = classConfig || DEFAULT_CLASSIFICATION, rows = classificationTable(ds, asOf, cfg), tb = 0, tp = 0;
+    rows.forEach(function (r) { tb += r.balance_npr; tp += r.provision_npr; });
+    return { as_of: asOf, config: clone(cfg), rows: rows, total_balance_npr: tb, total_provision_npr: tp };
+  }
+
+  function computeAll(ds, config, balanceSheet, scenarios, classConfig) {
     config = config || DEFAULT_CONFIG;
     var dates = ds.dates, latest = dates[dates.length - 1], prev = dates.length > 1 ? dates[dates.length - 2] : null;
     var institution = dates.map(function (d) { var m = portfolioMetrics(ds, d, [], config)[0]; m.as_of = d; return m; });
@@ -416,6 +533,7 @@
     return { config: clone(config), as_of_dates: dates.slice(), institution: institution, branches: branches,
       by_district: byKey("district"), by_product: byKey("product"), by_sector: byKey("sector"),
       segments: segments, migration: migration, concentration: concentration, alerts: alerts,
+      classification: classificationBlock(ds, latest, classConfig),
       balance_sheet: bs, scenarios: scenarios || clone(DEFAULT_SCENARIOS) };
   }
 
@@ -465,6 +583,16 @@
       cmp("hhi " + k, ref.concentration[k].hhi, comp.concentration[k].hhi, false);
       cmp("top5 " + k, ref.concentration[k].top5_share, comp.concentration[k].top5_share, false);
     });
+    if (ref.classification) {
+      if (!comp.classification || ref.classification.rows.length !== comp.classification.rows.length) mism.push("classification rows differ");
+      else ref.classification.rows.forEach(function (r, i) {
+        var c = comp.classification.rows[i];
+        if (r.key !== c.key || r.n_loans !== c.n_loans) mism.push("classification " + r.key + " differs");
+        cmp("classification " + r.key + ".balance_npr", r.balance_npr, c.balance_npr, true);
+        cmp("classification " + r.key + ".share", r.share, c.share, false);
+        cmp("classification " + r.key + ".provision_npr", r.provision_npr, c.provision_npr, true);
+      });
+    }
     if (ref.alerts.length !== comp.alerts.length) mism.push("alert count: reference " + ref.alerts.length + ", engine " + comp.alerts.length);
     else ref.alerts.forEach(function (a, i) {
       var c = comp.alerts[i];
@@ -493,6 +621,10 @@
     portfolioMetrics: portfolioMetrics, bucketBalances: bucketBalances,
     migrationMatrix: migrationMatrix, rollRates: rollRates, hhi: hhi, topNShare: topNShare,
     branchAlerts: branchAlerts, applyScenario: applyScenario, defaultBalanceSheet: defaultBalanceSheet,
-    computeAll: computeAll, verify: verify, sha256Hex: sha256Hex
+    computeAll: computeAll, verify: verify, sha256Hex: sha256Hex,
+    DEFAULT_CLASSIFICATION: DEFAULT_CLASSIFICATION, CLASSIFICATION_NOTE: CLASSIFICATION_NOTE,
+    defaultClassification: function () { return clone(DEFAULT_CLASSIFICATION); },
+    validateClassification: validateClassification, assignClass: assignClass,
+    classificationTable: classificationTable, classificationBlock: classificationBlock
   };
 });

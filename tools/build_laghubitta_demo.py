@@ -540,6 +540,41 @@ def branch_alerts(loans: pd.DataFrame, as_of: str, prev_as_of: str, config=None)
     return out
 
 
+# ---------------------------------------------------------------- classification (addendum 3)
+# Placeholders pending calibration; not NRB values. Every display carries this note.
+DEFAULT_CLASSIFICATION: dict = {"bands": [
+    {"key": "pass", "label": "Pass", "min_dpd": 0, "max_dpd": 30, "provision_rate": 0.01},
+    {"key": "watchlist", "label": "Watchlist", "min_dpd": 31, "max_dpd": 90,
+     "provision_rate": 0.05},
+    {"key": "substandard", "label": "Substandard", "min_dpd": 91, "max_dpd": 180,
+     "provision_rate": 0.25},
+    {"key": "doubtful", "label": "Doubtful", "min_dpd": 181, "max_dpd": 365,
+     "provision_rate": 0.50},
+    {"key": "loss", "label": "Loss", "min_dpd": 366, "max_dpd": None, "provision_rate": 1.00},
+]}
+CLASSIFICATION_NOTE = ("Configurable five-band classification. Bands and rates are placeholders "
+                       "pending calibration to the current NRB directive for D-class institutions.")
+
+
+def classification_block(loans: pd.DataFrame, as_of: str, cfg: dict) -> dict:
+    live = loans[(loans["as_of"] == as_of) & (loans["written_off"] == 0)]
+    gross = float(live["outstanding_npr"].sum())
+    d = live["days_past_due"]
+    rows = []
+    for b in cfg["bands"]:
+        inside = d >= b["min_dpd"]
+        if b["max_dpd"] is not None:
+            inside &= d <= b["max_dpd"]
+        bal = float(live.loc[inside, "outstanding_npr"].sum())
+        rows.append({"key": b["key"], "label": b["label"], "min_dpd": b["min_dpd"],
+                     "max_dpd": b["max_dpd"], "n_loans": int(inside.sum()), "balance_npr": bal,
+                     "share": _ratio(bal, gross), "provision_rate": b["provision_rate"],
+                     "provision_npr": bal * b["provision_rate"]})
+    return {"as_of": as_of, "config": cfg, "rows": rows,
+            "total_balance_npr": float(sum(r["balance_npr"] for r in rows)),
+            "total_provision_npr": float(sum(r["provision_npr"] for r in rows))}
+
+
 def apply_scenario(segments: list[dict], balance_sheet: dict, scenario: dict,
                    config=None) -> dict:
     config = config or DEFAULT_CONFIG
@@ -662,6 +697,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
                           "top5_share": top_n_share(loans, latest, by, 5)}
                      for by in ("district", "sector", "product")}
     alerts = branch_alerts(loans, latest, prev, cfg)
+    classification = classification_block(loans, latest, DEFAULT_CLASSIFICATION)
 
     g = institution[-1]["gross_npr"]
     def sized(k: float) -> float:   # rounded on the unscaled gross, then x SCALE
@@ -691,6 +727,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
         migration)
     add("concentration", {"as_of": latest, "n": 5}, concentration)
     add("alerts", {"as_of": latest, "prev_as_of": prev, "config": cfg}, alerts)
+    add("classification", {"as_of": latest, "config": DEFAULT_CLASSIFICATION}, classification)
     for s, res in zip(SCENARIOS, scen_results, strict=True):
         add(f"scenario:{s['id']}",
             {"scenario": s, "balance_sheet": balance_sheet, "config": cfg}, res)
@@ -698,7 +735,8 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
     out = {
         "meta": {"institution": INSTITUTION, "synthetic": True, "seed": SEED,
                  "generated_at": f"{latest}T23:59:59+05:45",
-                 "contract_version": CONTRACT_VERSION, "currency": "NPR"},
+                 "contract_version": CONTRACT_VERSION, "contract_addendum": "1.1",
+                 "currency": "NPR"},
         "config": cfg,
         "as_of_dates": dates,
         "institution": institution,
@@ -710,6 +748,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
         "migration": migration,
         "concentration": concentration,
         "alerts": alerts,
+        "classification": classification,
         "balance_sheet": balance_sheet,
         "scenarios": SCENARIOS,
         "audit": {"input_sha256": csv_sha, "chain": chain,

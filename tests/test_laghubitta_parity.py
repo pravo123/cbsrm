@@ -172,6 +172,22 @@ def test_alerts(loans, demo):
         assert close(a["value"], r["value"]) and close(a["threshold"], r["threshold"]), a
 
 
+def test_classification(loans, demo):
+    """Addendum v1.1 section 3: generator classification block vs cbsrm.mfi."""
+    block = demo["classification"]
+    assert block["as_of"] == demo["as_of_dates"][-1]
+    assert block["config"] == mfi.DEFAULT_CLASSIFICATION
+    lib = mfi.classification_table(loans, block["as_of"], block["config"])
+    assert list(lib["key"]) == [r["key"] for r in block["rows"]]
+    for r, (_, x) in zip(block["rows"], lib.iterrows(), strict=True):
+        assert r["n_loans"] == x["n_loans"], r["key"]
+        assert r["max_dpd"] == x["max_dpd"] and r["min_dpd"] == x["min_dpd"], r["key"]
+        assert close(r["balance_npr"], x["balance_npr"], amount=True), r["key"]
+        assert close(r["provision_npr"], x["provision_npr"], amount=True), r["key"]
+        assert close(r["share"], x["share"]), r["key"]
+    assert close(block["total_balance_npr"], demo["institution"][-1]["gross_npr"], amount=True)
+
+
 def _generator():
     spec = importlib.util.spec_from_file_location(
         "build_laghubitta_demo", ROOT / "tools" / "build_laghubitta_demo.py")
@@ -219,6 +235,8 @@ def _chain_inputs(demo: dict) -> list[tuple[str, dict, object]]:
          demo["migration"]),
         ("concentration", {"as_of": latest, "n": 5}, demo["concentration"]),
         ("alerts", {"as_of": latest, "prev_as_of": prev, "config": cfg}, demo["alerts"]),
+        ("classification", {"as_of": latest, "config": demo["classification"]["config"]},
+         demo["classification"]),
     ]
     for sc in demo["scenarios"]:
         items.append((f"scenario:{sc['id']}",
@@ -232,7 +250,7 @@ def test_audit_chain_recomputes(demo):
     chain = demo["audit"]["chain"]
     names = [r["name"] for r in chain]
     assert names == ["institution", "branches", "migration", "concentration", "alerts",
-                     *[f"scenario:{s}" for s in SCENARIO_IDS]]
+                     "classification", *[f"scenario:{s}" for s in SCENARIO_IDS]]
     input_sha = demo["audit"]["input_sha256"]
     prev = None
     for (name, params, output), stored in zip(_chain_inputs(demo), chain, strict=True):

@@ -160,6 +160,8 @@
   }
 
 
+
+  #clTable tr.tot td{border-top:1px solid var(--border-strong);color:var(--text-strong);}
   /* shared laghubitta navigation */
   .lb-nav{display:inline-flex;gap:4px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
   .lb-nav a{color:var(--text-muted);padding:5px 10px;border-radius:5px;border:1px solid transparent;text-decoration:none;}
@@ -363,6 +365,13 @@
         <div id="conc"></div>
       </section>
 
+      <!-- classification view (addendum v1.1 section 3) -->
+      <section class="rt-panel col-12" aria-labelledby="clT" id="classPanel">
+        <div class="rt-panel__hd"><h2 class="rt-panel__title" id="clT">Classification view</h2><span class="rt-cite" id="clAsOf"></span></div>
+        <p class="rt-oneliner" style="color:var(--watch)" id="clNote">Configurable five-band classification. Bands and rates are placeholders pending calibration to the current NRB directive for D-class institutions.</p>
+        <div style="overflow-x:auto"><table id="clTable"></table></div>
+      </section>
+
       <section class="rt-panel col-12" aria-labelledby="alT" id="alertsPanel">
         <div class="rt-panel__hd"><h2 class="rt-panel__title" id="alT">Early-warning alerts</h2><span class="rt-cite" id="alCount"></span></div>
         <div class="rules" id="rules"></div>
@@ -461,7 +470,7 @@ function loadText(text,meta){
   S.ds=new E.Dataset(v.rows);S.rows=v.summary.data_rows;
   S.mapping=meta.mapping||null;
   S.src=meta.src;S.label=meta.label;S.fileName=meta.fileName;S.bytes=meta.bytes;S.sha=meta.sha;S.ref=meta.ref||null;
-  S.config=E.defaultConfig();
+  S.config=E.defaultConfig();S.cls=E.defaultClassification();
   var inst=E.portfolioMetrics(S.ds,S.ds.dates[S.ds.dates.length-1],[],S.config)[0];
   S.bsDefault=meta.ref?JSON.parse(JSON.stringify(meta.ref.balance_sheet)):E.defaultBalanceSheet(inst.gross_npr);
   S.bs=JSON.parse(JSON.stringify(S.bsDefault));
@@ -554,6 +563,15 @@ var FIELDS=[
   {g:"Balance sheet (NPR crore)",k:"inflows_90d_npr",l:"Inflows, next 90 days",u:"cr",sc:1e-7,o:"bs"},
   {g:"Balance sheet (NPR crore)",k:"outflows_90d_npr",l:"Outflows, next 90 days",u:"cr",sc:1e-7,o:"bs"},
   {g:"Balance sheet (NPR crore)",k:"borrowings_npr",l:"Borrowings",u:"cr",sc:1e-7,o:"bs"},
+  {g:"Classification (placeholders)",k:"bands.0.max_dpd",l:"Pass up to",u:"days",sc:1,o:"cls",int:true},
+  {g:"Classification (placeholders)",k:"bands.1.max_dpd",l:"Watchlist up to",u:"days",sc:1,o:"cls",int:true},
+  {g:"Classification (placeholders)",k:"bands.2.max_dpd",l:"Substandard up to",u:"days",sc:1,o:"cls",int:true},
+  {g:"Classification (placeholders)",k:"bands.3.max_dpd",l:"Doubtful up to",u:"days",sc:1,o:"cls",int:true},
+  {g:"Classification (placeholders)",k:"bands.0.provision_rate",l:"Pass provision",u:"%",sc:100,o:"cls"},
+  {g:"Classification (placeholders)",k:"bands.1.provision_rate",l:"Watchlist provision",u:"%",sc:100,o:"cls"},
+  {g:"Classification (placeholders)",k:"bands.2.provision_rate",l:"Substandard provision",u:"%",sc:100,o:"cls"},
+  {g:"Classification (placeholders)",k:"bands.3.provision_rate",l:"Doubtful provision",u:"%",sc:100,o:"cls"},
+  {g:"Classification (placeholders)",k:"bands.4.provision_rate",l:"Loss provision",u:"%",sc:100,o:"cls"},
   {g:"Custom scenario",k:"base_shift",l:"Share moving one bucket worse",u:"%",sc:100,o:"custom"},
   {g:"Custom scenario",k:"farm_mult",l:"Farm (Agriculture, Livestock) multiplier",u:"x",sc:1,o:"custom"},
   {g:"Custom scenario",k:"province",l:"Province hit hardest",u:"",o:"custom",sel:true},
@@ -562,7 +580,7 @@ var FIELDS=[
   {g:"Custom scenario",k:"inflow_haircut",l:"90 day inflows lost",u:"%",sc:100,o:"custom"},
   {g:"Custom scenario",k:"outflow_mult",l:"90 day outflow multiplier",u:"x",sc:1,o:"custom"}
 ];
-function obj(o){return o==="config"?S.config:o==="bs"?S.bs:S.custom;}
+function obj(o){return o==="config"?S.config:o==="bs"?S.bs:o==="cls"?S.cls:S.custom;}
 function getP(o,k){return k.split(".").reduce(function(a,p){return a[p];},o);}
 function setP(o,k,v){var ps=k.split("."),last=ps.pop();ps.reduce(function(a,p){return a[p];},o)[last]=v;}
 function fid(f){return "cfg-"+f.k.replace(/\./g,"-");}
@@ -593,12 +611,15 @@ function onSettings(){
       if(inp.value===fmtField(f))return;   /* unchanged: keep the exact stored value */
       setP(obj(f.o),f.k,x/f.sc);
     });
+    for(var i=1;i<S.cls.bands.length;i++){var pm=S.cls.bands[i-1].max_dpd;if(pm!=null)S.cls.bands[i].min_dpd=pm+1;}
+    var cp=E.validateClassification(S.cls);
+    if(cp.length){el("cfgStatus").textContent="Classification not applied: "+cp.join(" ");return;}
     el("cfgStatus").textContent=bad.length?"Not applied (needs a number of 0 or more): "+bad.join(", "):"Applied. Figures below are recomputed.";
     if(!bad.length)recompute();
   },120);
 }
 function isDefault(){
-  return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault)&&JSON.stringify(S.custom)===JSON.stringify(DEFAULT_CUSTOM);
+  return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault)&&JSON.stringify(S.custom)===JSON.stringify(DEFAULT_CUSTOM)&&JSON.stringify(S.cls)===JSON.stringify(E.DEFAULT_CLASSIFICATION);
 }
 function bsAssumed(){return S.src==="upload"&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault);}
 function bsNote(){return bsAssumed()?"assumed balance sheet: replace in Settings":S.src==="upload"?"balance sheet entered in Settings":"sample balance sheet";}
@@ -613,7 +634,7 @@ function customScenario(){
 
 /* ---------------- compute + render ---------------- */
 function recompute(){
-  D=E.computeAll(S.ds,S.config,S.bs,S.baseScenarios.concat([customScenario()]));
+  D=E.computeAll(S.ds,S.config,S.bs,S.baseScenarios.concat([customScenario()]),S.cls);
   D.branches.forEach(function(b){BR[b.branch_id]=b;});
   if(!S.sel||!BR[S.sel]){var w=branchRows().sort(function(a,b){return (isNum(b.par30)?b.par30:-1)-(isNum(a.par30)?a.par30:-1);})[0];S.sel=w?w.id:null;}
   renderAll();
@@ -628,7 +649,7 @@ function renderAll(){
   else vb.hidden=true;
   el("dsInfo").textContent=(S.src==="sample"?"Sample data (synthetic)":"Your file: "+S.fileName)+" · "+S.rows.toLocaleString("en-US")+" records · "+D.as_of_dates.length+" month-ends · "+D.branches.length+" branches";
   fillFilters();
-  renderKpis();renderScenario();renderBranches();renderTrend();renderHeat();renderMigration();renderFarm();renderConc();renderAlerts();renderAudit();renderBoard();
+  renderKpis();renderScenario();renderBranches();renderTrend();renderHeat();renderMigration();renderFarm();renderConc();renderClassification();renderAlerts();renderAudit();renderBoard();
   document.documentElement.setAttribute("data-ready","1");
 }
 
@@ -795,6 +816,16 @@ function renderConc(){
 }
 function isPP(r){return r==="PAR30_JUMP"||r==="COLLECTION_DROP";}
 function sortedAlerts(){var rk={high:0,medium:1};return D.alerts.slice().sort(function(a,b){return rk[a.severity]-rk[b.severity]||b.value/b.threshold-a.value/a.threshold||a.branch_id.localeCompare(b.branch_id);});}
+function renderClassification(){
+  var c=D.classification;if(!c){el("classPanel").hidden=true;return;}
+  el("clAsOf").textContent="as of "+c.as_of+" · live balances";
+  function days(r){return r.max_dpd==null?"above "+(r.min_dpd-1):r.min_dpd+" to "+r.max_dpd;}
+  var h='<thead><tr><th class="l">Band</th><th class="l">Days past due</th><th>Accounts</th><th>Balance (crore)</th><th>Share</th><th>Provision rate</th><th>Provision (crore)</th></tr></thead><tbody>';
+  c.rows.forEach(function(r){h+='<tr><td class="l txt">'+esc(r.label)+'</td><td class="l">'+days(r)+"</td><td>"+r.n_loans.toLocaleString("en-US")+"</td><td>"+crore(r.balance_npr)+"</td><td>"+pct(r.share,2)+"</td><td>"+pct(r.provision_rate,1)+"</td><td>"+crore(r.provision_npr)+"</td></tr>";});
+  var n=c.rows.reduce(function(a,r){return a+r.n_loans;},0);
+  h+='<tr class="tot"><td class="l txt"><b>Total</b></td><td></td><td>'+n.toLocaleString("en-US")+"</td><td>"+crore(c.total_balance_npr)+"</td><td></td><td></td><td>"+crore(c.total_provision_npr)+"</td></tr></tbody>";
+  el("clTable").innerHTML=h;
+}
 function renderAlerts(){
   el("rules").innerHTML=Object.keys(RULE_TEXT).map(function(k){var th=D.config.alerts[RULE_KEY[k]];
     return "<div><b>"+k+"</b> ("+(isPP(k)?(th*100).toFixed(1)+" pp":(th*100).toFixed(1)+"%")+"). "+RULE_TEXT[k]+"</div>";}).join("")+
@@ -819,7 +850,7 @@ function renderAudit(){
   el("auRef").textContent=ref;
   el("auRec").textContent=S.rows.toLocaleString("en-US")+" records · "+D.as_of_dates.length+" · "+D.branches.length;
   el("auVer").textContent="engine laghubitta-engine.js · contract v1"+(isDefault()?" · default parameters":" · parameters changed");
-  el("auCfg").textContent=(S.mapping?"column mapping applied in this browser: "+Object.keys(S.mapping).map(function(k){return k+" <- "+S.mapping[k];}).join(", ")+"\n":"")+"parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config)+"\nbalance sheet ("+bsNote()+"): "+bsLines(D.balance_sheet)+"\ncustom scenario "+JSON.stringify(customScenario());
+  el("auCfg").textContent=(S.mapping?"column mapping applied in this browser: "+Object.keys(S.mapping).map(function(k){return k+" <- "+S.mapping[k];}).join(", ")+"\n":"")+"parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config)+"\nbalance sheet ("+bsNote()+"): "+bsLines(D.balance_sheet)+"\ncustom scenario "+JSON.stringify(customScenario())+"\nclassification bands (placeholders) "+JSON.stringify(S.cls.bands);
 }
 function renderBoard(){
   var inst=D.institution,L=inst[inst.length-1],latest=D.as_of_dates[D.as_of_dates.length-1];
@@ -863,7 +894,7 @@ drop.addEventListener("drop",function(e){var f=e.dataTransfer&&e.dataTransfer.fi
 el("btnAnother").addEventListener("click",function(){closeMapper();el("dash").hidden=true;el("start").hidden=false;el("loadMsg").hidden=true;window.scrollTo(0,0);});
 el("btnPrint").addEventListener("click",function(){renderBoard();window.print();});
 el("btnAlertsCsv").addEventListener("click",downloadAlerts);
-el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});
+el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));S.cls=E.defaultClassification();buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});
 el("cfgGrid").addEventListener("input",onSettings);
 el("cfgGrid").addEventListener("change",onSettings);
 el("scSeg").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;S.scen=b.getAttribute("data-id");renderScenario();});

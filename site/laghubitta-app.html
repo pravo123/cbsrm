@@ -246,14 +246,20 @@
     .wrap>*:not(#board){display:none !important;}
     #board{display:block !important;color:#111;font-family:var(--sans);font-size:11px;}
     #board h1{font-size:18px;margin:0 0 4px;color:#111;}
-    #board h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:14px 0 6px;color:#333;border-bottom:1px solid #999;padding-bottom:2px;}
+    #board h2{font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin:10px 0 4px;color:#333;border-bottom:1px solid #999;padding-bottom:2px;}
     #board .bmeta{margin:0;color:#333;}
     #board .bdisc{margin:6px 0 0;padding:6px 8px;border:1px solid #999;color:#333;}
     #board table.bt{border-collapse:collapse;width:100%;}
     #board .bt th,#board .bt td{border:1px solid #bbb;padding:3px 6px;text-align:right;font-family:var(--mono);font-size:10px;color:#111;background:#fff;position:static;}
     #board .bt th{background:#eee;text-transform:none;letter-spacing:0;font-family:var(--sans);}
     #board .bt td:first-child,#board .bt th:first-child{text-align:left;}
-    #board .bhash{font-family:var(--mono);font-size:9.5px;word-break:break-all;}
+    #board .bhash{font-family:var(--mono);font-size:9px;word-break:break-all;margin:0;}
+    #board .bpage2{break-before:page;page-break-before:always;}
+    #board .bhead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid #111;padding-bottom:3px;margin-bottom:6px;font-size:12px;}
+    #board .bhead span{font-size:10px;color:#333;}
+    #board .bnote{font-size:9.5px;color:#333;margin:4px 0 0;font-style:italic;}
+    #board .bt-small td,#board .bt-small th{font-size:9px;padding:2px 5px;}
+    #board .bcols{display:flex;gap:8px;align-items:flex-start;} #board .bcols table{width:50%;}
   }
 </style>
 </head>
@@ -876,22 +882,46 @@ function renderAudit(){
   el("auCfg").textContent=(S.mapping?"column mapping applied in this browser: "+Object.keys(S.mapping).map(function(k){return k+" <- "+S.mapping[k];}).join(", ")+"\n":"")+"parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config)+"\nbalance sheet ("+bsNote()+"): "+bsLines(D.balance_sheet)+"\ncustom scenario "+JSON.stringify(customScenario())+"\nclassification bands (placeholders) "+JSON.stringify(S.cls.bands);
 }
 function renderBoard(){
-  var inst=D.institution,L=inst[inst.length-1],latest=D.as_of_dates[D.as_of_dates.length-1];
-  var sc=D.scenarios.map(function(s){var r=E.applyScenario(D.segments,D.balance_sheet,s,D.config);return "<tr><td>"+esc(s.label||s.id)+"</td><td>"+pct(r.par30,2)+"</td><td>"+pct(r.car,2)+"</td><td>"+crore(r.liquidity_gap_90d_npr)+"</td><td>"+crore(r.delta_provisions_npr)+"</td></tr>";}).join("");
-  var top=branchRows().sort(function(a,b){return (isNum(b.par30)?b.par30:-1)-(isNum(a.par30)?a.par30:-1);}).slice(0,10).map(function(r){
-    return "<tr><td>"+esc(r.branch_name)+"</td><td>"+esc(r.district)+"</td><td>"+esc(r.province)+"</td><td>"+crore(r.gross_npr)+"</td><td>"+pct(r.par30)+"</td><td>"+pct(r.collection_efficiency)+"</td><td>"+r.alerts+"</td></tr>";}).join("");
-  var byRule={};D.alerts.forEach(function(a){byRule[a.rule]=(byRule[a.rule]||0)+1;});
+  var inst=D.institution,L=inst[inst.length-1],P=inst.length>1?inst[inst.length-2]:{},latest=D.as_of_dates[D.as_of_dates.length-1];
+  var name=S.src==="sample"?"Sample Laghubitta (synthetic data)":S.fileName;
+  var notice='Pilot prototype. '+(S.src==="sample"?"Sample data is synthetic: not a real institution. ":"")+'Not a regulatory report. Thresholds, provisioning rates, classification bands and scenarios are illustrative, to be calibrated. '+
+    (bsAssumed()?"CAR, capital and liquidity figures use an ASSUMED balance sheet sized from the portfolio, not the institution's own figures. ":S.src==="upload"?"CAR, capital and liquidity figures use the balance sheet entered in Settings. ":"")+'Amounts in NPR crore.';
   var base=baseRes();
-  el("board").innerHTML='<h1>Board summary · portfolio risk</h1>'+
-    '<p class="bmeta">'+esc(S.src==="sample"?"Sample Laghubitta (synthetic data)":S.fileName)+' · as of '+latest+' · prepared with CBSRM (pilot prototype)</p>'+
-    '<p class="bdisc">Pilot prototype. '+(S.src==="sample"?"Sample data is synthetic. ":"")+'Not a regulatory report. Thresholds, provisioning rates and scenarios are illustrative, to be calibrated. '+(bsAssumed()?"CAR, capital and liquidity figures use an ASSUMED balance sheet sized from the portfolio, not the institution's own figures. ":S.src==="upload"?"CAR, capital and liquidity figures use the balance sheet entered in Settings. ":"")+'Amounts in NPR crore.</p>'+
-    '<h2>Headline</h2><table class="bt"><tr><th>Gross portfolio</th><th>PAR30</th><th>PAR90</th><th>NPL</th><th>Collection efficiency</th><th>CAR (base)</th><th>90 day liquidity gap</th><th>Alerts</th></tr>'+
-    "<tr><td>"+crore(L.gross_npr)+"</td><td>"+pct(L.par30,2)+"</td><td>"+pct(L.par90,2)+"</td><td>"+pct(L.npl_ratio,2)+"</td><td>"+pct(L.collection_efficiency,1)+"</td><td>"+pct(base.car,2)+"</td><td>"+crore(base.liquidity_gap_90d_npr)+"</td><td>"+D.alerts.length+"</td></tr></table>"+
-    '<h2>Stress scenarios</h2><table class="bt"><tr><th>Scenario</th><th>PAR30</th><th>CAR</th><th>Liquidity gap</th><th>Extra provisions</th></tr>'+sc+"</table>"+
-    '<h2>Branches with the highest PAR30</h2><table class="bt"><tr><th>Branch</th><th>District</th><th>Province</th><th>Gross</th><th>PAR30</th><th>Coll. eff.</th><th>Alerts</th></tr>'+top+"</table>"+
-    '<h2>Early-warning alerts</h2><p>'+(Object.keys(byRule).sort().map(function(k){return k+": "+byRule[k];}).join(" · ")||"none")+'</p>'+
-    '<h2>Audit</h2><p class="bhash">Input file sha256: '+esc(S.sha||"not available in this browser")+"<br>Records: "+S.rows.toLocaleString("en-US")+" · month-ends: "+D.as_of_dates.length+" · branches: "+D.branches.length+
-    "<br>Balance sheet ("+esc(bsNote())+"): "+esc(bsLines(D.balance_sheet))+"<br>Parameters: "+esc(JSON.stringify(D.config))+"</p>";
+  function chg(k){return inst.length>1?pp(L[k]-P[k]):"—";}
+  var kpis='<table class="bt"><tr><th>Measure</th><th>Value</th><th>vs prior month</th><th>Measure</th><th>Value</th></tr>'+
+    "<tr><td>Gross portfolio</td><td>"+crore(L.gross_npr)+"</td><td></td><td>Accounts (live)</td><td>"+L.n_loans.toLocaleString("en-US")+"</td></tr>"+
+    "<tr><td>PAR30</td><td>"+pct(L.par30,2)+"</td><td>"+chg("par30")+"</td><td>CAR (base)</td><td>"+pct(base.car,2)+"</td></tr>"+
+    "<tr><td>PAR90</td><td>"+pct(L.par90,2)+"</td><td>"+chg("par90")+"</td><td>90 day liquidity gap</td><td>"+crore(base.liquidity_gap_90d_npr)+"</td></tr>"+
+    "<tr><td>NPL (&gt;"+D.config.npl_dpd_threshold+" days)</td><td>"+pct(L.npl_ratio,2)+"</td><td>"+chg("npl_ratio")+"</td><td>Write-off ratio (month)</td><td>"+pct(L.writeoff_ratio,2)+"</td></tr>"+
+    "<tr><td>Collection efficiency</td><td>"+pct(L.collection_efficiency,1)+"</td><td>"+chg("collection_efficiency")+"</td><td>Early-warning alerts</td><td>"+D.alerts.length+" ("+D.alerts.filter(function(a){return a.severity==="high";}).length+" high)</td></tr></table>";
+  var sc=D.scenarios.map(function(s){var r=E.applyScenario(D.segments,D.balance_sheet,s,D.config);return "<tr><td>"+esc(s.label||s.id)+"</td><td>"+pct(r.par30,2)+"</td><td>"+pct(r.par90,2)+"</td><td>"+crore(r.delta_provisions_npr)+"</td><td>"+crore(r.capital_npr)+"</td><td>"+pct(r.car,2)+"</td><td>"+crore(r.liquidity_gap_90d_npr)+"</td></tr>";}).join("");
+  var c=D.classification,cls="";
+  if(c){cls='<table class="bt"><tr><th>Band</th><th>Days past due</th><th>Accounts</th><th>Balance</th><th>Share</th><th>Provision rate</th><th>Provision</th></tr>'+
+    c.rows.map(function(r){return "<tr><td>"+esc(r.label)+"</td><td>"+(r.max_dpd==null?"above "+(r.min_dpd-1):r.min_dpd+" to "+r.max_dpd)+"</td><td>"+r.n_loans+"</td><td>"+crore(r.balance_npr)+"</td><td>"+pct(r.share,2)+"</td><td>"+pct(r.provision_rate,1)+"</td><td>"+crore(r.provision_npr)+"</td></tr>";}).join("")+
+    "<tr><td><b>Total</b></td><td></td><td></td><td>"+crore(c.total_balance_npr)+"</td><td></td><td></td><td>"+crore(c.total_provision_npr)+"</td></tr></table>"+
+    '<p class="bnote">'+esc(E.CLASSIFICATION_NOTE)+"</p>";}
+  var top=branchRows().sort(function(a,b){return (isNum(b.par30)?b.par30:-1)-(isNum(a.par30)?a.par30:-1);}).slice(0,10).map(function(r){
+    return "<tr><td>"+esc(r.branch_name)+"</td><td>"+esc(r.district)+"</td><td>"+esc(r.province)+"</td><td>"+crore(r.gross_npr)+"</td><td>"+pct(r.par30)+"</td><td>"+pct(r.par90)+"</td><td>"+pct(r.collection_efficiency)+"</td><td>"+r.alerts+"</td></tr>";}).join("");
+  var MAXA=60,alist=sortedAlerts(),shown=alist.slice(0,MAXA);
+  var arow=function(a){var b=BR[a.branch_id]||{};return "<tr><td>"+a.severity+"</td><td>"+esc(b.branch_name)+"</td><td>"+a.rule+"</td><td>"+(isPP(a.rule)?pp(a.value)+" / "+pp(a.threshold):pct(a.value,1)+" / "+pct(a.threshold,0))+"</td></tr>";};
+  var ahead='<tr><th>Severity</th><th>Branch</th><th>Rule</th><th>Value / threshold</th></tr>';
+  var half=Math.ceil(shown.length/2);
+  var al=shown.length?'<div class="bcols"><table class="bt bt-small">'+ahead+shown.slice(0,half).map(arow).join("")+'</table><table class="bt bt-small">'+ahead+shown.slice(half).map(arow).join("")+"</table></div>"+
+    (alist.length>MAXA?'<p class="bnote">and '+(alist.length-MAXA)+' more; the full list is in "Download alerts CSV".</p>':""):'<p>No alerts at the current thresholds.</p>';
+  var head=function(page){return '<div class="bhead"><b>Board summary · portfolio risk</b><span>'+esc(name)+' · as of '+latest+' · page '+page+' of 2</span></div>';};
+  el("board").innerHTML=
+    '<div class="bpage">'+head(1)+'<p class="bdisc">'+notice+'</p>'+
+    '<h2>Key indicators</h2>'+kpis+
+    '<h2>Stress scenarios</h2><table class="bt"><tr><th>Scenario</th><th>PAR30</th><th>PAR90</th><th>Extra provisions</th><th>Capital</th><th>CAR</th><th>Liquidity gap</th></tr>'+sc+"</table>"+
+    '<h2>Classification view</h2>'+cls+'</div>'+
+    '<div class="bpage bpage2">'+head(2)+
+    '<h2>Branches with the highest PAR30</h2><table class="bt"><tr><th>Branch</th><th>District</th><th>Province</th><th>Gross</th><th>PAR30</th><th>PAR90</th><th>Coll. eff.</th><th>Alerts</th></tr>'+top+"</table>"+
+    '<h2>Early-warning alerts ('+D.alerts.length+')</h2>'+al+
+    '<h2>Audit</h2><p class="bhash">Input file sha256: '+esc(S.sha||"not available in this browser")+
+    (S.src==="sample"&&S.ref&&S.ref.audit?"<br>Reference audit chain head: "+esc(S.ref.audit.head_hash)+(S.verify&&S.verify.ok?" (engine matches the reference figures)":""):"")+
+    "<br>Records: "+S.rows.toLocaleString("en-US")+" · month-ends: "+D.as_of_dates.length+" · branches: "+D.branches.length+
+    "<br>Balance sheet ("+esc(bsNote())+"): "+esc(bsLines(D.balance_sheet))+"<br>Parameters: "+esc(JSON.stringify(D.config))+"</p>"+
+    '<p class="bdisc">'+notice+'</p></div>';
 }
 
 /* ---------------- exports ---------------- */

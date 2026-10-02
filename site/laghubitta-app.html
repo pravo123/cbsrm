@@ -162,6 +162,13 @@
 
 
   #clTable tr.tot td{border-top:1px solid var(--border-strong);color:var(--text-strong);}
+
+  .findings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+  .finding{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--watch);border-radius:5px;padding:10px 12px;font-size:13px;line-height:1.55;}
+  .finding.high{border-left-color:var(--severe);}
+  .finding h3{margin:0 0 4px;font-size:13px;color:var(--text-strong);}
+  .finding h3 span{font-family:var(--mono);font-size:11px;color:var(--text-dim);font-weight:400;margin-left:6px;}
+  @media (max-width:900px){.findings{grid-template-columns:minmax(0,1fr);}}
   /* shared laghubitta navigation */
   .lb-nav{display:inline-flex;gap:4px;flex-wrap:wrap;font-family:var(--mono);font-size:12px;}
   .lb-nav a{color:var(--text-muted);padding:5px 10px;border-radius:5px;border:1px solid transparent;text-decoration:none;}
@@ -371,6 +378,13 @@
         <p class="rt-oneliner" style="color:var(--watch)" id="clNote">Configurable five-band classification. Bands and rates are placeholders pending calibration to the current NRB directive for D-class institutions.</p>
         <div style="overflow-x:auto"><table id="clTable"></table></div>
       </section>
+
+    <!-- branch findings (addendum v1.1 section 4) -->
+    <section class="rt-panel col-12" aria-labelledby="fdT" id="findingsPanel">
+      <div class="rt-panel__hd"><h2 class="rt-panel__title" id="fdT">Branch findings</h2><span class="rt-cite" id="fdCount"></span></div>
+      <p class="rt-oneliner">One paragraph per branch with alerts, filled from the data by a fixed rule-based template (no generated text).</p>
+      <div id="findings" class="findings"></div>
+    </section>
 
       <section class="rt-panel col-12" aria-labelledby="alT" id="alertsPanel">
         <div class="rt-panel__hd"><h2 class="rt-panel__title" id="alT">Early-warning alerts</h2><span class="rt-cite" id="alCount"></span></div>
@@ -649,7 +663,7 @@ function renderAll(){
   else vb.hidden=true;
   el("dsInfo").textContent=(S.src==="sample"?"Sample data (synthetic)":"Your file: "+S.fileName)+" · "+S.rows.toLocaleString("en-US")+" records · "+D.as_of_dates.length+" month-ends · "+D.branches.length+" branches";
   fillFilters();
-  renderKpis();renderScenario();renderBranches();renderTrend();renderHeat();renderMigration();renderFarm();renderConc();renderClassification();renderAlerts();renderAudit();renderBoard();
+  renderKpis();renderScenario();renderBranches();renderTrend();renderHeat();renderMigration();renderFarm();renderConc();renderClassification();renderAlerts();renderFindings();renderAudit();renderBoard();
   document.documentElement.setAttribute("data-ready","1");
 }
 
@@ -825,6 +839,15 @@ function renderClassification(){
   var n=c.rows.reduce(function(a,r){return a+r.n_loans;},0);
   h+='<tr class="tot"><td class="l txt"><b>Total</b></td><td></td><td>'+n.toLocaleString("en-US")+"</td><td>"+crore(c.total_balance_npr)+"</td><td></td><td></td><td>"+crore(c.total_provision_npr)+"</td></tr></tbody>";
   el("clTable").innerHTML=h;
+}
+function renderFindings(){
+  var F=D.findings||[];
+  if(!F.length){el("findings").innerHTML='<p class="muted">No branch has an alert at the current thresholds.</p>';el("fdCount").textContent="";return;}
+  var rank=function(f){return f.rules.filter(function(r){return r.severity==="high";}).length*10+f.rules.length;};
+  var list=F.slice().sort(function(a,b){return rank(b)-rank(a)||(isNum(b.par30)?b.par30:0)-(isNum(a.par30)?a.par30:0)||a.branch_id.localeCompare(b.branch_id);});
+  el("findings").innerHTML=list.map(function(f){var hi=f.rules.some(function(r){return r.severity==="high";});
+    return '<article class="finding'+(hi?" high":"")+'"><h3>'+esc(f.branch_name)+'<span>'+esc(f.branch_id)+" · "+esc(f.district)+" · "+esc(f.province)+"</span></h3><p style=\"margin:0\">"+esc(window.LaghubittaEngine.findingText(f))+"</p></article>";}).join("");
+  el("fdCount").textContent=F.length+" branches with alerts";
 }
 function renderAlerts(){
   el("rules").innerHTML=Object.keys(RULE_TEXT).map(function(k){var th=D.config.alerts[RULE_KEY[k]];

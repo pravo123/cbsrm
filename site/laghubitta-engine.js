@@ -494,6 +494,53 @@
     return { as_of: asOf, config: clone(cfg), rows: rows, total_balance_npr: tb, total_provision_npr: tp };
   }
 
+  /* Fixed plain-language template for one finding. Filled only from data; no generated text. */
+  function fpct(v, d) { return typeof v === "number" && isFinite(v) ? (v * 100).toFixed(d == null ? 1 : d) + "%" : "n/a"; }
+  function fpp(v) { return typeof v === "number" && isFinite(v) ? (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + " pp" : "n/a"; }
+  function findingText(f) {
+    var rules = f.rules.map(function (r) {
+      var sev = r.severity === "high" ? "high" : "medium";
+      if (r.rule === "PAR30_LEVEL") return "PAR30 level (" + fpct(r.value) + ", threshold " + fpct(r.threshold, 0) + ", " + sev + ")";
+      if (r.rule === "PAR30_JUMP") return "PAR30 jump (" + fpp(r.value) + " in the month, threshold " + fpp(r.threshold) + ", " + sev + ")";
+      if (r.rule === "ROLL_RATE") return "roll rate (" + fpct(r.value) + " of last month's current balance slipped into arrears, threshold " + fpct(r.threshold, 0) + ", " + sev + ")";
+      return "collection drop (efficiency down " + fpp(r.value).replace("+", "") + ", threshold " + fpp(r.threshold).replace("+", "") + ", " + sev + ")";
+    });
+    var t = "PAR30 moved from " + fpct(f.par30_prev) + " on " + f.prev_as_of + " to " + fpct(f.par30) + " on " + f.as_of +
+      " (" + fpp(f.par30 - f.par30_prev) + "), and collection efficiency from " + fpct(f.collection_efficiency_prev) +
+      " to " + fpct(f.collection_efficiency) + ". " + (rules.length === 1 ? "Rule fired: " : rules.length + " rules fired: ") +
+      rules.join("; ") + ". ";
+    t += f.top_product == null ? "No balance is more than 30 days overdue on " + f.as_of + "." :
+      "The largest contributor to the balance more than 30 days overdue is " + f.top_product + " (" + fpct(f.top_product_share, 0) +
+      " of it); by sector, " + f.top_sector + " (" + fpct(f.top_sector_share, 0) + ").";
+    return t;
+  }
+
+  /* ---------------- addendum v1.1 section 4: branch findings (data only; text is a fixed template) ---------------- */
+  function topShare(rows, col) {
+    var g = Object.create(null), tot = 0;
+    rows.forEach(function (x) { g[x[col]] = (g[x[col]] || 0) + x.outstanding_npr; tot += x.outstanding_npr; });
+    if (tot === 0) return [null, null];
+    var best = Object.keys(g).sort(function (a, b) { return (g[b] - g[a]) || (a < b ? -1 : a > b ? 1 : 0); })[0];
+    return [best, g[best] / tot];
+  }
+  function branchFindings(ds, asOf, prevAsOf, alerts, branches) {
+    var by = Object.create(null), info = Object.create(null);
+    alerts.forEach(function (a) { (by[a.branch_id] = by[a.branch_id] || []).push(a); });
+    branches.forEach(function (b) { info[b.branch_id] = b; });
+    var latest = ds.byDate[asOf] || [];
+    return Object.keys(by).sort().map(function (bid) {
+      var b = info[bid], cur = null, prv = null;
+      b.series.forEach(function (x) { if (x.as_of === asOf) cur = x; if (x.as_of === prevAsOf) prv = x; });
+      var par = latest.filter(function (x) { return x.branch_id === bid && x.written_off === 0 && x.days_past_due > 30; });
+      var tp = topShare(par, "product"), ts = topShare(par, "sector");
+      return { branch_id: bid, branch_name: b.branch_name, district: b.district, province: b.province,
+        as_of: asOf, prev_as_of: prevAsOf, gross_npr: cur.gross_npr, par30: cur.par30, par30_prev: prv.par30,
+        collection_efficiency: cur.collection_efficiency, collection_efficiency_prev: prv.collection_efficiency,
+        rules: by[bid].map(function (a) { return { rule: a.rule, value: a.value, threshold: a.threshold, severity: a.severity }; }),
+        top_product: tp[0], top_product_share: tp[1], top_sector: ts[0], top_sector_share: ts[1] };
+    });
+  }
+
   function computeAll(ds, config, balanceSheet, scenarios, classConfig) {
     config = config || DEFAULT_CONFIG;
     var dates = ds.dates, latest = dates[dates.length - 1], prev = dates.length > 1 ? dates[dates.length - 2] : null;
@@ -534,6 +581,7 @@
       by_district: byKey("district"), by_product: byKey("product"), by_sector: byKey("sector"),
       segments: segments, migration: migration, concentration: concentration, alerts: alerts,
       classification: classificationBlock(ds, latest, classConfig),
+      findings: prev ? branchFindings(ds, latest, prev, alerts, branches) : [],
       balance_sheet: bs, scenarios: scenarios || clone(DEFAULT_SCENARIOS) };
   }
 
@@ -593,6 +641,15 @@
         cmp("classification " + r.key + ".provision_npr", r.provision_npr, c.provision_npr, true);
       });
     }
+    if (ref.findings) {
+      if (!comp.findings || ref.findings.length !== comp.findings.length) mism.push("findings count differs");
+      else ref.findings.forEach(function (f, i) {
+        var c = comp.findings[i];
+        if (f.branch_id !== c.branch_id || f.top_product !== c.top_product || f.top_sector !== c.top_sector) mism.push("finding " + f.branch_id + " differs");
+        ["par30", "par30_prev", "collection_efficiency", "collection_efficiency_prev", "top_product_share", "top_sector_share"].forEach(function (k) { cmp("finding " + f.branch_id + "." + k, f[k], c[k], false); });
+        cmp("finding " + f.branch_id + ".gross_npr", f.gross_npr, c.gross_npr, true);
+      });
+    }
     if (ref.alerts.length !== comp.alerts.length) mism.push("alert count: reference " + ref.alerts.length + ", engine " + comp.alerts.length);
     else ref.alerts.forEach(function (a, i) {
       var c = comp.alerts[i];
@@ -625,6 +682,7 @@
     DEFAULT_CLASSIFICATION: DEFAULT_CLASSIFICATION, CLASSIFICATION_NOTE: CLASSIFICATION_NOTE,
     defaultClassification: function () { return clone(DEFAULT_CLASSIFICATION); },
     validateClassification: validateClassification, assignClass: assignClass,
-    classificationTable: classificationTable, classificationBlock: classificationBlock
+    classificationTable: classificationTable, classificationBlock: classificationBlock,
+    branchFindings: branchFindings, findingText: findingText
   };
 });

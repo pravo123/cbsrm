@@ -188,6 +188,34 @@ def test_classification(loans, demo):
     assert close(block["total_balance_npr"], demo["institution"][-1]["gross_npr"], amount=True)
 
 
+def test_findings(loans, demo):
+    """Addendum v1.1 section 4: findings rebuilt from cbsrm.mfi alerts and metrics."""
+    m = demo["migration"]
+    alerts = mfi.branch_alerts(loans, m["to_as_of"], m["from_as_of"])
+    cur = mfi.portfolio_metrics(loans, m["to_as_of"], by=("branch_id",)).set_index("branch_id")
+    prv = mfi.portfolio_metrics(loans, m["from_as_of"], by=("branch_id",)).set_index("branch_id")
+    fired = sorted(set(alerts["branch_id"]))
+    assert [f["branch_id"] for f in demo["findings"]] == fired
+    latest = loans[(loans["as_of"] == m["to_as_of"]) & (loans["written_off"] == 0)]
+    for f in demo["findings"]:
+        bid = f["branch_id"]
+        assert close(f["par30"], cur.loc[bid, "par30"]) and close(f["par30_prev"], prv.loc[bid, "par30"])
+        assert close(f["collection_efficiency"], cur.loc[bid, "collection_efficiency"])
+        assert close(f["collection_efficiency_prev"], prv.loc[bid, "collection_efficiency"])
+        assert close(f["gross_npr"], cur.loc[bid, "gross_npr"], amount=True)
+        lib_rules = alerts[alerts["branch_id"] == bid]
+        assert [r["rule"] for r in f["rules"]] == list(lib_rules["rule"])
+        par = latest[(latest["branch_id"] == bid) & (latest["days_past_due"] > 30)]
+        for col in ("product", "sector"):
+            if par["outstanding_npr"].sum() == 0:
+                assert f["top_" + col] is None and f["top_" + col + "_share"] is None
+                continue
+            g = par.groupby(col)["outstanding_npr"].sum()
+            top = sorted(g.items(), key=lambda kv: (-kv[1], kv[0]))[0]
+            assert f["top_" + col] == top[0]
+            assert close(f["top_" + col + "_share"], top[1] / g.sum())
+
+
 def _generator():
     spec = importlib.util.spec_from_file_location(
         "build_laghubitta_demo", ROOT / "tools" / "build_laghubitta_demo.py")
@@ -237,6 +265,8 @@ def _chain_inputs(demo: dict) -> list[tuple[str, dict, object]]:
         ("alerts", {"as_of": latest, "prev_as_of": prev, "config": cfg}, demo["alerts"]),
         ("classification", {"as_of": latest, "config": demo["classification"]["config"]},
          demo["classification"]),
+        ("findings", {"as_of": latest, "prev_as_of": prev, "config": cfg["alerts"]},
+         demo["findings"]),
     ]
     for sc in demo["scenarios"]:
         items.append((f"scenario:{sc['id']}",
@@ -250,7 +280,7 @@ def test_audit_chain_recomputes(demo):
     chain = demo["audit"]["chain"]
     names = [r["name"] for r in chain]
     assert names == ["institution", "branches", "migration", "concentration", "alerts",
-                     "classification", *[f"scenario:{s}" for s in SCENARIO_IDS]]
+                     "classification", "findings", *[f"scenario:{s}" for s in SCENARIO_IDS]]
     input_sha = demo["audit"]["input_sha256"]
     prev = None
     for (name, params, output), stored in zip(_chain_inputs(demo), chain, strict=True):

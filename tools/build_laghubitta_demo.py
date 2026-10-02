@@ -575,6 +575,46 @@ def classification_block(loans: pd.DataFrame, as_of: str, cfg: dict) -> dict:
             "total_provision_npr": float(sum(r["provision_npr"] for r in rows))}
 
 
+# ---------------------------------------------------------------- branch findings (addendum 4)
+def _top_share(rows: pd.DataFrame, col: str) -> tuple:
+    """Largest group of the PAR30 balance by `col`; ties go to the alphabetically first key."""
+    total = float(rows["outstanding_npr"].sum())
+    if total == 0:
+        return None, None
+    g = rows.groupby(col)["outstanding_npr"].sum()
+    best = sorted(g.items(), key=lambda kv: (-kv[1], kv[0]))[0]
+    return best[0], float(best[1]) / total
+
+
+def branch_findings(loans: pd.DataFrame, as_of: str, prev_as_of: str, alerts: list[dict],
+                    branches: list[dict]) -> list[dict]:
+    by_branch: dict[str, list[dict]] = {}
+    for a in alerts:
+        by_branch.setdefault(a["branch_id"], []).append(a)
+    info = {b["branch_id"]: b for b in branches}
+    latest = loans[loans["as_of"] == as_of]
+    out = []
+    for bid in sorted(by_branch):
+        b = info[bid]
+        cur = next(x for x in b["series"] if x["as_of"] == as_of)
+        prv = next(x for x in b["series"] if x["as_of"] == prev_as_of)
+        par = latest[(latest["branch_id"] == bid) & (latest["written_off"] == 0)
+                     & (latest["days_past_due"] > 30)]
+        tp, tps = _top_share(par, "product")
+        ts, tss = _top_share(par, "sector")
+        out.append({"branch_id": bid, "branch_name": b["branch_name"], "district": b["district"],
+                    "province": b["province"], "as_of": as_of, "prev_as_of": prev_as_of,
+                    "gross_npr": cur["gross_npr"], "par30": cur["par30"],
+                    "par30_prev": prv["par30"],
+                    "collection_efficiency": cur["collection_efficiency"],
+                    "collection_efficiency_prev": prv["collection_efficiency"],
+                    "rules": [{k: a[k] for k in ("rule", "value", "threshold", "severity")}
+                              for a in by_branch[bid]],
+                    "top_product": tp, "top_product_share": tps,
+                    "top_sector": ts, "top_sector_share": tss})
+    return out
+
+
 def apply_scenario(segments: list[dict], balance_sheet: dict, scenario: dict,
                    config=None) -> dict:
     config = config or DEFAULT_CONFIG
@@ -698,6 +738,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
                      for by in ("district", "sector", "product")}
     alerts = branch_alerts(loans, latest, prev, cfg)
     classification = classification_block(loans, latest, DEFAULT_CLASSIFICATION)
+    findings = branch_findings(loans, latest, prev, alerts, branches)
 
     g = institution[-1]["gross_npr"]
     def sized(k: float) -> float:   # rounded on the unscaled gross, then x SCALE
@@ -728,6 +769,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
     add("concentration", {"as_of": latest, "n": 5}, concentration)
     add("alerts", {"as_of": latest, "prev_as_of": prev, "config": cfg}, alerts)
     add("classification", {"as_of": latest, "config": DEFAULT_CLASSIFICATION}, classification)
+    add("findings", {"as_of": latest, "prev_as_of": prev, "config": cfg["alerts"]}, findings)
     for s, res in zip(SCENARIOS, scen_results, strict=True):
         add(f"scenario:{s['id']}",
             {"scenario": s, "balance_sheet": balance_sheet, "config": cfg}, res)
@@ -749,6 +791,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
         "concentration": concentration,
         "alerts": alerts,
         "classification": classification,
+        "findings": findings,
         "balance_sheet": balance_sheet,
         "scenarios": SCENARIOS,
         "audit": {"input_sha256": csv_sha, "chain": chain,

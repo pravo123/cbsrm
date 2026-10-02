@@ -207,6 +207,22 @@
   .cfg-note{grid-column:1/-1;margin:0;}
   .cfg-foot{display:flex;gap:12px;align-items:center;margin-top:10px;}
   #board{display:none;}
+  .sc-wrap{overflow-x:auto;min-width:0;}
+  @media (max-width:1180px){.sc-grid{grid-template-columns:minmax(0,1fr);}}
+  @media (max-width:640px){
+    .rt-mast,.start,.toolbar,.privacy,.banner{padding-left:16px;padding-right:16px;}
+    .rt-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .rt-kpi{padding:10px 12px;} .rt-kpi__val{font-size:20px;} .rt-kpi svg{max-width:100%;}
+    .rt-panel{padding:12px;}
+    .sc-tbl th,.sc-tbl td{white-space:normal;}
+    .cfg-grid{grid-template-columns:minmax(0,1fr);}
+    .fld{grid-template-columns:minmax(0,1fr) 72px 22px;}
+    .fld span{overflow-wrap:anywhere;}
+    .bar{grid-template-columns:110px 1fr 56px;}
+    .rules{grid-template-columns:1fr;}
+    .hgrid{grid-template-columns:1fr;}
+    .flow .arrow{transform:rotate(90deg);padding:4px 0;width:100%;justify-content:center;}
+  }
   @media (max-width:1180px){.start-grid{grid-template-columns:1fr;}.cfg-grid{grid-template-columns:repeat(2,1fr);}}
   @media print{
     @page{size:A4;margin:14mm;}
@@ -291,8 +307,8 @@
         <div class="seg" id="scSeg" role="group" aria-label="Scenario"></div>
         <div class="sc-grid">
           <div class="sc-params" id="scParams"></div>
-          <table class="sc-tbl"><thead><tr><th class="l">Measure</th><th>Base</th><th>Stressed</th><th>Change</th></tr></thead>
-            <tbody id="scBody"></tbody></table>
+          <div class="sc-wrap"><table class="sc-tbl"><thead><tr><th class="l">Measure</th><th>Base</th><th>Stressed</th><th>Change</th></tr></thead>
+            <tbody id="scBody"></tbody></table></div>
         </div>
       </section>
 

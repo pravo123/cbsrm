@@ -594,7 +594,7 @@ function renderAudit(){
   el("auVer").textContent="contract v"+D.meta.contract_version+" · generated "+D.meta.generated_at;
   el("sealTxt").textContent="CHAIN "+a.head_hash.slice(0,10)+"…";
   el("auChain").innerHTML=a.chain.map(function(r,i){return "<div>"+(i+1)+". "+esc(r.name)+" <span>"+r.hash.slice(0,16)+"…</span></div>";}).join("");
-  el("auCfg").textContent="parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config,null,1).replace(/\n\s*/g," ")+"\nbalance sheet: "+bsLines(D.balance_sheet);
+  el("auCfg").textContent="parameter set (illustrative, to be calibrated)\n"+JSON.stringify(D.config,function(k,v){return v===null||v===undefined||(typeof v==="number"&&!isFinite(v))?"\u2014":v;},1).replace(/\n\s*/g," ")+"\nbalance sheet: "+bsLines(D.balance_sheet);
 }
 
 function selectBranch(id){state.sel=id;renderBranches();renderTrend();}

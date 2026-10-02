@@ -98,11 +98,70 @@ async function connectChecks(browser) {
   }
 }
 
+/* A two-month book where everything is written off: every ratio is NaN, gross is 0. */
+function allWrittenOff() {
+  const hdr = "as_of,loan_id,branch_id,branch_name,district,province,product,sector,disbursed_npr,outstanding_npr,days_past_due,restructured,written_off,writeoff_npr,due_npr,collected_npr";
+  const rows = [hdr];
+  ["2026-08-31", "2026-09-30"].forEach(d => {
+    rows.push(`${d},C1,BR1,Test Branch,Jhapa,Koshi,Group Loan,Agriculture,1000000.00,0.00,400,0,1,0.00,0.00,0.00`);
+    rows.push(`${d},C2,BR1,Test Branch,Jhapa,Koshi,Group Loan,Retail Trade,500000.00,0.00,0,0,1,0.00,0.00,0.00`);
+  });
+  const f = path.join(os.tmpdir(), "laghubitta_all_written_off.csv");
+  fs.writeFileSync(f, rows.join("\n") + "\n");
+  return f;
+}
+const BAD_WORDS = /\b(null|undefined|NaN)\b/i;
+function badWords(t) { const m = t.match(new RegExp(BAD_WORDS.source, "gi")); return m ? [...new Set(m)].join(",") : ""; }
+
+async function visibleText(p, withBoard) {
+  let t = await p.evaluate(() => document.body.innerText);
+  if (withBoard) { await p.emulateMedia({ media: "print" }); t += "\n" + await p.innerText("#board"); await p.emulateMedia({ media: "screen" }); }
+  return t;
+}
+
+async function nullChecks(browser) {
+  for (const page of ["laghubitta.html", "laghubitta-product.html"]) {
+    const p = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+    await p.goto(BASE + page); await p.waitForTimeout(400);
+    const t = await visibleText(p, false);
+    check(`text: ${page} shows no null/undefined/NaN`, !badWords(t), badWords(t));
+    await p.close();
+  }
+  const p = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  const app = BASE + "laghubitta-app.html";
+  async function state(name, withBoard) { const t = await visibleText(p, withBoard); check(`text: app ${name} shows no null/undefined/NaN`, !badWords(t), badWords(t)); }
+  await p.goto(app); await p.waitForSelector('html[data-boot="1"]'); await state("start screen", false);
+  await p.click("#btnSample"); await p.waitForSelector('html[data-ready="1"]'); await state("sample + board summary", true);
+  await p.click("#settingsBox summary");
+  for (const [id, v] of [["#cfg-alerts-par30_level", "0"], ["#cfg-provision_rates-b31_90", "0"], ["#cfg-bands-0-max_dpd", "0"], ["#cfg-capital_npr", "0"], ["#cfg-rwa_npr", "0"]]) { await p.fill(id, v); }
+  await p.waitForTimeout(600); await state("sample with extreme settings (zero RWA) + board summary", true);
+  await p.click("#btnReset"); await p.waitForTimeout(300);
+  for (const sc of ["regional_disaster", "funding_squeeze", "custom"]) { await p.click(`#scSeg button[data-id="${sc}"]`); }
+  await state("sample after scenarios", false);
+  await p.click("#btnAnother");
+  await p.setInputFiles("#fileIn", renamedSample()); await p.waitForSelector("#mapper:not([hidden]) select", { timeout: 30000 });
+  await state("column mapper", false);
+  await p.click("#mapper .btn-primary, #mapper [id^=lbm-apply]");
+  await p.waitForFunction(() => !document.getElementById("dash").hidden && /Your file/.test(document.getElementById("dsInfo").textContent), null, { timeout: 30000 });
+  await state("mapped upload + board summary", true);
+  await p.click("#btnAnother"); await p.setInputFiles("#fileIn", path.join(SITE, "laghubitta_template.csv"));
+  await p.waitForFunction(() => /laghubitta_template/.test(document.getElementById("dsInfo").textContent), null, { timeout: 30000 });
+  await state("one-month template upload + board summary", true);
+  await p.click("#btnAnother"); await p.setInputFiles("#fileIn", allWrittenOff());
+  await p.waitForFunction(() => /all_written_off/.test(document.getElementById("dsInfo").textContent), null, { timeout: 30000 });
+  await state("all-written-off upload (NaN ratios) + board summary", true);
+  const tpl = fs.readFileSync(path.join(SITE, "laghubitta_template.csv"), "utf8").replace(",45,", ",forty-five,");
+  await p.click("#btnAnother"); await p.setInputFiles("#fileIn", { name: "bad.csv", mimeType: "text/csv", buffer: Buffer.from(tpl) });
+  await p.waitForSelector("#loadMsg:not([hidden])"); await state("malformed upload error", false);
+  await p.close();
+}
+
 (async () => {
   const browser = await pw.chromium.launch();
   try {
-    await connectChecks(browser);
-    await badgeChecks(browser);
+    for (const [name, fn] of [["null scan", nullChecks], ["connect", connectChecks], ["badge", badgeChecks]]) {
+      try { await fn(browser); } catch (e) { check(`${name} section ran to completion`, false, String(e.message || e).split("\n")[0]); }
+    }
   } finally { await browser.close(); }
   let failed = 0;
   results.forEach(r => { if (!r.ok) failed++; console.log((r.ok ? "PASS " : "FAIL ") + r.name + (r.ok || !r.detail ? "" : "  [" + r.detail + "]")); });

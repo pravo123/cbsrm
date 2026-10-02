@@ -495,8 +495,8 @@
   }
 
   /* Fixed plain-language template for one finding. Filled only from data; no generated text. */
-  function fpct(v, d) { return typeof v === "number" && isFinite(v) ? (v * 100).toFixed(d == null ? 1 : d) + "%" : "n/a"; }
-  function fpp(v) { return typeof v === "number" && isFinite(v) ? (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + " pp" : "n/a"; }
+  function fpct(v, d) { return typeof v === "number" && isFinite(v) ? (v * 100).toFixed(d == null ? 1 : d) + "%" : "\u2014"; }
+  function fpp(v) { return typeof v === "number" && isFinite(v) ? (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + " pp" : "\u2014"; }
   function findingText(f) {
     var rules = f.rules.map(function (r) {
       var sev = r.severity === "high" ? "high" : "medium";

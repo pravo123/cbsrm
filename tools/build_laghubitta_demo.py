@@ -518,6 +518,27 @@ def record(name: str, input_sha256: str, params: dict, output, prev_hash=None) -
             "hash": sha(canon([prev_hash or "", name, input_sha256, p, o]))}
 
 
+HASH_SIG_DIGITS = 10
+
+
+def round_sig(x, digits: int = HASH_SIG_DIGITS):
+    """Round every float to `digits` significant digits, recursively.
+
+    Contract-owner ruling R2: outputs are hashed at 10 significant digits so the
+    audit chain is stable across summation order and platform; the figures
+    stored in the JSON stay unrounded. Ints, bools, strings and None pass through.
+    """
+    if isinstance(x, bool) or x is None:
+        return x
+    if isinstance(x, float):
+        return float(format(x, f".{digits}g")) if math.isfinite(x) else x
+    if isinstance(x, dict):
+        return {k: round_sig(v, digits) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [round_sig(v, digits) for v in x]
+    return x
+
+
 def clean(x):
     """NaN -> None recursively (JSON null)."""
     if isinstance(x, float):
@@ -579,11 +600,12 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
     }
     scen_results = [apply_scenario(segments, balance_sheet, s, cfg) for s in SCENARIOS]
 
-    # audit chain: one record per computed block
+    # audit chain: one record per computed block. Outputs are hashed after
+    # rounding to 10 significant digits (ruling R2); params are hashed as is.
     chain: list[dict] = []
 
     def add(name, params, output):
-        chain.append(record(name, csv_sha, clean(params), clean(output),
+        chain.append(record(name, csv_sha, clean(params), round_sig(clean(output)),
                             chain[-1]["hash"] if chain else None))
 
     add("institution", {"config": cfg, "as_of_dates": dates}, institution)

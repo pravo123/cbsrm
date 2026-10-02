@@ -8,9 +8,11 @@ Deterministic generator for the illustrative CBSRM pilot prototype. It writes
 
 Each CSV row is a centre-level pooled account (group loans aggregated per
 centre) at one month-end. The column is still called `loan_id`, per the
-contract schema. Amounts are simulated at single-account ticket sizes and
-multiplied by SCALE (100) when written, so a branch carries roughly NPR 10 to
-35 crore and the institution about NPR 1,200 crore. Ratios are unaffected.
+contract schema. Performing centres re-lend (new loan cycles add to
+`disbursed_npr` and `outstanding_npr`, contract addendum v1.1 section 2), so
+disbursements exceed repayments and the book grows about 13% a year, from
+about NPR 1,320 crore to NPR 1,685 crore. Amounts are simulated at centre
+ticket sizes and multiplied by SCALE (100) when written; ratios are unaffected.
 
 All data is SYNTHETIC. Institution label: "Sample Laghubitta (synthetic data)".
 Thresholds and provisioning rates are illustrative, to be calibrated. No
@@ -38,7 +40,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-SEED = 20261007
+SEED = 20261129
 CONTRACT_VERSION = 1
 INSTITUTION = "Sample Laghubitta (synthetic data)"
 LAST_MONTH_END = (2026, 9)  # latest as_of = 2026-09-30
@@ -91,8 +93,8 @@ PROVINCE_DISTRICTS = {
 }
 # Branches whose risk ramps up over the last few months (the "story").
 # (district, ramp length in months, hazard multiplier at the latest month)
-DETERIORATING = {"Siraha": (6, 19.75), "Rautahat": (6, 17.25), "Kapilvastu": (5, 17.25),
-                 "Bardiya": (5, 11.0), "Saptari": (4, 14.75)}
+DETERIORATING = {"Siraha": (6, 16.0), "Rautahat": (6, 14.0), "Kapilvastu": (5, 8.8),
+                 "Bardiya": (5, 6.6), "Saptari": (4, 12.0)}
 AGRI_PROVINCES = ("Madhesh", "Lumbini")
 
 SECTORS = ["Agriculture", "Livestock", "Retail Trade", "Services",
@@ -121,18 +123,30 @@ PRODUCT_DEFAULT = (["Group Loan", "Micro Enterprise", "Housing Improvement"],
 SEASON = {1: 0.8, 2: 0.8, 3: 0.9, 4: 1.0, 5: 1.1, 6: 1.8, 7: 2.6, 8: 2.4,
           9: 1.6, 10: 1.0, 11: 0.5, 12: 0.5}
 FARM_SECTORS = ("Agriculture", "Livestock")
+# After the harvest, centres in arrears catch up: cure probability multiplier.
+HARVEST_MONTHS = (11, 12, 1, 2)
+HARVEST_CURE = 2.5
 
-BASE_HAZARD = 0.010
-CURE_BY_MISSED = [0.0, 0.75, 0.40, 0.20, 0.12, 0.08, 0.05, 0.03, 0.02]
+BASE_HAZARD = 0.0095
+CURE_BY_MISSED = [0.0, 0.55, 0.15, 0.06, 0.03, 0.03, 0.02, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01]
 STAY_PROB = 0.22
-WRITE_OFF_AT = 9          # missed installments
-PREPAY_PROB = 0.006
+WRITE_OFF_AT = 12         # missed instalments: written off at the latest after ~330 dpd
+WRITE_OFF_PROB = 0.055    # monthly chance of write-off once 181+ days past due
+PREPAY_PROB = 0.004
+INITIAL_ARREARS_PROB = 0.05   # seasoned centres still in arrears after the 2024 monsoon
+INITIAL_MISSED_MAX = 10       # their arrears range from 1 to this many missed instalments
+# Centres re-lend: a performing centre takes a new loan cycle with this monthly
+# probability, sized at TOPUP_SIZE x its base ticket (the book grows).
+TOPUP_PROB = 0.044
+TOPUP_SIZE = (0.5, 1.0)
+TICKET_MULT = 0.8
+
 # Background arrears: one small centre per branch services interest only with
-# two instalments overdue (31 to 59 days), sized at this share of the branch's
-# opening gross, so every branch carries a little PAR30 (separate RNG stream).
-BACKGROUND_PAR = (0.010, 0.030)
+# two instalments overdue (31 to 59 days). Its balance is reset each month-end to
+# this share of the branch's other live balance, so it tracks the book.
+BACKGROUND_PAR = (0.006, 0.018)
 INITIAL_LOANS = 1080
-NEW_PER_MONTH = 38
+NEW_PER_MONTH = 22
 
 # Scenario library (contract 5.1). Parameters are illustrative.
 SCENARIOS = [
@@ -213,7 +227,7 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
         names, pw = PRODUCT_BY_SECTOR.get(sector, PRODUCT_DEFAULT)
         product = names[int(rng.choice(len(names), p=pw))]
         lo, hi, term, rate = PRODUCTS[product]
-        disbursed = float(round(rng.uniform(lo, hi) / 1000.0) * 1000.0)
+        disbursed = float(round(rng.uniform(lo, hi) * TICKET_MULT / 1000.0) * 1000.0)
         age = int(rng.integers(0, int(term * 0.6))) if seasoned else 0
         outstanding = r2(disbursed * (1 - age / term))
         ln = {"loan_id": f"LN{len(loans) + 1:05d}", **b, "product": product,
@@ -222,9 +236,10 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
               "out": outstanding, "missed": 0, "arrears": 0.0,
               "arrears_p": 0.0, "restructured": 0, "offset": int(rng.integers(1, 30)),
               # seasoned loans already have a repayment history at the panel start
-              "start": -1 if seasoned else t, "done": False, "chronic": False}
-        if seasoned and rng.random() < 0.04:   # some seasoned arrears at start
-            ln["missed"] = int(rng.integers(1, 5))
+              "start": -1 if seasoned else t, "done": False, "chronic": False,
+              "ticket": disbursed}
+        if seasoned and rng.random() < INITIAL_ARREARS_PROB:
+            ln["missed"] = int(rng.integers(1, INITIAL_MISSED_MAX + 1))
             ln["arrears_p"] = r2(min(ln["missed"] * ln["inst_p"], outstanding * 0.5))
             ln["arrears"] = r2(ln["arrears_p"] * 1.1)
         return ln
@@ -242,14 +257,18 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
             continue
         gross0 = sum(a["out"] for a in accts)
         a = min(accts, key=lambda x: (x["out"], x["loan_id"]))   # smallest centre
-        out = r2(rng_bg.uniform(*BACKGROUND_PAR) * gross0)
-        a.update(chronic=True, out=out, disbursed=max(a["disbursed"], out), missed=2,
-                 arrears_p=r2(out * 0.06))
+        share = float(rng_bg.uniform(*BACKGROUND_PAR))
+        out = r2(share * gross0)
+        a.update(chronic=True, bg_share=share, out=out, disbursed=max(a["disbursed"], out),
+                 missed=2, arrears_p=r2(out * 0.06))
         a["arrears"] = r2(a["arrears_p"] * 1.1)
+    rng_wo = np.random.default_rng(SEED + 2)
 
     rows: list[dict] = []
+    chronic_ids = {ln["loan_id"] for ln in loans if ln["chronic"]}
     for t, as_of in enumerate(dates):
         cal_month = int(as_of[5:7])
+        month_start, month_chronic = len(rows), []
         if t > 0:
             for _ in range(NEW_PER_MONTH):
                 if len(loans) < MAX_LOANS:
@@ -283,7 +302,11 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
                 if m == 0:
                     outcome = "miss" if u < BASE_HAZARD * h_mult * season else "pay"
                 else:
-                    cure = min(0.95, CURE_BY_MISSED[min(m, 8)] * c_mult / season)
+                    harvest = HARVEST_CURE if cal_month in HARVEST_MONTHS else 1.0
+                    if ln["sector"] not in FARM_SECTORS:
+                        harvest = 1.0 + (harvest - 1.0) * 0.4
+                    cure = min(0.95, CURE_BY_MISSED[min(m, len(CURE_BY_MISSED) - 1)]
+                               * c_mult * harvest / season)
                     outcome = ("cure" if u < cure else
                                "pay" if u < cure + STAY_PROB else "miss")
                 if (m >= 3 and h_mult > 1.0 and t >= N_MONTHS - 4
@@ -308,12 +331,19 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
                     ln["missed"] += 1
                     ln["arrears"] = r2(ln["arrears"] + sched - collected)
                     ln["arrears_p"] = r2(ln["arrears_p"] + sched_p)
+                if ln["missed"] == 0 and outcome in ("pay", "cure") and rng.random() < TOPUP_PROB:
+                    amt = r2(rng.uniform(*TOPUP_SIZE) * ln["ticket"])   # new loan cycle
+                    ln["out"] = r2(ln["out"] + amt)
+                    ln["disbursed"] = r2(ln["disbursed"] + amt)
+                    ln["inst_p"] = r2(ln["out"] / ln["term"])
+                    row["disbursed_npr"] = ln["disbursed"]
                 if ln["out"] <= 1.0:
                     ln["done"] = True     # matured: absent from this month on
                     continue
             m = ln["missed"]
             dpd = 0 if m == 0 else 30 * (m - 1) + ln["offset"]
-            if m >= WRITE_OFF_AT:
+            if not ln["chronic"] and (m >= WRITE_OFF_AT or (
+                    m >= 7 and rng_wo.random() < WRITE_OFF_PROB)):
                 row.update(outstanding_npr=0.0, days_past_due=dpd,
                            restructured=ln["restructured"], written_off=1,
                            writeoff_npr=ln["out"], due_npr=due,
@@ -324,6 +354,21 @@ def simulate(rng: np.random.Generator) -> pd.DataFrame:
                            restructured=ln["restructured"], written_off=0,
                            writeoff_npr=0.0, due_npr=due, collected_npr=collected)
             rows.append(row)
+            if ln["chronic"]:
+                month_chronic.append((ln, row))
+        # background centres track their branch: reset to bg_share of the rest
+        other: dict[str, float] = {}
+        for r in rows[month_start:]:
+            if r["written_off"] == 0 and r["loan_id"] not in chronic_ids:
+                other[r["branch_id"]] = other.get(r["branch_id"], 0.0) + r["outstanding_npr"]
+        for ln, row in month_chronic:
+            out = r2(ln["bg_share"] * other.get(ln["branch_id"], 0.0))
+            ln["out"] = out
+            ln["disbursed"] = max(ln["disbursed"], out)
+            ln["arrears_p"] = r2(out * 0.06)
+            ln["arrears"] = r2(ln["arrears_p"] * 1.1)
+            row["outstanding_npr"] = out
+            row["disbursed_npr"] = ln["disbursed"]
     assert len(loans) <= MAX_LOANS
     return pd.DataFrame(rows, columns=CSV_COLUMNS)
 

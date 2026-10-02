@@ -3,7 +3,18 @@
 Contract: docs/laghubitta_contract.md section 7. The generator
 (tools/build_laghubitta_demo.py) does not import cbsrm.mfi, so agreement here
 is an independent check of both implementations against the frozen contract.
-Tolerance: absolute 1e-9. NaN in Python corresponds to null in JSON.
+NaN in Python corresponds to null in JSON.
+
+Contract-owner rulings applied here (the contract file itself is frozen):
+
+R1. Tolerance. Ratios: absolute 1e-9. NPR amounts: relative 1e-9. This
+    replaces the absolute 1e-9 on amounts, which is below float resolution
+    for NPR sums of this size.
+R2. Audit hashing. Before hashing any output, every float is rounded to 10
+    significant digits, recursively. Stored JSON figures stay unrounded.
+    ``test_audit_chain_recomputes`` rebuilds every chain record and the head.
+R3. ``.gitattributes`` marks the demo CSV, JSON and HTML ``-text`` so every
+    checkout has identical bytes; the input sha256 check is byte-exact.
 """
 
 from __future__ import annotations
@@ -22,9 +33,13 @@ mfi = pytest.importorskip("cbsrm.mfi")
 ROOT = Path(__file__).resolve().parents[1]
 CSV = ROOT / "site" / "laghubitta_loans.csv"
 JSON = ROOT / "site" / "laghubitta_demo.json"
-TOL = 1e-9
+RATIO_ABS_TOL = 1e-9   # R1: ratios
+AMOUNT_REL_TOL = 1e-9  # R1: NPR amounts
+HASH_SIG_DIGITS = 10   # R2
 METRICS = ["gross_npr", "par30", "par90", "npl_ratio", "restructured_ratio",
            "writeoff_ratio", "collection_efficiency", "n_loans"]
+AMOUNT_KEYS = {"gross_npr", "provisions_npr", "delta_provisions_npr", "nii_hit_npr",
+               "capital_npr", "liquidity_gap_90d_npr", *mfi.BUCKETS}
 SCENARIO_IDS = ["base", "rate_up_200bp", "agri_income_shock", "monsoon_seasonal",
                 "regional_disaster", "funding_squeeze"]
 
@@ -39,25 +54,49 @@ def demo() -> dict:
     return json.loads(JSON.read_text(encoding="utf-8"))
 
 
-def close(expected, actual) -> bool:
-    """JSON value (None means NaN) vs library value, absolute tolerance."""
-    if expected is None:
-        return actual is None or (isinstance(actual, float) and math.isnan(actual))
-    if actual is None or (isinstance(actual, float) and math.isnan(actual)):
-        return False
-    return abs(float(expected) - float(actual)) <= TOL
+def _is_nan(v) -> bool:
+    return v is None or (isinstance(v, float) and math.isnan(v))
+
+
+def close(expected, actual, amount: bool = False) -> bool:
+    """JSON value (None means NaN) vs library value under ruling R1."""
+    if _is_nan(expected) or _is_nan(actual):
+        return _is_nan(expected) and _is_nan(actual)
+    if amount:
+        return math.isclose(float(expected), float(actual), rel_tol=AMOUNT_REL_TOL, abs_tol=0.0)
+    return abs(float(expected) - float(actual)) <= RATIO_ABS_TOL
 
 
 def assert_metrics(expected: dict, actual: dict, where: str) -> None:
-    bad = [k for k in METRICS if not close(expected[k], actual[k])]
+    bad = [k for k in METRICS if not close(expected[k], actual[k], k in AMOUNT_KEYS)]
     assert not bad, f"{where}: mismatch in {[(k, expected[k], actual[k]) for k in bad]}"
 
 
+def round_sig(x, digits: int = HASH_SIG_DIGITS):
+    """R2: round every float to 10 significant digits, recursively."""
+    if isinstance(x, bool) or x is None:
+        return x
+    if isinstance(x, float):
+        return float(format(x, f".{digits}g")) if math.isfinite(x) else x
+    if isinstance(x, dict):
+        return {k: round_sig(v, digits) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [round_sig(v, digits) for v in x]
+    return x
+
+
+def nan_to_none(x):
+    if isinstance(x, float) and math.isnan(x):
+        return None
+    if isinstance(x, dict):
+        return {k: nan_to_none(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [nan_to_none(v) for v in x]
+    return x
+
+
 def test_input_hash_matches_csv(demo):
-    # The generator writes LF line endings; a CRLF checkout (Windows autocrlf)
-    # must not change the audited digest, so normalise before hashing.
-    data = CSV.read_bytes().replace(b"\r\n", b"\n")
-    assert demo["audit"]["input_sha256"] == hashlib.sha256(data).hexdigest()
+    assert demo["audit"]["input_sha256"] == hashlib.sha256(CSV.read_bytes()).hexdigest()
 
 
 def test_config_matches_library(demo):
@@ -99,7 +138,7 @@ def test_segments(loans, demo):
     for seg in demo["segments"]:
         got = lib.loc[(seg["sector"], seg["province"])]
         for b in mfi.BUCKETS:
-            assert close(seg[b], got[b]), (seg["sector"], seg["province"], b)
+            assert close(seg[b], got[b], amount=True), (seg["sector"], seg["province"], b)
 
 
 def test_migration(loans, demo):
@@ -141,6 +180,11 @@ def _generator():
     return mod
 
 
+def _lib_scenario(demo: dict, scenario: dict) -> dict:
+    return mfi.apply_scenario(pd.DataFrame(demo["segments"]), demo["balance_sheet"],
+                              scenario, demo["config"])
+
+
 @pytest.mark.parametrize("scenario_id", SCENARIO_IDS)
 def test_apply_scenario(demo, scenario_id):
     scenarios = {s["id"]: s for s in demo["scenarios"]}
@@ -148,45 +192,63 @@ def test_apply_scenario(demo, scenario_id):
     sc = scenarios[scenario_id]
     gen = _generator().apply_scenario(demo["segments"], demo["balance_sheet"], sc,
                                       demo["config"])
-    lib = mfi.apply_scenario(pd.DataFrame(demo["segments"]), demo["balance_sheet"], sc,
-                             demo["config"])
+    lib = _lib_scenario(demo, sc)
     assert lib["scenario_id"] == gen["scenario_id"] == scenario_id
     for k in ["gross_npr", "par30", "par90", "provisions_npr", "delta_provisions_npr",
               "nii_hit_npr", "capital_npr", "car", "liquidity_gap_90d_npr"]:
-        assert close(gen[k], lib[k]), (scenario_id, k, gen[k], lib[k])
+        assert close(gen[k], lib[k], k in AMOUNT_KEYS), (scenario_id, k, gen[k], lib[k])
     for b in mfi.BUCKETS:
-        assert close(gen["buckets"][b], lib["buckets"][b]), (scenario_id, b)
+        assert close(gen["buckets"][b], lib["buckets"][b], amount=True), (scenario_id, b)
     if scenario_id == "base":
-        assert close(lib["delta_provisions_npr"], 0.0)
-        assert close(lib["capital_npr"], demo["balance_sheet"]["capital_npr"])
+        assert lib["delta_provisions_npr"] == 0.0
+        assert lib["capital_npr"] == demo["balance_sheet"]["capital_npr"]
 
 
-def test_audit_chain_links(demo):
+def _chain_inputs(demo: dict) -> list[tuple[str, dict, object]]:
+    """(name, params, output) for every chain record, in chain order.
+
+    Block outputs are the published (unrounded) JSON figures; scenario outputs
+    are not stored in the JSON, so they are recomputed with the library.
+    """
+    cfg, dates = demo["config"], demo["as_of_dates"]
+    latest, prev = dates[-1], dates[-2]
+    items = [
+        ("institution", {"config": cfg, "as_of_dates": dates}, demo["institution"]),
+        ("branches", {"config": cfg, "as_of_dates": dates}, demo["branches"]),
+        ("migration", {"from_as_of": prev, "to_as_of": latest, "weight": "outstanding"},
+         demo["migration"]),
+        ("concentration", {"as_of": latest, "n": 5}, demo["concentration"]),
+        ("alerts", {"as_of": latest, "prev_as_of": prev, "config": cfg}, demo["alerts"]),
+    ]
+    for sc in demo["scenarios"]:
+        items.append((f"scenario:{sc['id']}",
+                      {"scenario": sc, "balance_sheet": demo["balance_sheet"], "config": cfg},
+                      nan_to_none(_lib_scenario(demo, sc))))
+    return items
+
+
+def test_audit_chain_recomputes(demo):
+    """R2: rebuild every record with cbsrm.mfi.record, then the head hash."""
     chain = demo["audit"]["chain"]
     names = [r["name"] for r in chain]
-    assert names[:5] == ["institution", "branches", "migration", "concentration", "alerts"]
-    assert names[5:] == [f"scenario:{s}" for s in SCENARIO_IDS]
+    assert names == ["institution", "branches", "migration", "concentration", "alerts",
+                     *[f"scenario:{s}" for s in SCENARIO_IDS]]
+    input_sha = demo["audit"]["input_sha256"]
     prev = None
-    for r in chain:
-        assert r["prev_hash"] == prev
-        assert r["input_sha256"] == demo["audit"]["input_sha256"]
-        rebuilt = mfi.record(r["name"], r["input_sha256"], {}, {}, prev)
-        # Recompute the link hash from the stored component digests (5.2).
-        link = hashlib.sha256(json.dumps(
-            [prev or "", r["name"], r["input_sha256"], r["params_sha256"], r["output_sha256"]],
-            sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-        assert r["hash"] == link
-        assert set(rebuilt) == set(r)
-        prev = r["hash"]
+    for (name, params, output), stored in zip(_chain_inputs(demo), chain, strict=True):
+        rebuilt = mfi.record(name, input_sha, params, round_sig(output), prev)
+        assert rebuilt == stored, name
+        prev = rebuilt["hash"]
     assert demo["audit"]["head_hash"] == prev
 
 
-def test_audit_output_hashes_match_library(demo):
-    """Each block's output digest equals the library record over the JSON block."""
-    chain = {r["name"]: r for r in demo["audit"]["chain"]}
-    blocks = {"institution": demo["institution"], "branches": demo["branches"],
-              "migration": demo["migration"], "concentration": demo["concentration"],
-              "alerts": demo["alerts"]}
-    for name, block in blocks.items():
-        rec = mfi.record(name, demo["audit"]["input_sha256"], {}, block)
-        assert rec["output_sha256"] == chain[name]["output_sha256"], name
+def test_audit_record_link_hash(demo):
+    """Each stored hash is sha256(canon([prev, name, input, params, output])) (5.2)."""
+    prev = None
+    for r in demo["audit"]["chain"]:
+        assert r["prev_hash"] == prev
+        link = hashlib.sha256(json.dumps(
+            [prev or "", r["name"], r["input_sha256"], r["params_sha256"], r["output_sha256"]],
+            sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+        assert r["hash"] == link
+        prev = r["hash"]

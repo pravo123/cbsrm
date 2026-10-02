@@ -174,6 +174,8 @@
   .lb-nav a{color:var(--text-muted);padding:5px 10px;border-radius:5px;border:1px solid transparent;text-decoration:none;}
   .lb-nav a:hover{color:var(--text-strong);border-color:var(--border-strong);text-decoration:none;}
   .lb-nav a[aria-current="page"]{color:var(--text-strong);border-color:var(--accent);background:#0F1828;}
+  .rt-lozenge.custom{color:var(--watch);border-color:#4A3E1E;background:#1A1608;}
+  .rt-lozenge.custom .seal-dot{background:var(--watch);}
   /* ---- app additions ---- */
   .rt-mast__right a{font-family:var(--mono);font-size:12px;}
   .privacy{margin:0;padding:9px 24px;background:var(--hash-bg);border-bottom:1px solid var(--hash-bd);color:var(--text);
@@ -275,7 +277,7 @@
     <div class="rt-mast__right">
       <nav class="lb-nav" aria-label="Laghubitta pages"><a href="laghubitta-product.html">Product</a><a href="laghubitta-app.html" aria-current="page">App</a><a href="laghubitta.html">Sample dashboard</a></nav>
       <span id="asOfWrap" hidden>As of <b class="tn" id="asOf" style="color:var(--text-strong)">-</b></span>
-      <span class="rt-lozenge" id="verifiedBadge" hidden title=""><span class="seal-dot"></span><span>Verified against the open-source reference library</span></span>
+      <span class="rt-lozenge" id="verifiedBadge" hidden title=""><span class="seal-dot"></span><span id="verifiedTxt">Verified against the open-source reference library</span></span>
     </div>
   </header>
 
@@ -534,7 +536,7 @@ function loadSample(){
 var M=window.LaghubittaMapper||null,mapperView=null;
 function closeMapper(){if(mapperView){mapperView.destroy();mapperView=null;}el("mapper").hidden=true;el("mapper").innerHTML="";}
 function openMapper(parsed,meta,initial){
-  closeMapper();
+  closeMapper();clearLoaded();
   el("start").hidden=true;el("dash").hidden=true;el("mapper").hidden=false;
   mapperView=M.render(el("mapper"),{fileName:meta.fileName,headers:parsed.rows[0],sampleRows:parsed.rows.slice(1,4),mapping:initial||null,
     onApply:function(mapping){
@@ -638,6 +640,27 @@ function onSettings(){
     if(!bad.length)recompute();
   },120);
 }
+/* Reference verification state. "verified" only when the loaded data is the bundled sample,
+   every setting equals its default and the engine reproduced the reference; "custom" for the
+   sample with changed settings; "none" otherwise (uploads, mapped files, failed verification). */
+var VERIFIED_TXT="Verified against the open-source reference library",CUSTOM_TXT="Custom parameters. Not compared with the reference.";
+function verifyState(){
+  if(S.src!=="sample"||!S.verify||!S.verify.ok)return "none";
+  return isDefault()?"verified":"custom";
+}
+function renderBadge(){
+  var vb=el("verifiedBadge"),st=verifyState();
+  vb.classList.toggle("custom",st==="custom");
+  if(st==="verified"){vb.hidden=false;el("verifiedTxt").textContent=VERIFIED_TXT;
+    vb.title="Engine output matches laghubitta_demo.json on "+S.verify.checked.toLocaleString("en-US")+" figures (ratios within 1e-9 absolute, NPR amounts within 1e-9 relative, ruling R1), with default parameters. That reference is checked against the cbsrm.mfi library by tests/test_laghubitta_parity.py.";}
+  else if(st==="custom"){vb.hidden=false;el("verifiedTxt").textContent=CUSTOM_TXT;vb.title="Settings differ from the defaults, so these figures are not compared with the reference. Reset to defaults to compare again.";}
+  else{vb.hidden=true;vb.title="";el("verifiedTxt").textContent=VERIFIED_TXT;}
+}
+/* Leaving a loaded dataset (start screen or column mapper for another file): clear what describes it. */
+function clearLoaded(){
+  var vb=el("verifiedBadge");vb.hidden=true;vb.title="";vb.classList.remove("custom");
+  el("dsLabel").textContent="no data loaded";el("asOfWrap").hidden=true;el("asOf").textContent="-";
+}
 function isDefault(){
   return JSON.stringify(S.config)===JSON.stringify(E.DEFAULT_CONFIG)&&JSON.stringify(S.bs)===JSON.stringify(S.bsDefault)&&JSON.stringify(S.custom)===JSON.stringify(DEFAULT_CUSTOM)&&JSON.stringify(S.cls)===JSON.stringify(E.DEFAULT_CLASSIFICATION);
 }
@@ -663,10 +686,7 @@ var BR={};
 function renderAll(){
   el("dsLabel").textContent=S.label;
   el("asOfWrap").hidden=false;el("asOf").textContent=D.as_of_dates[D.as_of_dates.length-1];
-  var vb=el("verifiedBadge");
-  if(S.src==="sample"&&S.verify&&S.verify.ok){vb.hidden=false;
-    vb.title="Engine output matches laghubitta_demo.json on "+S.verify.checked.toLocaleString("en-US")+" figures (ratios within 1e-9 absolute, NPR amounts within 1e-9 relative, ruling R1), computed with default parameters. That reference is checked against the cbsrm.mfi library by tests/test_laghubitta_parity.py.";}
-  else vb.hidden=true;
+  renderBadge();
   el("dsInfo").textContent=(S.src==="sample"?"Sample data (synthetic)":"Your file: "+S.fileName)+" · "+S.rows.toLocaleString("en-US")+" records · "+D.as_of_dates.length+" month-ends · "+D.branches.length+" branches";
   fillFilters();
   renderKpis();renderScenario();renderBranches();renderTrend();renderHeat();renderMigration();renderFarm();renderConc();renderClassification();renderAlerts();renderFindings();renderAudit();renderBoard();
@@ -871,7 +891,10 @@ function renderAudit(){
   el("auInLbl").textContent="Loaded file sha256 · "+S.fileName+" · "+S.bytes.toLocaleString("en-US")+" bytes";
   el("auIn").textContent=S.sha||"Not available: this browser does not expose crypto.subtle here (it needs https or localhost).";
   var ref;
-  if(S.src==="sample"&&S.verify){
+  var vst=verifyState();
+  if(vst==="custom"){
+    ref=CUSTOM_TXT+(S.verify.hashMatch===true?" File hash equals the published reference input hash.":"");
+  } else if(S.src==="sample"&&S.verify){
     ref=(S.verify.ok?"Matches the reference figures on "+S.verify.checked.toLocaleString("en-US")+" values (ruling R1, default parameters).":"Does NOT match the reference: "+S.verify.mismatches.slice(0,3).join("; "))+
       (S.verify.hashMatch===true?" File hash equals the published reference input hash.":S.verify.hashMatch===false?" File hash differs from the published reference input hash.":"")+
       (S.ref&&S.ref.audit?" Reference chain head "+S.ref.audit.head_hash.slice(0,16)+"…":"");
@@ -918,7 +941,7 @@ function renderBoard(){
     '<h2>Branches with the highest PAR30</h2><table class="bt"><tr><th>Branch</th><th>District</th><th>Province</th><th>Gross</th><th>PAR30</th><th>PAR90</th><th>Coll. eff.</th><th>Alerts</th></tr>'+top+"</table>"+
     '<h2>Early-warning alerts ('+D.alerts.length+')</h2>'+al+
     '<h2>Audit</h2><p class="bhash">Input file sha256: '+esc(S.sha||"not available in this browser")+
-    (S.src==="sample"&&S.ref&&S.ref.audit?"<br>Reference audit chain head: "+esc(S.ref.audit.head_hash)+(S.verify&&S.verify.ok?" (engine matches the reference figures)":""):"")+
+    (verifyState()==="verified"?"<br>Reference audit chain head: "+esc(S.ref.audit.head_hash)+" (engine matches the reference figures at default parameters)":verifyState()==="custom"?"<br>"+esc(CUSTOM_TXT):"")+
     "<br>Records: "+S.rows.toLocaleString("en-US")+" · month-ends: "+D.as_of_dates.length+" · branches: "+D.branches.length+
     "<br>Balance sheet ("+esc(bsNote())+"): "+esc(bsLines(D.balance_sheet))+"<br>Parameters: "+esc(JSON.stringify(D.config))+"</p>"+
     '<p class="bdisc">'+notice+'</p></div>';
@@ -944,7 +967,7 @@ fin.addEventListener("change",function(){loadFile(fin.files[0]);fin.value="";});
 ["dragenter","dragover"].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.add("over");});});
 ["dragleave","drop"].forEach(function(t){drop.addEventListener(t,function(e){e.preventDefault();drop.classList.remove("over");});});
 drop.addEventListener("drop",function(e){var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];loadFile(f);});
-el("btnAnother").addEventListener("click",function(){closeMapper();el("dash").hidden=true;el("start").hidden=false;el("loadMsg").hidden=true;window.scrollTo(0,0);});
+el("btnAnother").addEventListener("click",function(){closeMapper();clearLoaded();el("dash").hidden=true;el("start").hidden=false;el("loadMsg").hidden=true;window.scrollTo(0,0);});
 el("btnPrint").addEventListener("click",function(){renderBoard();window.print();});
 el("btnAlertsCsv").addEventListener("click",downloadAlerts);
 el("btnReset").addEventListener("click",function(){S.config=E.defaultConfig();S.bs=JSON.parse(JSON.stringify(S.bsDefault));S.custom=JSON.parse(JSON.stringify(DEFAULT_CUSTOM));S.cls=E.defaultClassification();buildSettings();el("cfgStatus").textContent="Defaults restored.";recompute();});

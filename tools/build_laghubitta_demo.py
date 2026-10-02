@@ -323,21 +323,44 @@ def _ratio(num: float, den: float) -> float:
     return float(num) / float(den) if den != 0 else math.nan
 
 
-def metrics_for(rows: pd.DataFrame, config: dict) -> dict:
-    live = rows[rows["written_off"] == 0]
-    gross = float(live["outstanding_npr"].sum())
-    o, d = live["outstanding_npr"], live["days_past_due"]
-    w = float(rows["writeoff_npr"].sum())
+# Summation note: contract parity is absolute 1e-9, below one ulp of an NPR sum
+# near 1e8. Sums are therefore taken with whole-column pandas reductions over
+# zero-masked columns (frame sum, or groupby sum), so any implementation of the
+# contract that reduces the same way agrees to the last bit.
+_SUMS = ["gross_npr", "par30", "par90", "npl_ratio", "restructured_ratio",
+         "writeoff_npr", "due_npr", "collected_npr", "n_loans"]
+
+
+def _masked(rows: pd.DataFrame, config: dict) -> pd.DataFrame:
+    f = rows.copy()
+    live = f["written_off"] == 0
+    o = f["outstanding_npr"].where(live, 0.0)
+    d = f["days_past_due"]
+    f["gross_npr"] = o
+    f["par30"] = o.where(d > 30, 0.0)
+    f["par90"] = o.where(d > 90, 0.0)
+    f["npl_ratio"] = o.where(d > config["npl_dpd_threshold"], 0.0)
+    f["restructured_ratio"] = o.where(f["restructured"] == 1, 0.0)
+    f["n_loans"] = live.astype(int)
+    return f
+
+
+def _finish(t: dict) -> dict:
+    gross, w = float(t["gross_npr"]), float(t["writeoff_npr"])
     return {
         "gross_npr": gross,
-        "par30": _ratio(o[d > 30].sum(), gross),
-        "par90": _ratio(o[d > 90].sum(), gross),
-        "npl_ratio": _ratio(o[d > config["npl_dpd_threshold"]].sum(), gross),
-        "restructured_ratio": _ratio(o[live["restructured"] == 1].sum(), gross),
+        "par30": _ratio(t["par30"], gross),
+        "par90": _ratio(t["par90"], gross),
+        "npl_ratio": _ratio(t["npl_ratio"], gross),
+        "restructured_ratio": _ratio(t["restructured_ratio"], gross),
         "writeoff_ratio": _ratio(w, gross + w),
-        "collection_efficiency": _ratio(rows["collected_npr"].sum(), rows["due_npr"].sum()),
-        "n_loans": int(len(live)),
+        "collection_efficiency": _ratio(t["collected_npr"], t["due_npr"]),
+        "n_loans": int(t["n_loans"]),
     }
+
+
+def metrics_for(rows: pd.DataFrame, config: dict) -> dict:
+    return _finish(_masked(rows, config)[_SUMS].sum().to_dict())
 
 
 def portfolio_metrics(loans: pd.DataFrame, as_of: str, by=(), config=None) -> list[dict]:
@@ -345,24 +368,26 @@ def portfolio_metrics(loans: pd.DataFrame, as_of: str, by=(), config=None) -> li
     rows = loans[loans["as_of"] == as_of]
     if not by:
         return [metrics_for(rows, config)]
+    g = _masked(rows, config).groupby(list(by), sort=True)[_SUMS].sum()
     out = []
-    for key, g in rows.groupby(list(by), sort=True):
+    for key, t in g.iterrows():
         key = key if isinstance(key, tuple) else (key,)
-        out.append({**dict(zip(by, key)), **metrics_for(g, config)})
+        out.append({**dict(zip(by, key, strict=True)), **_finish(t.to_dict())})
     return out
 
 
 def bucket_balances(loans: pd.DataFrame, as_of: str, by=()) -> list[dict]:
     rows = loans[(loans["as_of"] == as_of) & (loans["written_off"] == 0)].copy()
-    rows["bucket"] = assign_bucket(rows["days_past_due"])
+    bucket = assign_bucket(rows["days_past_due"])
+    for b in BUCKETS:
+        rows[b] = rows["outstanding_npr"].where(bucket == b, 0.0)
+    if not by:
+        return [{b: float(v) for b, v in rows[BUCKETS].sum().items()}]
+    g = rows.groupby(list(by), sort=True)[BUCKETS].sum()
     out = []
-    groups = rows.groupby(list(by), sort=True) if by else [((), rows)]
-    for key, g in groups:
+    for key, t in g.iterrows():
         key = key if isinstance(key, tuple) else (key,)
-        rec = dict(zip(by, key))
-        for b in BUCKETS:
-            rec[b] = float(g.loc[g["bucket"] == b, "outstanding_npr"].sum())
-        out.append(rec)
+        out.append({**dict(zip(by, key, strict=True)), **{b: float(t[b]) for b in BUCKETS}})
     return out
 
 
@@ -443,18 +468,16 @@ def apply_scenario(segments: list[dict], balance_sheet: dict, scenario: dict,
     rates = config["provision_rates"]
     base_shift = scenario.get("base_shift", 0.0)
     smult, pmult = scenario.get("sector_mult", {}), scenario.get("province_mult", {})
-    T = {b: 0.0 for b in BUCKETS}
-    U = {b: 0.0 for b in BUCKETS}
-    for seg in segments:
-        s = min(1.0, base_shift * smult.get(seg["sector"], 1.0)
-                * pmult.get(seg["province"], 1.0))
-        c, b1, b2, b3, b4 = (seg[b] for b in BUCKETS)
-        stressed = {"current": (1 - s) * c, "b1_30": (1 - s) * b1 + s * c,
-                    "b31_90": (1 - s) * b2 + s * b1, "b91_180": (1 - s) * b3 + s * b2,
-                    "b180p": b4 + s * b3}
-        for b in BUCKETS:
-            T[b] += stressed[b]
-            U[b] += seg[b]
+    seg = pd.DataFrame(segments)
+    s = (base_shift * seg["sector"].map(lambda k: smult.get(k, 1.0))
+         * seg["province"].map(lambda k: pmult.get(k, 1.0))).clip(upper=1.0)
+    stressed = {"current": seg["current"] * (1 - s),
+                "b1_30": seg["b1_30"] * (1 - s) + seg["current"] * s,
+                "b31_90": seg["b31_90"] * (1 - s) + seg["b1_30"] * s,
+                "b91_180": seg["b91_180"] * (1 - s) + seg["b31_90"] * s,
+                "b180p": seg["b180p"] + seg["b91_180"] * s}
+    T = {b: float(stressed[b].sum()) for b in BUCKETS}
+    U = {b: float(seg[b].sum()) for b in BUCKETS}
     gross = sum(T.values())
     prov = sum(T[b] * rates[b] for b in BUCKETS)
     prov_base = sum(U[b] * rates[b] for b in BUCKETS)
@@ -565,7 +588,7 @@ def build(loans: pd.DataFrame, csv_sha: str) -> dict:
         migration)
     add("concentration", {"as_of": latest, "n": 5}, concentration)
     add("alerts", {"as_of": latest, "prev_as_of": prev, "config": cfg}, alerts)
-    for s, res in zip(SCENARIOS, scen_results):
+    for s, res in zip(SCENARIOS, scen_results, strict=True):
         add(f"scenario:{s['id']}",
             {"scenario": s, "balance_sheet": balance_sheet, "config": cfg}, res)
 

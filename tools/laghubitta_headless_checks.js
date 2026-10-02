@@ -156,10 +156,47 @@ async function nullChecks(browser) {
   await p.close();
 }
 
+function pdfPages(buf) { return (buf.toString("latin1").match(/\/Type\s*\/Page[^s]/g) || []).length; }
+
+async function boardCase(p, name) {
+  await p.emulateMedia({ media: "print" });
+  const pages = pdfPages(await p.pdf({ format: "A4", printBackground: true }));
+  const board = await p.innerText("#board");
+  await p.emulateMedia({ media: "screen" });
+  const total = parseInt((await p.textContent("#alCount")).match(/^(\d+) alerts/)[1], 10);
+  const more = board.match(/plus (\d+) more in the alerts CSV/);
+  const shown = await p.$$eval("#board .bcols tr", rs => rs.filter(r => r.querySelector("td")).length);
+  check(`board: ${name}: prints to exactly 2 A4 pages`, pages === 2, `${pages} pages`);
+  check(`board: ${name}: headers say page 1 of 2 and page 2 of 2`, /page 1 of 2/.test(board) && /page 2 of 2/.test(board) && !/of [^2]\b/.test(board), "");
+  check(`board: ${name}: shown + "plus N more" equals ${total} alerts`, shown + (more ? +more[1] : 0) === total, `shown ${shown}, more ${more ? more[1] : 0}`);
+  return { pages, total, shown };
+}
+
+async function boardChecks(browser) {
+  const p = await browser.newPage({ viewport: { width: 1366, height: 900 } });
+  await p.goto(BASE + "laghubitta-app.html"); await p.click("#btnSample"); await p.waitForSelector('html[data-ready="1"]');
+  await boardCase(p, "sample, default thresholds");
+  await p.evaluate(() => { document.getElementById("settingsBox").open = true; });
+  const many = [["#cfg-alerts-par30_level", "1"], ["#cfg-alerts-par30_jump", "0.1"], ["#cfg-alerts-roll_rate", "0.5"], ["#cfg-alerts-collection_drop", "0.1"]];
+  for (const [id, v] of many) await p.fill(id, v);
+  await p.waitForTimeout(600);
+  const r = await boardCase(p, "sample, thresholds giving 75+ alerts");
+  check("board: the strict thresholds really produce at least 75 alerts", r.total >= 75, `${r.total} alerts`);
+  await p.click("#btnAnother");
+  await p.setInputFiles("#fileIn", renamedSample()); await p.waitForSelector("#mapper:not([hidden]) select", { timeout: 30000 });
+  await p.click("#mapper .btn-primary, #mapper [id^=lbm-apply]");
+  await p.waitForFunction(() => !document.getElementById("dash").hidden && /Your file/.test(document.getElementById("dsInfo").textContent), null, { timeout: 30000 });
+  await p.evaluate(() => { document.getElementById("settingsBox").open = true; });
+  for (const [id, v] of many) await p.fill(id, v);
+  await p.waitForTimeout(600);
+  await boardCase(p, "mapped upload (assumed balance sheet), 75+ alerts");
+  await p.close();
+}
+
 (async () => {
   const browser = await pw.chromium.launch();
   try {
-    for (const [name, fn] of [["null scan", nullChecks], ["connect", connectChecks], ["badge", badgeChecks]]) {
+    for (const [name, fn] of [["null scan", nullChecks], ["connect", connectChecks], ["badge", badgeChecks], ["board", boardChecks]]) {
       try { await fn(browser); } catch (e) { check(`${name} section ran to completion`, false, String(e.message || e).split("\n")[0]); }
     }
   } finally { await browser.close(); }

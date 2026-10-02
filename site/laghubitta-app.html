@@ -909,6 +909,7 @@ function renderAudit(){
   el("auVer").textContent="engine laghubitta-engine.js · contract v1"+(isDefault()?" · default parameters":" · parameters changed");
   el("auCfg").textContent=(S.mapping?"column mapping applied in this browser: "+Object.keys(S.mapping).map(function(k){return k+" <- "+S.mapping[k];}).join(", ")+"\n":"")+"parameter set (illustrative, to be calibrated)\n"+safeJSON(D.config)+"\nbalance sheet ("+bsNote()+"): "+bsLines(D.balance_sheet)+"\ncustom scenario "+safeJSON(customScenario())+"\nclassification bands (placeholders): "+fmtBands(S.cls.bands);
 }
+var BOARD_MAX_ALERTS=40;
 function renderBoard(){
   var inst=D.institution,L=inst[inst.length-1],P=inst.length>1?inst[inst.length-2]:{},latest=D.as_of_dates[D.as_of_dates.length-1];
   var name=S.src==="sample"?"Sample Laghubitta (synthetic data)":S.fileName;
@@ -930,12 +931,14 @@ function renderBoard(){
     '<p class="bnote">'+esc(E.CLASSIFICATION_NOTE)+"</p>";}
   var top=branchRows().sort(function(a,b){return (isNum(b.par30)?b.par30:-1)-(isNum(a.par30)?a.par30:-1);}).slice(0,10).map(function(r){
     return "<tr><td>"+esc(r.branch_name)+"</td><td>"+esc(r.district)+"</td><td>"+esc(r.province)+"</td><td>"+crore(r.gross_npr)+"</td><td>"+pct(r.par30)+"</td><td>"+pct(r.par90)+"</td><td>"+pct(r.collection_efficiency)+"</td><td>"+r.alerts+"</td></tr>";}).join("");
-  var MAXA=60,alist=sortedAlerts(),shown=alist.slice(0,MAXA);
+  /* Page 2 has room for BOARD_MAX_ALERTS rows (two columns); the rest go to the alerts CSV, so the
+     summary prints to exactly two A4 pages for any alert count. Highest severity first. */
+  var MAXA=BOARD_MAX_ALERTS,alist=sortedAlerts(),shown=alist.slice(0,MAXA);
   var arow=function(a){var b=BR[a.branch_id]||{};return "<tr><td>"+a.severity+"</td><td>"+esc(b.branch_name)+"</td><td>"+a.rule+"</td><td>"+(isPP(a.rule)?pp(a.value)+" / "+pp(a.threshold):pct(a.value,1)+" / "+pct(a.threshold,0))+"</td></tr>";};
   var ahead='<tr><th>Severity</th><th>Branch</th><th>Rule</th><th>Value / threshold</th></tr>';
   var half=Math.ceil(shown.length/2);
   var al=shown.length?'<div class="bcols"><table class="bt bt-small">'+ahead+shown.slice(0,half).map(arow).join("")+'</table><table class="bt bt-small">'+ahead+shown.slice(half).map(arow).join("")+"</table></div>"+
-    (alist.length>MAXA?'<p class="bnote">and '+(alist.length-MAXA)+' more; the full list is in "Download alerts CSV".</p>':""):'<p>No alerts at the current thresholds.</p>';
+    (alist.length>MAXA?'<p class="bnote bmore">plus '+(alist.length-MAXA)+' more in the alerts CSV</p>':""):'<p>No alerts at the current thresholds.</p>';
   var head=function(page){return '<div class="bhead"><b>Board summary · portfolio risk</b><span>'+esc(name)+' · as of '+latest+' · page '+page+' of 2</span></div>';};
   el("board").innerHTML=
     '<div class="bpage">'+head(1)+'<p class="bdisc">'+notice+'</p>'+

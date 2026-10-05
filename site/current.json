@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-10-04T16:52:13Z",
+  "generated_at_utc": "2026-10-05T20:40:49Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -9,9 +9,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-09-30",
+      "as_of": "2026-10-02",
       "fmt": "ratio",
-      "value": 0.009357,
+      "value": 0.007838,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -21,9 +21,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-09-30",
+      "as_of": "2026-10-02",
       "fmt": "ratio",
-      "value": 0.013406,
+      "value": 0.024042,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -33,9 +33,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-09-30",
+      "as_of": "2026-10-02",
       "fmt": "ratio",
-      "value": 0.011821,
+      "value": 0.012476,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -69,7 +69,7 @@
       "unit": "composite",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-09-25",
+      "as_of": "2026-10-02",
       "fmt": "state",
       "state": "TRANSITION_UP"
     },
@@ -93,9 +93,9 @@
       "unit": "bps",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-10-01",
+      "as_of": "2026-10-02",
       "fmt": "bps",
-      "value": 324.0,
+      "value": 310.0,
       "state": "CREDIT_BENIGN",
       "interpretation": "HY OAS regime classifier. Level >= 1000 bps OR 1-month change >= 200 bps signals acute credit stress."
     }
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "503e620808703f7898e0af88163100058a6d3804a74f235da6c4a6fdff6aaf07"
+  "output_sha256": "5ea1fafc0ec566b8ace9aea7136fe9490e5f723e57e51edd8801f369a36d465c"
 }

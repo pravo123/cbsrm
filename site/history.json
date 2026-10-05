@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-history/1.0.0",
-  "generated_at_utc": "2026-10-04T16:52:31Z",
+  "generated_at_utc": "2026-10-05T20:41:07Z",
   "quarters": [
     "1999Q1",
     "1999Q2",
@@ -248,7 +248,8 @@
         "2025Q4": 0.017204,
         "2026Q1": 0.032361,
         "2026Q2": 0.009513,
-        "2026Q3": 0.009357
+        "2026Q3": 0.009368,
+        "2026Q4": 0.007838
       }
     },
     {
@@ -369,7 +370,8 @@
         "2025Q4": 0.0218,
         "2026Q1": 0.055369,
         "2026Q2": 0.009754,
-        "2026Q3": 0.013406
+        "2026Q3": 0.013392,
+        "2026Q4": 0.024042
       }
     },
     {
@@ -490,7 +492,8 @@
         "2025Q4": 0.001604,
         "2026Q1": 0.091775,
         "2026Q2": 0.007225,
-        "2026Q3": 0.011821
+        "2026Q3": 0.012189,
+        "2026Q4": 0.012476
       }
     },
     {
@@ -825,7 +828,8 @@
         "2025Q4": "TRANSITION_UP",
         "2026Q1": "TRANSITION_UP",
         "2026Q2": "TRANSITION_UP",
-        "2026Q3": "TRANSITION_UP"
+        "2026Q3": "TRANSITION_UP",
+        "2026Q4": "TRANSITION_UP"
       }
     },
     {
@@ -1082,7 +1086,7 @@
         "2026Q1": 328.0,
         "2026Q2": 275.0,
         "2026Q3": 312.0,
-        "2026Q4": 324.0
+        "2026Q4": 310.0
       },
       "states": {
         "2023Q4": "CREDIT_BENIGN",
@@ -1106,5 +1110,5 @@
     "FRED"
   ],
   "disclaimer": "Historical quarterly readings reproduced from public data (ECB SDMX + FRED), at each provider's quarter-end observation. Risk measurement — not investment advice.",
-  "output_sha256": "39ce14637ee3883453bd36af27b2ab142ea88e57b29f5760668f9aaf7fcce9bf"
+  "output_sha256": "59a65a4886b5ad69d366ed1d72cca59d141e0c42d9b84a9cb3c130bf5eefe17c"
 }

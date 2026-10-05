@@ -1,0 +1,22 @@
+{
+  "release": "cbsrm-saas-web-20261005-v1",
+  "date": "2026-10-05",
+  "scope": "public institutional website and product routes",
+  "microfinance_production_accepted": false,
+  "languages": [
+    "en",
+    "ne",
+    "hi"
+  ],
+  "pages": [
+    "",
+    "systemic-risk.html",
+    "saas.html",
+    "ne/saas.html",
+    "hi/saas.html",
+    "integrations.html",
+    "security.html",
+    "partners.html",
+    "workspace.html"
+  ]
+}

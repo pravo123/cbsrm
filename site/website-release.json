@@ -1,8 +1,10 @@
 {
-  "release": "cbsrm-saas-web-20261005-v1",
+  "release": "cbsrm-saas-commercial-web-20261005-v2",
   "date": "2026-10-05",
-  "scope": "public institutional website and product routes",
+  "scope": "public product, trial and paid-pilot request routes",
   "microfinance_production_accepted": false,
+  "paid_checkout_active": false,
+  "request_delivery": "local preview/download or user-sent email draft; no backend submission",
   "languages": [
     "en",
     "ne",
@@ -17,6 +19,15 @@
     "integrations.html",
     "security.html",
     "partners.html",
-    "workspace.html"
+    "workspace.html",
+    "plans.html",
+    "trial.html",
+    "pilot.html",
+    "ne/plans.html",
+    "ne/trial.html",
+    "ne/pilot.html",
+    "hi/plans.html",
+    "hi/trial.html",
+    "hi/pilot.html"
   ]
 }

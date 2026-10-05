@@ -218,7 +218,11 @@ def test_findings(loans, demo):
 
 def test_product_page_chain_head_is_current(demo):
     """The product page shows the sample's audit chain head; it must not go stale."""
-    html = (ROOT / "site" / "laghubitta-product.html").read_text(encoding="utf-8")
+    # The legacy product URL redirects to the institutional SaaS page.
+    legacy = (ROOT / "site" / "laghubitta-product.html").read_text(encoding="utf-8")
+    assert 'url=/saas.html' in legacy
+    html = (ROOT / "site" / "saas.html").read_text(encoding="utf-8")
+    assert 'href="/laghubitta_demo.json"' in html
     head = demo["audit"]["head_hash"]
     assert f'id="heroChainHead">sample · {head[:8]}…{head[-7:]}<' in html
 

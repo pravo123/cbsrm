@@ -1,5 +1,5 @@
 {
-  "release": "cbsrm-saas-commercial-web-20261005-v2",
+  "release": "cbsrm-saas-commercial-policy-20261005-v3",
   "date": "2026-10-05",
   "scope": "public product, trial and paid-pilot request routes",
   "microfinance_production_accepted": false,
@@ -29,5 +29,12 @@
     "hi/plans.html",
     "hi/trial.html",
     "hi/pilot.html"
-  ]
+  ],
+  "status": "VALIDATED_PUBLIC_COPY",
+  "free_trial_days": 14,
+  "synthetic_trial_only": true,
+  "stripe_target": "test_only",
+  "live_nepal_invoices": "blocked_pending_verification",
+  "confidential_prices": "excluded_from_public_files",
+  "source_base": "73c3cedc49819de730e628a41a330a7235d55068"
 }

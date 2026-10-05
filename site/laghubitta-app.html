@@ -284,13 +284,13 @@
 
   <p class="banner" role="note"><b>Pilot prototype. Sample data is synthetic. Not a regulatory report.</b>
     &nbsp;Defaults are illustrative, to be calibrated. Amounts in NPR crore (1 crore = 1,00,00,000).</p>
-  <p class="privacy" role="note"><span class="seal-dot"></span><b>Your file is processed in this browser. Nothing is uploaded.</b>
-    The page reads the file you choose locally and makes no network request with it.</p>
+  <p class="privacy" role="note"><span class="seal-dot"></span><b>Public synthetic demo only. Customer file input is disabled.</b>
+    Use the bundled sample. Real institution data requires a separately authorised paid pilot and secure onboarding.</p>
 
   <!-- ============ START ============ -->
   <section id="start" class="start" aria-labelledby="stT">
     <h1 id="stT" class="start-h">Branch risk monitor, early warning and stress tests for a microfinance portfolio</h1>
-    <p class="rt-oneliner">Load the synthetic sample, or a portfolio export from your CBS or MIS in the template format. Each row is one account (or one centre-level pooled account) at one month-end.</p>
+    <p class="rt-oneliner">Load the bundled synthetic sample. Each sample row represents one account or centre-level pooled account at a month-end. Customer file input is disabled on this public demonstration.</p>
     <div class="start-grid">
       <div class="start-card">
         <div class="sub-h">Try it now</div>
@@ -299,12 +299,12 @@
         <p class="muted" id="sampleNote"></p>
       </div>
       <div class="start-card">
-        <div class="sub-h">Use your own export</div>
-        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose a CSV file or drop it here">
-          <b>Drop a CSV file here</b><br><span class="muted">or click to choose a file</span>
-          <input type="file" id="fileIn" accept=".csv,text/csv" hidden>
+        <div class="sub-h">Institution data requires a paid-pilot gate</div>
+        <div class="drop" id="drop" role="note" aria-label="Customer file input is disabled in this synthetic demo">
+          <b>Customer file input disabled</b><br><span class="muted">Use the bundled synthetic sample. <a href="/pilot.html">Request a paid pilot</a> for separately approved institution data.</span>
+          <input type="file" id="fileIn" accept=".csv,text/csv" hidden disabled disabled disabled disabled>
         </div>
-        <p class="muted">Format: <a href="laghubitta_template.csv" download>download the template CSV</a> (header plus 3 example rows). Columns follow contract section 2. Names and IDs can be anonymised.</p>
+        <p class="muted">Format: <a href="laghubitta_template.csv" download>download the template CSV</a> (header plus 3 example rows). Template examples are synthetic. Real-data permission, minimization, hosting and retention must be agreed for a paid pilot.</p>
       </div>
     </div>
     <div id="loadMsg" class="loadmsg" hidden></div>
@@ -557,19 +557,8 @@ function openMapper(parsed,meta,initial){
   window.scrollTo(0,0);
 }
 function loadFile(file){
-  if(!file)return;
-  var rd=new FileReader();
-  rd.onerror=function(){showMsg("loadMsg","err","The file could not be read by the browser.",[]);};
-  rd.onload=function(){
-    var buf=rd.result;
-    E.sha256Hex(buf).then(function(sha){
-      var text=decode(buf),meta={src:"upload",label:file.name,fileName:file.name,bytes:buf.byteLength,sha:sha,ref:null,mapping:null};
-      var parsed=E.parseCSV(text);
-      if(M&&parsed.rows.length>1&&M.needsMapping(parsed.rows[0])){openMapper(parsed,meta,null);return;}
-      loadText(text,meta);
-    });
-  };
-  rd.readAsArrayBuffer(file);
+  showMsg("loadMsg","err","Customer file input is disabled in this public synthetic demo. Use the bundled sample; institution data requires an authorised paid pilot.",[]);
+  return; // No FileReader, parser or hashing of a customer-selected file.
 }
 
 /* ---------------- settings ---------------- */

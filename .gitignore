@@ -39,3 +39,11 @@ logs/
 # i18n build artifacts — the translated dicts are embedded into site/*.html (the
 # source of truth); the extracted/translated JSON bundles are regenerable.
 .tmp_i18n/
+
+# Confidential local handoffs and invention records: do not publish.
+_claude*/
+_codex*/
+confidential/
+patent-private/
+invention-disclosures/
+*.private.json

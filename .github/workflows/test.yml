@@ -38,6 +38,9 @@ jobs:
       - name: Run pytest
         run: pytest tests/ -v --cov=cbsrm --cov-report=term-missing
 
+      - name: Verify readiness evidence ledger
+        run: python tools/verify_readiness_ledger.py
+
       - name: Verify CLI installs
         run: |
           cbsrm info

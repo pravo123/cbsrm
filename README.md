@@ -4,10 +4,13 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![Tests](https://img.shields.io/badge/tests-1015_passing-brightgreen.svg)](#tests)
+[![Tests](https://github.com/pravo123/cbsrm/actions/workflows/test.yml/badge.svg)](https://github.com/pravo123/cbsrm/actions/workflows/test.yml)
 [![Version](https://img.shields.io/badge/version-0.9.0-blueviolet.svg)](CHANGELOG.md)
 [![Whitepaper](https://img.shields.io/badge/whitepaper-12_sections-orange.svg)](whitepaper/cbsrm_methodology_v1.md)
+
 [![Live demo](https://img.shields.io/badge/live_demo-Risk_Terminal-1f6feb.svg)](https://pravo123.github.io/cbsrm/)
+
+**Latest checked public suite (6 October 2026): 1,238 passed**, including seven new evidence-reporting tests. This count covers the public package and is separate from institutional SaaS acceptance. [Build, feature and test records](docs/readiness/TEST_EVIDENCE.md).
 
 **▶ Live demo — [CBSRM Risk Terminal](https://pravo123.github.io/cbsrm/):** a self-contained, offline, audit-traceable dashboard of the five systemic-risk lenses (CISS-family stress, SRISK, ΔCoVaR/MES, DebtRank, the 4-state macro regime) plus the SHA-256 model-governance audit chain — every number computed from the public `cbsrm` classes. Governance / risk-measurement only; not investment advice. Source: [`dashboard/cbsrm_terminal.html`](dashboard/cbsrm_terminal.html).
 
@@ -96,11 +99,18 @@ The target consumers are: hedge-fund and prop-shop risk teams, central-bank fina
 
 CBSRM is the public half of a paired system. The private companion (VolanX) applies the same data / indicators / audit primitives to a multi-broker derivatives execution platform — same 7-layer architecture, additional layers L3-L5 covering risk, composer, and execution. See [`ARCHITECTURE.md`](../ARCHITECTURE.md) in the parent worktree for the full north-star (note: the private layers are referenced for completeness but not part of the public package).
 
+## Microfinance and SaaS status as of 6 October 2026
+
+The public research package and the privately reviewed institutional SaaS build are separate. The latter has bounded independent synthetic/component evidence; full authenticated customer, provider/MFA, hosted-operation and commercial release acceptance remains open.
+
+[Feature requirements and remaining work](docs/readiness/FEATURE_SCOPE.md) preserve 64 original families, the 83-row named-detail crosswalk and all SaaS, workflow, integration, commercial and owner-demo additions. [Test evidence](docs/readiness/TEST_EVIDENCE.md) separates public package tests, independent cohorts and peer counts. [Publication boundaries](docs/readiness/PUBLICATION_BOUNDARIES.md) keep unpublished proprietary implementation and invention records outside this public repository.
+
 ## Tests
 
 ```bash
 pytest tests/ -v
-# 1,015 passing on current main (verified 2026-09-15, commit a95240d) in <25s; all HTTP mocked; Monte Carlo seeded for determinism.
+# Historical baseline: 1,015 passing at a95240d on 2026-09-15.
+# Current exact-build counts and evidence units: docs/readiness/TEST_EVIDENCE.md
 ```
 
 ## Whitepaper

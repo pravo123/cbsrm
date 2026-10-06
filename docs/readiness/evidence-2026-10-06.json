@@ -1,0 +1,308 @@
+{
+  "schema": "cbsrm-readiness-evidence/1",
+  "as_of": "2026-10-06",
+  "public_code_base": "3a739399685e50bdc68af64fe9c43a4b0b6ca0a5",
+  "private_reviewed_build": "dab01ce8fa24630dd7f2b093d9d4c7a656e893cf",
+  "scope_counts": {
+    "original_families": 64,
+    "named_detail_rows": 83,
+    "saas_requirements": 16,
+    "human_workflow_requirements": 10,
+    "integration_requirements": 16,
+    "commercial_requirements": 16,
+    "owner_demo_cases": 14,
+    "product_page_promises": 40,
+    "value_items": 32,
+    "guide_cases_prepared": 44
+  },
+  "counting_policy": "Cohorts are separate observations at their named build; no cumulative product test or feature acceptance total. Requests, assertions, parametrized tests, peer claims and release cases are distinct units.",
+  "independent_cohorts": [
+    {
+      "id": "A85-01",
+      "label": "CONCURRENT-AUDIT-TARGETED-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 12,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "b8818860aa95db49c211b1f743644bcb752211dd64bd8b22b5833cde7da4a692"
+    },
+    {
+      "id": "A85-02",
+      "label": "EXPORT-CURRENT-KIND-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 8,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "26adec2410cd185864211cf3540f3eb17edfe0f3634eb17abe85a86bb38150e7"
+    },
+    {
+      "id": "A85-03",
+      "label": "HUMANWORK-CALENDAR-BOUNDARY-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 28,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "af7b19f5cfc60ea9bc0fa83503d76bcdd359cc65ed8132630a6fe44ff722b9bc"
+    },
+    {
+      "id": "A85-04",
+      "label": "HUMANWORK-CONCURRENT-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 24,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "fe1f4b42841a6b776ce5d6116c6395ad7883575026e5f33bd2d7cc9c9dde1683"
+    },
+    {
+      "id": "A85-05",
+      "label": "HUMANWORK-DISABLED-AI-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 28,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "f0864f3fd5e5d5d9ca3e11f313518b931861330f638b3270d5ea5dca1dbd87ec"
+    },
+    {
+      "id": "A85-06",
+      "label": "HUMANWORK-EXPLICIT-SHARING-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 29,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "3ff8a606c8deabc693e1e3b1278afc51311c4069cee00618a598b702204cdb7e"
+    },
+    {
+      "id": "A85-07",
+      "label": "HUMANWORK-INTEGRITY-DRAFT-ACK-UI-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 20,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "2a48891d564cce2a5953c921556873f8eef33ed5de461e560b36452570435bfd"
+    },
+    {
+      "id": "A85-08",
+      "label": "HUMANWORK-PREVIEW-REVISION-BINDING-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 20,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "ed6a0f54a41f65b0550b101e07b92a8e409fb9e86a4dd9304f8c8c111a88792f"
+    },
+    {
+      "id": "A85-09",
+      "label": "HUMANWORK-REMINDER-RESCHEDULE-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 26,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "3631a0eedbfd431c6c132d1516f8746a1aa44025c0282d7b42c80785c9fbf324"
+    },
+    {
+      "id": "A85-10",
+      "label": "HUMANWORK-SESSION-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 24,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "544d10775707929a2b367a3bcd7128569aa902af6403b25875fda8565b907934"
+    },
+    {
+      "id": "A85-11",
+      "label": "INTEGRATION-INFLIGHT-POLICY-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 18,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "8bb88f7de8afe2ddf64765a135faee9e34a2a62fd4a6bd62bed798122d507933"
+    },
+    {
+      "id": "A85-12",
+      "label": "PRELOGIN-BOUNDARIES-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 22,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "19bdd65e8f75ebf580ecc6e48e5210e941523ce5ea0b488e54967f9236a93fc2"
+    },
+    {
+      "id": "A85-13",
+      "label": "REPORT-READ-GENERATION-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 13,
+      "failed": 1,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "c3a2d0135fa8dccc71cbad8b7ff53bc5a0f0ed3986a26ceb6e91c1fdcd2cd746"
+    },
+    {
+      "id": "A85-14",
+      "label": "SERVICE-FINANCIAL-ASSISTANT-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 30,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "50ed1a9df3da1156fa69fc72e0676bab63b06a663017d62456b0d32d646bd158"
+    },
+    {
+      "id": "A85-15",
+      "label": "SERVICE-IMPORT-RECONCILIATION-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 36,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "a9954069f9ae896c5329ac069db1348f89bd1995230d9f74ed1c36cc3f395ccf"
+    },
+    {
+      "id": "A85-16",
+      "label": "SERVICE-PRELOGIN-EXPIRY-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 12,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "63944ef70a88c70270ba2b5b095ba2fce0ba41e97a7ec1c3c56cb78679f233cc"
+    },
+    {
+      "id": "A85-17",
+      "label": "SERVICE-STREAM-BOUNDARY-REQUEST-REVIEW",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 16,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "8e782435d69501c3e140699fdddb19e0fba4e4a265d212cd0f5705e52d89ccef"
+    },
+    {
+      "id": "DAB-REPORT",
+      "label": "DAB-REPORT",
+      "build": "dab01ce8fa24630dd7f2b093d9d4c7a656e893cf",
+      "passed": 14,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": false,
+      "evidence_sha256": "20d88adfa648ee0390dbc9d0180b1f8f1b5fa023b8d1248a4736ec7fdc78b8a7"
+    },
+    {
+      "id": "AI-OUTPUT",
+      "label": "AI-OUTPUT",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 4,
+      "failed": 3,
+      "kind": "independent_component",
+      "historical": true,
+      "evidence_sha256": "aa970f512ce25993c10acb28e327783f4750a9dae6049cd03fa6be23436a89cb"
+    },
+    {
+      "id": "DAB-TRIAL",
+      "label": "DAB-TRIAL",
+      "build": "dab01ce8fa24630dd7f2b093d9d4c7a656e893cf",
+      "passed": 49,
+      "failed": 0,
+      "kind": "independent_component",
+      "historical": false,
+      "evidence_sha256": "524ad19cdd9d8e4fea5bd1e38b9a998601c222773ea0bdcac45b800104555296"
+    },
+    {
+      "id": "DAB-LEDGER",
+      "label": "DAB-LEDGER",
+      "build": "dab01ce8fa24630dd7f2b093d9d4c7a656e893cf",
+      "passed": 33,
+      "failed": 1,
+      "kind": "independent_component",
+      "historical": false,
+      "evidence_sha256": "c3f4c6b1948a0f2b574da49282b2540dbd733c64254ed6fb3077e13fe2490bf6"
+    }
+  ],
+  "peer_only": [
+    {
+      "id": "PEER-A85",
+      "build": "a85c457e727d29eb7994bf37d4dcd8dc8dd78afd",
+      "passed": 4395,
+      "skipped": 1,
+      "kind": "peer_reported_pytest",
+      "independently_rerun": false
+    },
+    {
+      "id": "PEER-DAB-FOCUSED",
+      "build": "dab01ce8fa24630dd7f2b093d9d4c7a656e893cf",
+      "passed": 65,
+      "kind": "peer_reported_pytest",
+      "independently_rerun": false
+    },
+    {
+      "id": "PEER-DAB-AFFECTED",
+      "build": "dab01ce8fa24630dd7f2b093d9d4c7a656e893cf",
+      "passed": 932,
+      "skipped": 1,
+      "kind": "peer_reported_pytest",
+      "independently_rerun": false
+    }
+  ],
+  "release_cases": {
+    "saas": {
+      "prepared": 26,
+      "accepted": 0
+    },
+    "permissions": {
+      "prepared": 30,
+      "accepted": 0
+    },
+    "human_workflow": {
+      "prepared": 24,
+      "accepted": 0
+    },
+    "integrations": {
+      "prepared": 36,
+      "accepted": 0
+    },
+    "commercial": {
+      "prepared": 32,
+      "accepted": 0
+    },
+    "owner_demo": {
+      "prepared": 14,
+      "accepted": 0
+    },
+    "local_guide": {
+      "prepared": 44,
+      "accepted": 0
+    }
+  },
+  "open_component_findings": [
+    "AI-AUDIT-01",
+    "BILL-AUDIT-01"
+  ],
+  "full_platform_release_accepted": false,
+  "public_suite_run": {
+    "kind": "independent_public_pytest",
+    "public_code_base": "3a739399685e50bdc68af64fe9c43a4b0b6ca0a5",
+    "change_scope": "public readiness documentation, reporting validator and seven reporting tests only",
+    "runner": "Windows Python 3.12, isolated environment, editable public package with all extras",
+    "tests": 1238,
+    "passed": 1238,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "junit_sha256": "549278658c02a00f33ff7b30601e98267b7742600f7cc1355982230306f55181",
+    "timestamp": "2026-10-06T10:08:38.143643+05:45",
+    "duration_seconds": 72.934,
+    "reporting_tests_included": 7,
+    "private_saas_acceptance": false
+  },
+  "confidentiality": "No proprietary source, invention claims, private configuration, customer records or raw private fixtures in this ledger."
+}

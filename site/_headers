@@ -6,3 +6,9 @@
   Permissions-Policy: geolocation=(), microphone=(), camera=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   Content-Security-Policy: default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; frame-ancestors 'self'; form-action 'self'
+
+# Microfinance sign in entry page: same headers as every page (/*), plus no indexing. Pretty URL and .html both covered.
+/microfinance-signin
+  X-Robots-Tag: noindex, nofollow
+/microfinance-signin.html
+  X-Robots-Tag: noindex, nofollow

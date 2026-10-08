@@ -1,0 +1,32 @@
+/* Shared presentation layer. Never change visibility, permissions or workflow state. */
+:root{--sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--accent-2:#45b8ef;--gold:#e3b75e;--gold-2:#f2cf89;--gold-3:#ba9144;--cyan:#45b8ef;--surface-3:#1d2834;--hash-fg:#7ed8aa;--danger:#efb0c2;--severe:#cf7887}
+html{background:var(--bg,#0b0f14)}
+body{font-family:var(--sans);font-size:15px;line-height:1.65;color:var(--text,#d8e2ec);-webkit-font-smoothing:antialiased}
+a{color:#83cff5}a:hover{color:#b6e5fc}
+h1,h2,h3,h4{font-family:var(--sans);color:var(--text-strong,#edf4fa);letter-spacing:-.025em;line-height:1.25}
+h1{font-weight:650}h2,h3{font-weight:600}
+.rt-wordmark,.wm,.wm-gold,.lb-nav,.rt-nav,.nav__links,.navbtn,.tn,.btn,.rt-overline,.overline,.rt-tag,.tag,.chip,.rt-lozenge,.seal,.hw-status,.rt-mast__right{font-family:var(--sans)}
+.rt-overline,.overline{letter-spacing:.055em;font-size:12px}
+.rt-mast,.nav__in{gap:20px;padding-top:20px;padding-bottom:20px}
+.rt-brand{align-items:center;gap:16px}.rt-wordmark .dot,.wm .dot{color:var(--gold)}
+.lb-nav,.rt-nav,.nav__links{gap:6px}.lb-nav a,.rt-nav a,.nav__links a{border-radius:8px;padding:8px 12px}
+.lb-nav a[aria-current="page"],.rt-nav a[aria-current="page"],.nav__links a[aria-current="page"]{background:#152b3a;color:#84d1f7;border-color:#2e5a72}
+.btn,button,input,select,textarea{font-family:inherit;accent-color:#45b8ef}
+.btn,button:not(.navbtn){border-radius:8px}.btn{min-height:40px;padding:9px 16px}
+.btn--primary,.primary{background:#14658e;color:white;border-color:#318cba}.btn--primary:hover,.primary:hover{background:#1c789f}
+input,select,textarea{background:#18212c;color:#edf4fa;border-color:#44566c;border-radius:8px}
+.card,.panel,.screen,.rt-panel,.hero__panel,.term,.tablewrap,.guide{border-radius:14px;border-color:var(--border,#293442)}
+.card,.panel,.rt-panel{padding:22px}.card,.panel,.rt-panel,.rt-kpi{background:var(--surface,#121922)}
+.rt-kpi{padding:18px 20px}.rt-kpi__label,.rt-kpi .label{color:var(--text-muted,#a6b6c6)}
+.banner{font-family:var(--sans);line-height:1.6}.refusal,.alert{border-radius:10px}
+table{font-size:13px}th{font-family:var(--sans);font-weight:600;letter-spacing:.02em}th,td{padding:12px 14px;border-color:#293442}
+pre,code,kbd,.mono,.hash{font-family:ui-monospace,"Cascadia Code",Consolas,monospace}
+pre,code{background:#18212c;color:#d8e2ec}pre{border-color:#44566c}
+:where(a,button,input,select,textarea):focus-visible{outline:2px solid #69c9f5;outline-offset:3px}
+.map-brand-logo,.wv-brand-logo,.brand-logo,.mobile-brand{background:transparent;padding:0;border-radius:0;object-fit:contain}
+.wv-brand-logo{display:block;width:126px;height:auto;max-height:82px}.brand-logo{width:154px}
+/* Preserve status distinctions and all blocked/denied/error states. */
+.tag.sev-red,.tag.sev-breached,.tag.st-denied,.tag.st-revoked,.tag.st-error,.btn--danger{background:#3a202c;color:#efb0c2;border-color:#805364}
+@media(max-width:760px){.rt-mast,.nav__in{gap:12px;padding-top:14px;padding-bottom:14px}.card,.panel,.rt-panel{padding:16px}.wv-brand-logo{width:96px}.btn{min-height:44px}table{font-size:12px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{html,body{background:white;color:#18212c}.card,.panel,.rt-panel,.screen,pre,code{background:white;color:#18212c;border-color:#a6b6c6}h1,h2,h3,a{color:#18212c}}

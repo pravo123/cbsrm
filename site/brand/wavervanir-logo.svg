@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 410" role="img" aria-label="WaverVanir"><g transform="translate(193 5) scale(.5)">
+    <defs>
+      <linearGradient id="wvG" gradientUnits="userSpaceOnUse" x1="0" y1="322" x2="508" y2="0">
+        <stop offset="0" stop-color="#C69A62"/><stop offset="1" stop-color="#E4BA82"/>
+      </linearGradient>
+      <linearGradient id="wvB" gradientUnits="userSpaceOnUse" x1="0" y1="131" x2="0" y2="593">
+        <stop offset="0" stop-color="#12E6FA"/><stop offset="1" stop-color="#42A5F5"/>
+      </linearGradient>
+    </defs>
+    <path fill="url(#wvG)" d="M0 0H508V37H37V265L399 107L388 61L508 100L0 322Z"/>
+    <g fill="url(#wvB)">
+      <path d="M0 352L100 309V482L0 401Z"/>
+      <path d="M136 293L236 249V593L136 512Z"/>
+      <path d="M272 233L372 190V512L272 593Z"/>
+      <path d="M408 174L508 131V401L408 482Z"/>
+    </g>
+  </g><text x="320" y="393" text-anchor="middle" fill="#E4BA82" font-family="Segoe UI,Arial,sans-serif" font-size="93" font-weight="700" letter-spacing="-4">WaverVanir</text></svg>

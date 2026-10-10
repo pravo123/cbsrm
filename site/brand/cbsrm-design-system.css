@@ -1,0 +1,54 @@
+@charset "UTF-8";
+/* Canonical CBSRM presentation tokens. Existing owner-approved WaverVanir
+   identity: wavervanir-palette.css and wavervanir-unified.css.
+   Light neutrals: assets/launch/launch.css. These variables grant no authority. */
+:root {
+  --wv-blue: #45b8ef;
+  --wv-gold: #e3b75e;
+  --wv-green: #4bc18c;
+  --wv-black: #0b0f14;
+  --wv-focus: #69c9f5;
+  --wv-control: #14658e;
+  --wv-control-border: #318cba;
+  --wv-critical: #efb0c2;
+  --wv-elevated: #cf7887;
+  --wv-watch: #e3b75e;
+  --wv-benign: #7ed8aa;
+  --wv-font: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --wv-space-1: 4px;
+  --wv-space-2: 8px;
+  --wv-space-3: 12px;
+  --wv-space-4: 16px;
+  --wv-space-6: 24px;
+  --wv-space-8: 32px;
+  --wv-radius-control: 8px;
+  --wv-radius-card: 12px;
+  --wv-radius-panel: 18px;
+  --wv-logo-width: 154px;
+  --wv-logo-mobile: 96px;
+  --wv-bg: #0b0f14;
+  --wv-card: #121922;
+  --wv-surface: #18212c;
+  --wv-text: #eaf0f5;
+  --wv-muted: #a6b6c6;
+  --wv-border: #293442;
+  --wv-chart: #45b8ef;
+}
+html[data-theme="dark"] {
+  --wv-bg: #0b0f14;
+  --wv-card: #121922;
+  --wv-surface: #18212c;
+  --wv-text: #eaf0f5;
+  --wv-muted: #a6b6c6;
+  --wv-border: #293442;
+  --wv-chart: #45b8ef;
+}
+html[data-theme="light"] {
+  --wv-bg: #f4f5f1;
+  --wv-card: #fff;
+  --wv-surface: #edf1f4;
+  --wv-text: #112337;
+  --wv-muted: #536574;
+  --wv-border: #d8dfe3;
+  --wv-chart: #14658e;
+}

@@ -1,0 +1,16 @@
+/* Public information pages use the same identity as the product. */
+.nav{position:relative;background:var(--wv-bg);border-color:var(--wv-border);color:var(--wv-text)}
+.nav .wrap{max-width:1440px;padding:14px 5vw;min-height:0;gap:24px;flex-wrap:wrap}
+.nav .brand{color:var(--wv-text)}.brand strong{font-size:26px;font-weight:700;letter-spacing:-.04em}.brand small{font-size:10px;letter-spacing:.03em;color:var(--wv-muted)}
+.nav-links{gap:22px}.nav a{color:var(--wv-muted)}.nav a:hover,.nav a[aria-current=page]{color:var(--wv-text)}
+.nav .access{border-radius:var(--wv-radius-control);background:var(--wv-control);color:#fff;padding:10px 16px}
+.menu-toggle{border-color:var(--wv-border);color:var(--wv-text);background:var(--wv-card)}
+.wrap{max-width:1440px;padding-left:5vw;padding-right:5vw}
+.white,.hero,.page-hero{background:var(--wv-bg);color:var(--wv-text)}.tint,.ribbon,.cta,.footer{background:var(--wv-card);color:var(--wv-text)}
+.page-hero{padding:64px 0 48px}.page-hero h1{font-size:clamp(40px,4.3vw,64px);font-weight:650;line-height:1.12;max-width:22ch}.page-hero p{font-size:18px;line-height:1.6;color:var(--wv-muted);max-width:68ch;margin-top:24px}
+.eyebrow{color:var(--wv-chart);font-size:11px;letter-spacing:.1em}.section-head h2{font-size:32px}.card h3{font-size:23px}.cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr))}.card p{color:var(--wv-muted)}.white{padding:32px 0 56px}
+.footer{border-top:1px solid var(--wv-border);padding:32px 0}.footer .wrap{gap:32px}.footer h3{color:var(--wv-text)}.footer a,.footer small,.current-footer,.translation-note{color:var(--wv-muted)}.current-footer{border-color:var(--wv-border)}
+.notice,.pv,.pv-body,.pv-kpi,.plain-grid>article{background:var(--wv-card);color:var(--wv-text);border-color:var(--wv-border)}
+@media(max-width:820px){.nav .wrap{gap:12px;padding-top:12px;padding-bottom:12px}.nav-actions{margin-left:auto;gap:8px}.nav .brand strong{font-size:22px}.nav .brand small{font-size:8px}.nav .access{display:none}.nav-links{background:var(--wv-card);border-color:var(--wv-border);width:100%}.page-hero{padding:40px 0 32px}.page-hero p{font-size:16px}.section-head h2{font-size:28px}.footer .wrap{grid-template-columns:1fr}.white{padding:24px 0 40px}}
+@media(max-width:480px){.nav .wrap{gap:10px}.nav-actions{width:100%;justify-content:flex-end}.nav-actions .theme-switch{margin-right:auto}.nav .brand img{width:96px}.page-hero h1{font-size:40px}}
+@media print{.nav,.footer{display:none}.white,.tint,.page-hero{background:#fff;color:#112337}}

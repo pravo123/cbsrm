@@ -216,15 +216,13 @@ def test_findings(loans, demo):
             assert close(f["top_" + col + "_share"], top[1] / g.sum())
 
 
-def test_product_page_chain_head_is_current(demo):
-    """The product page shows the sample's audit chain head; it must not go stale."""
-    # The legacy product URL redirects to the institutional SaaS page.
+def test_product_entry_uses_the_service_instead_of_a_separate_sample_dashboard():
+    """Legacy entry resolves to product information; actual data stays in the service."""
     legacy = (ROOT / "site" / "laghubitta-product.html").read_text(encoding="utf-8")
-    assert 'url=/saas.html' in legacy
+    assert 'url=https://cbsrm.wavervanir.com/saas.html' in legacy
     html = (ROOT / "site" / "saas.html").read_text(encoding="utf-8")
-    assert 'href="/laghubitta_demo.json"' in html
-    head = demo["audit"]["head_hash"]
-    assert f'id="heroChainHead">sample · {head[:8]}…{head[-7:]}<' in html
+    assert 'href="https://mfi.cbsrm.wavervanir.com/app/laghubitta-service.html"' in html
+    assert 'id="heroChainHead"' not in html
 
 
 def _generator():

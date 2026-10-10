@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Latest pilot build | CBSRM</title>
+  <meta name="description" content="Capabilities in the latest CBSRM pilot source, with the remaining institutional verification steps.">
+  <link rel="stylesheet" href="/assets/launch/launch.css">
+  <link rel="icon" href="/assets/launch/mark.svg" type="image/svg+xml">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="nav"><div class="wrap">
+    <a class="brand" href="/">CBSRM <span>WaverVanir International</span></a>
+    <nav aria-label="Main navigation"><a href="/saas.html">Microfinance service</a> <a href="/security.html">Security and governance</a> <a href="/pilot.html">Plan a pilot</a></nav>
+  </div></header>
+  <main id="main">
+    <section class="white"><div class="wrap">
+      <div class="section-head">
+        <div class="eyebrow">Pilot source update · 10 October 2026</div>
+        <h1>What is in the latest pilot build</h1>
+        <p>The latest local source includes the institution workspace, risk dashboards and a data-connection workflow. Demonstrations use synthetic records. This page describes reviewed source capabilities; a deployment and an institutional acceptance are separate steps.</p>
+      </div>
+      <div class="cards">
+        <article class="card"><h2>Nine risk views</h2><p>Overview, portfolio quality, branches, concentration, liquidity, stress testing, early warning, operations and risk appetite. Trends can use up to 24 supplied month ends. Missing figures keep their reasons rather than becoming zero.</p></article>
+        <article class="card"><h2>Geographic analysis</h2><p>Branch records can be grouped and filtered by municipality, district and province using an institution's published location reference. This checkpoint includes geographic rollups and filters. A geographic map renderer and an authoritative boundary dataset have not been verified in this checkpoint.</p></article>
+        <article class="card"><h2>Data connections and guidance</h2><p>The signed-in workspace includes connection setup and review, import checks and contextual dashboard guides. A specific CBS product, version and approved interface still need their own integration verification.</p></article>
+      </div>
+    </div></section>
+    <section class="white"><div class="wrap">
+      <div class="section-head"><h2>Where security features appear</h2><p>The marketing website explains the service. Institution records and workflow screens are behind sign-in. Backend checks enforce access for each request.</p></div>
+      <div class="cards">
+        <article class="card"><h3>Identity and access</h3><p>Source includes identity-provider sign-in, second-factor claim checks, institution membership, role permissions and branch scope. Real second-user invitation, rejection, revocation and logout still require independent acceptance.</p></article>
+        <article class="card"><h3>Review and accountability</h3><p>Source includes maker/checker workflow, audit records and bounded temporary support access. Production approval requires the institution's security and data-location review.</p></article>
+        <article class="card"><h3>Dates and reporting</h3><p>Gregorian civil dates remain the canonical source dates. The AD/BS calendar choice is being integrated. BS conversion, month boundaries and report/export metadata need a verified calendar dataset and range checks before use.</p></article>
+      </div>
+    </div></section>
+    <section class="white"><div class="wrap">
+      <h2>What remains before an institutional pilot</h2>
+      <ul>
+        <li>Independent checks against the exact final source, including native PostgreSQL and real identity-provider acceptance.</li>
+        <li>Approved CBS access and institution-owned data, calibrated thresholds and confirmed data location.</li>
+        <li>Native review of Nepali and Hindi wording, and verified BS-calendar coverage.</li>
+        <li>A distinct checker and manager for release approval, and measured time savings in each participating institution.</li>
+      </ul>
+      <p>No percentage of labor savings, regulatory acceptance or four-institution production result is claimed. Public-data and synthetic demonstrations do not establish customer validation.</p>
+      <div class="buttons"><a class="btn" href="/pilot.html">Plan a controlled pilot</a><a class="btn" href="/saas.html">Explore the service</a></div>
+    </div></section>
+  </main>
+  <footer class="footer"><div class="wrap"><p>© 2026 WaverVanir International. Risk measurement and decision support. Pilot source status; production onboarding remains gated.</p></div></footer>
+</body>
+</html>

@@ -18,3 +18,5 @@ The public investor page records only authorized current development work: calen
 Functional explorer, research terminal and synthetic portfolio JavaScript/data are unchanged. The private authenticated application is not part of this website release. Original source and the earlier seven-path status candidate remain in Git history. Production rollback baseline: b862d55ff9509cb9ee238a7a9091feb4fd13a2c1.
 
 Verification records belong to their exact candidate. Earlier source review and CI of 1f5a033 are retained as historical evidence; they do not clear this broader final revision. New source/link checks cover all 25 authored HTML pages, and final browser, CI and deployment checks are recorded by the integrator separately. The existing Netlify workflow still publishes site/ without a build step.
+
+The first broader revision at 38b0b9 failed the unchanged demo parity test: the legacy product redirect and the product page audit link/badge were removed. They are restored in the follow-up source change; no tests or demo hashes are changed. The original failed CI run remains evidence.

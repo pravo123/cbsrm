@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: >-
+  If you use CBSRM in scholarly work, please cite this repository and
+  specify the exact release tag or commit SHA used for reproducibility.
+type: software
+title: "CBSRM: Cross-Border Systemic Risk Monitor"
+authors:
+  - family-names: Koirala
+    given-names: Prabhawa
+    affiliation: "WaverVanir International"
+repository-code: "https://github.com/pravo123/cbsrm"
+url: "https://github.com/pravo123/cbsrm"
+license: Apache-2.0
+keywords:
+  - systemic risk
+  - financial stability
+  - reproducibility
+  - model governance
+  - Python

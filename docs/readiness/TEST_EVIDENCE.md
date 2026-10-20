@@ -52,6 +52,10 @@ The developer reported 4,395 passed / 1 skipped at a85, 65 focused report tests 
 
 Prepared case counts are not passing test counts. No full platform release, security certification, regulatory approval or all-vendor compatibility is established.
 
+## Reconfirmation run — 20 October 2026
+
+**1,238 passed; 0 failed, 0 errors, 0 skipped** on Linux/Python 3.13 at commit `82526fb` with `pip install -e ".[all]"` and `python -m pytest tests`. Same total as the 6 October run. Without the optional `api` extra, FastAPI tests are skipped and the collected total is lower, so always report counts from an `.[all]` install. Composition: 830 core, 216 microfinance (`cbsrm.mfi`, laghubitta parity), 113 API, 79 Streamlit viewer.
+
 ## Fresh public-package run — 6 October 2026
 
 **1,238 passed; zero failures, errors or skips** on Windows/Python 3.12 against the named public base plus this reporting update. This includes seven new reporting tests. The run took 72.934 seconds and emitted one Starlette/httpx deprecation warning. Cross-platform CI results are separate. It does not execute the privately delivered institutional SaaS build.

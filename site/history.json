@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-history/1.0.0",
-  "generated_at_utc": "2026-11-05T20:01:27Z",
+  "generated_at_utc": "2026-11-06T19:28:16Z",
   "quarters": [
     "1999Q1",
     "1999Q2",
@@ -249,7 +249,7 @@
         "2026Q1": 0.032274,
         "2026Q2": 0.009528,
         "2026Q3": 0.009175,
-        "2026Q4": 0.019579
+        "2026Q4": 0.02729
       }
     },
     {
@@ -371,7 +371,7 @@
         "2026Q1": 0.055346,
         "2026Q2": 0.009833,
         "2026Q3": 0.013269,
-        "2026Q4": 0.008311
+        "2026Q4": 0.006819
       }
     },
     {
@@ -493,7 +493,7 @@
         "2026Q1": 0.092889,
         "2026Q2": 0.007337,
         "2026Q3": 0.012118,
-        "2026Q4": 0.005716
+        "2026Q4": 0.00851
       }
     },
     {
@@ -737,7 +737,7 @@
         "2026Q1": 0.184358,
         "2026Q2": 0.189109,
         "2026Q3": 0.11744,
-        "2026Q4": 0.170558
+        "2026Q4": 0.173566
       }
     },
     {
@@ -830,7 +830,7 @@
         "2026Q1": "TRANSITION_UP",
         "2026Q2": "TRANSITION_UP",
         "2026Q3": "TRANSITION_UP",
-        "2026Q4": "TRANSITION_UP"
+        "2026Q4": "TRANSITION_DOWN"
       }
     },
     {
@@ -951,7 +951,8 @@
         "2025Q4": 0.333333,
         "2026Q1": 0.2,
         "2026Q2": 0.066667,
-        "2026Q3": 0.0
+        "2026Q3": 0.0,
+        "2026Q4": 0.0
       },
       "states": {
         "1999Q1": "NORMAL",
@@ -1064,7 +1065,8 @@
         "2025Q4": "NORMAL",
         "2026Q1": "NORMAL",
         "2026Q2": "NORMAL",
-        "2026Q3": "NORMAL"
+        "2026Q3": "NORMAL",
+        "2026Q4": "NORMAL"
       }
     },
     {
@@ -1087,7 +1089,7 @@
         "2026Q1": 328.0,
         "2026Q2": 275.0,
         "2026Q3": 312.0,
-        "2026Q4": 332.0
+        "2026Q4": 348.0
       },
       "states": {
         "2023Q4": "CREDIT_BENIGN",
@@ -1111,5 +1113,5 @@
     "FRED"
   ],
   "disclaimer": "Historical quarterly readings reproduced from public data (ECB SDMX + FRED), at each provider's quarter-end observation. Risk measurement — not investment advice.",
-  "output_sha256": "74c1a3ee7d166bca25dba97ed1ff468c494d429e9af07639206b5a9d3eb1feaf"
+  "output_sha256": "de77021ad81bf92419665453b6b36b6c40a606bbd2337378ccd3d27df7dc9c73"
 }

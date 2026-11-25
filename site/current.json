@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-11-24T22:31:10Z",
+  "generated_at_utc": "2026-11-25T21:45:53Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -9,9 +9,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-11-23",
+      "as_of": "2026-11-24",
       "fmt": "ratio",
-      "value": 0.02914,
+      "value": 0.018473,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -21,9 +21,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-11-23",
+      "as_of": "2026-11-24",
       "fmt": "ratio",
-      "value": 0.027663,
+      "value": 0.028929,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -33,9 +33,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-11-23",
+      "as_of": "2026-11-24",
       "fmt": "ratio",
-      "value": 0.027058,
+      "value": 0.025413,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -45,9 +45,9 @@
       "unit": "z · 0 = normal",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-11-13",
+      "as_of": "2026-11-20",
       "fmt": "signed",
-      "value": -0.8655,
+      "value": -0.0697,
       "interpretation": "0 = normal conditions; >0 above-average stress; <0 below-average. Weekly-Thursday cadence."
     },
     {
@@ -93,9 +93,9 @@
       "unit": "bps",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-11-23",
+      "as_of": "2026-11-24",
       "fmt": "bps",
-      "value": 363.0,
+      "value": 372.0,
       "state": "CREDIT_NORMAL",
       "interpretation": "HY OAS regime classifier. Level >= 1000 bps OR 1-month change >= 200 bps signals acute credit stress."
     }
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "2cb3fe5dc86f715b93c3d690d51d34dec7651391a5b40bf4b9e9df2026c8260c"
+  "output_sha256": "3a077c66f4ede4028cf72a5935533b50615a87acdcc5a73c80800264ea43f20d"
 }

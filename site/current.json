@@ -1,6 +1,6 @@
 {
   "schema": "cbsrm-current-conditions/1.0.0",
-  "generated_at_utc": "2026-11-25T21:45:53Z",
+  "generated_at_utc": "2026-11-26T21:39:02Z",
   "readings": [
     {
       "id": "ECB-CISS-US",
@@ -9,9 +9,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-11-24",
+      "as_of": "2026-11-25",
       "fmt": "ratio",
-      "value": 0.018473,
+      "value": 0.010021,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -21,9 +21,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-11-24",
+      "as_of": "2026-11-25",
       "fmt": "ratio",
-      "value": 0.028929,
+      "value": 0.038068,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -33,9 +33,9 @@
       "unit": "index 0–1",
       "source": "ECB SDMX",
       "status": "ok",
-      "as_of": "2026-11-24",
+      "as_of": "2026-11-25",
       "fmt": "ratio",
-      "value": 0.025413,
+      "value": 0.026548,
       "interpretation": "Values in [0, 1]. Levels above ~0.4 historically associated with broad financial-stability events. Daily cadence."
     },
     {
@@ -57,9 +57,9 @@
       "unit": "Estrella–Mishkin",
       "source": "FRED",
       "status": "ok",
-      "as_of": "2026-11-24",
+      "as_of": "2026-11-25",
       "fmt": "probability",
-      "value": 0.192317,
+      "value": 0.198833,
       "interpretation": "Recession probability 12 months out, conditional on current 10Y-3M Treasury spread, via Estrella-Mishkin probit. Persistent inversion = run-length >= 60 trading days."
     },
     {
@@ -110,5 +110,5 @@
     "FRED"
   ],
   "disclaimer": "Latest available public readings, each dated to its provider's last publication. Risk measurement — not investment advice.",
-  "output_sha256": "3a077c66f4ede4028cf72a5935533b50615a87acdcc5a73c80800264ea43f20d"
+  "output_sha256": "223693c899e8dc07880be952ef7b6ace3b9ae98b53d1be8c87b6d8a2f75045a5"
 }
